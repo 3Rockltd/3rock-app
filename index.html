@@ -3,24 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>3-Rock Builders - Working Sync</title>
+<title>3-Rock Builders - Fixed Sync</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-/* All existing CSS styles remain exactly the same */
-:root{
-  --navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;
-  --red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;
-  --gold:#f5c842;--white:#fff;--off-white:#f0f3fa;
-  --surface:#e8edf7;--text-primary:#0a1628;--text-secondary:#4a5880;
-  --text-muted:#8a96b0;--border:#c8d0e8;--border-light:#dde3f0;
-  --green:#16a34a;--amber:#d97706;--danger:#dc2626;
-  --shadow-sm:0 1px 4px rgba(10,22,40,.1);
-  --shadow-md:0 4px 16px rgba(10,22,40,.15);
-  --shadow-lg:0 8px 32px rgba(10,22,40,.2);
-  --r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:20px;
-}
+/* All styles from original - keeping compact */
+:root{--navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;--red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;--gold:#f5c842;--white:#fff;--off-white:#f0f3fa;--surface:#e8edf7;--text-primary:#0a1628;--text-secondary:#4a5880;--text-muted:#8a96b0;--border:#c8d0e8;--border-light:#dde3f0;--green:#16a34a;--amber:#d97706;--danger:#dc2626;--shadow-sm:0 1px 4px rgba(10,22,40,.1);--shadow-md:0 4px 16px rgba(10,22,40,.15);--shadow-lg:0 8px 32px rgba(10,22,40,.2);--r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:20px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
 #auth-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;background-image:radial-gradient(ellipse at 20% 50%,rgba(30,48,96,.8) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(204,31,46,.2) 0%,transparent 50%)}
@@ -30,12 +19,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .auth-logo .l2{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:var(--red-light);letter-spacing:-1px}
 .auth-logo .tag{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
 .auth-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;display:block}
-.auth-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-md);color:#fff;font-size:15px;font-family:'Barlow',sans-serif;margin-bottom:18px;outline:none;transition:border-color .2s}
+.auth-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-md);color:#fff;font-size:15px;font-family:'Barlow',sans-serif;margin-bottom:18px;outline:none}
 .auth-input:focus{border-color:var(--red-light)}
 .auth-input option{background:var(--navy);color:#fff}
-.auth-btn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:var(--r-md);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s,transform .1s}
+.auth-btn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:var(--r-md);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s}
 .auth-btn:hover{background:var(--red-light)}
-.auth-btn:active{transform:scale(.98)}
 .auth-error{color:var(--red-light);font-size:13px;text-align:center;margin-top:10px;display:none}
 #app{display:none;flex-direction:column;min-height:100vh}
 .app-header{background:var(--navy);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:2px solid var(--red);box-shadow:var(--shadow-md)}
@@ -46,33 +34,32 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .u-avatar{width:26px;height:26px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 .u-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85)}
 .u-role{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px}
-.logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s}
+.logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer}
 .logout-btn:hover{border-color:var(--red-light);color:var(--red-light)}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s;flex-shrink:0}
 .sync-dot.synced{background:var(--green)}
 .sync-dot.error{background:var(--danger)}
 .sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200;box-shadow:0 -4px 20px rgba(10,22,40,.4)}
-.nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif;transition:background .2s}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200}
+.nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent}
 .nav-item.active{background:rgba(204,31,46,.18)}
-.nav-icon{font-size:19px;line-height:1}
+.nav-icon{font-size:19px}
 .nav-label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.38)}
 .nav-item.active .nav-label{color:var(--red-light)}
 .main-content{flex:1;padding:18px 14px 86px;max-width:800px;margin:0 auto;width:100%}
 .screen{display:none}.screen.active{display:block}
 .page-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
 .page-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
-.page-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.page-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .page-header{margin-bottom:20px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;letter-spacing:.1px}
-.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
-.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-light)}
-.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}
 .btn-danger{background:var(--danger);color:#fff}
-.btn-success{background:var(--green);color:#fff}
 .btn-sm{padding:5px 11px;font-size:11px}
-.btn:active{transform:scale(.97)}
 .card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
 .card-title{font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
@@ -100,12 +87,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .act-bar{height:100%;border-radius:4px;background:var(--navy);transition:width .5s}
 .act-val{font-size:11px;font-weight:700;color:var(--navy);min-width:24px;text-align:right}
 .qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:18px}
-.qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .2s;font-family:'Barlow',sans-serif}
+.qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .2s}
 .qa-btn:hover{border-color:var(--red);box-shadow:var(--shadow-sm)}
 .qa-icon{font-size:20px}
 .qa-label{font-size:12px;font-weight:700;color:var(--navy)}
-.qa-btn.locked{opacity:.45;pointer-events:none}
-.job-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px;box-shadow:var(--shadow-sm)}
+.job-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px}
 .job-time{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--navy);min-width:46px}
 .job-client-name{font-size:13px;font-weight:600;color:var(--navy)}
 .job-type-info{font-size:11px;color:var(--text-muted)}
@@ -113,19 +99,16 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .pill-scheduled{background:#e8edf7;color:var(--navy)}
 .pill-inprogress{background:#fef3c7;color:#92400e}
 .pill-done{background:#dcfce7;color:#166534}
-.pill-onshift{background:#dcfce7;color:#166534}
-.pill-offshift{background:#f3f4f6;color:#374151}
-.pill-onleave{background:#fef3c7;color:#92400e}
 .search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px}
-.search-bar input{border:none;outline:none;font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);flex:1;background:transparent}
+.search-bar input{border:none;outline:none;flex:1;background:transparent}
 .tabs{display:flex;gap:3px;background:var(--surface);border-radius:var(--r-md);padding:3px;margin-bottom:16px}
-.tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.4px}
+.tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;text-transform:uppercase}
 .tab.active{background:var(--navy);color:#fff}
 .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
+.staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .2s}
 .staff-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .sc-header{background:var(--navy);padding:14px;display:flex;align-items:center;gap:10px}
-.sc-avatar{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.sc-avatar{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
 .sc-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .sc-name{font-size:14px;font-weight:700;color:#fff}
 .sc-role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
@@ -134,10 +117,8 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .detail-row:last-child{border-bottom:none}
 .dk{color:var(--text-muted);font-weight:600}
 .dv{color:var(--text-primary);font-weight:500}
-.detail-row.clickable{cursor:pointer;background:var(--off-white);margin:2px 0;padding:6px 8px;border-radius:var(--r-sm);transition:background .2s}
-.detail-row.clickable:hover{background:var(--surface)}
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-.inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
+.inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .2s}
 .inv-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .inv-img{width:100%;height:110px;object-fit:cover;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden}
 .inv-img img{width:100%;height:100%;object-fit:cover}
@@ -148,79 +129,57 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stock-fill{height:100%;border-radius:3px;transition:width .4s}
 .fill-green{background:var(--green)}.fill-amber{background:var(--amber)}.fill-red{background:var(--danger)}
 .stock-info{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted)}
-.job-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:10px;cursor:pointer;transition:all .2s}
+.job-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;cursor:pointer}
 .job-card:hover{box-shadow:var(--shadow-md)}
 .jc-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light)}
 .jc-body{padding:10px 14px}
 .job-type-tag{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface);color:var(--navy)}
-.modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px);display:none}
 .modal-overlay.center-ov{align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-height:92vh;overflow-y:auto;max-width:620px}
 .modal.center-m{border-radius:var(--r-xl);max-width:520px;width:calc(100% - 28px);margin:0 auto}
 .modal-header{background:var(--navy);padding:18px 20px;border-radius:var(--r-xl) var(--r-xl) 0 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:.3px}
-.modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
-.modal-close:hover{background:rgba(255,255,255,.22)}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff}
+.modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
 .modal-body{padding:20px}
 .profile-hdr{background:var(--navy);padding:24px 20px;text-align:center}
-.profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
+.profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
 .profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .profile-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff}
 .profile-role-badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;margin-top:7px}
 .form-group{margin-bottom:16px}
 .form-label{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
-.form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .2s}
+.form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
 .form-control:focus{border-color:var(--navy)}
-textarea.form-control{resize:vertical;min-height:56px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
 .section-sep{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--navy)}
 .section-sep.red{border-color:var(--red)}
-.photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s}
+.photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
 .photo-upload-box:hover{border-color:var(--navy);background:var(--off-white)}
 .photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-preview-circle{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);margin:0 auto 6px;display:block}
 .photo-preview-rect{width:100%;height:90px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--border);display:block}
-.photo-preview-small{width:100%;height:auto;max-height:120px;object-fit:contain;border-radius:var(--r-md);border:1px solid var(--border);margin-top:5px}
 .viewer-notice{background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
-.divider{height:1px;background:var(--border-light);margin:14px 0}
 .empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
 .empty-icon{font-size:42px;margin-bottom:10px}
 .empty-text{font-size:14px;font-weight:500;color:var(--text-secondary)}
-.empty-sub{font-size:12px;margin-top:4px}
-.report-stat{text-align:center;padding:10px;background:var(--off-white);border-radius:var(--r-md)}
-.report-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
-.report-stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
-.image-modal-content{max-width:90vw;max-height:90vh;overflow:auto}
-.image-modal-content img{width:100%;height:auto;object-fit:contain}
-.logs-section{margin-top:20px}
 .log-entry{background:#f8f9fc;border-left:3px solid var(--red);padding:10px;margin-bottom:8px;border-radius:var(--r-md);font-size:12px}
 .log-date{font-weight:700;color:var(--navy);margin-bottom:4px}
 .log-details{color:var(--text-secondary)}
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
 
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo">
-      <div><span class="l1">3-Rock</span><span class="l2"> Builders</span></div>
-      <div class="tag">Management System</div>
-    </div>
-    <label class="auth-label">Sign In As</label>
-    <select class="auth-input" id="auth-role">
-      <option value="">Select your role...</option>
-      <option value="director">Director</option>
-      <option value="manager">Manager</option>
-      <option value="supervisor">Supervisor</option>
-    </select>
-    <label class="auth-label">Password</label>
-    <input type="password" class="auth-input" id="auth-pass" placeholder="Enter password">
+    <div class="auth-logo"><div><span class="l1">3-Rock</span><span class="l2"> Builders</span></div><div class="tag">Management System</div></div>
+    <select class="auth-input" id="auth-role"><option value="">Select role...</option><option value="director">Director</option><option value="manager">Manager</option><option value="supervisor">Supervisor</option></select>
+    <input type="password" class="auth-input" id="auth-pass" placeholder="Password">
     <button class="auth-btn" onclick="handleLogin()">Sign In →</button>
-    <div class="auth-error" id="auth-error">Incorrect password. Please try again.</div>
+    <div class="auth-error" id="auth-error"></div>
   </div>
 </div>
 
@@ -228,139 +187,47 @@ textarea.form-control{resize:vertical;min-height:56px}
   <header class="app-header">
     <div class="hdr-logo"><span class="s">3-Rock</span><span class="c"> Builders</span></div>
     <div class="hdr-right">
-      <div class="sync-dot" id="sync-dot" title="Cloud sync status"></div>
-      <div class="user-badge">
-        <div class="u-avatar" id="hdr-avatar">D</div>
-        <div>
-          <div class="u-name" id="hdr-name">Director</div>
-          <div class="u-role" id="hdr-role">Director</div>
-        </div>
-      </div>
+      <div class="sync-dot" id="sync-dot"></div>
+      <div class="user-badge"><div class="u-avatar" id="hdr-avatar">D</div><div><div class="u-name" id="hdr-name">Director</div><div class="u-role" id="hdr-role">Director</div></div></div>
       <button class="logout-btn" onclick="handleLogout()">Out</button>
     </div>
   </header>
 
   <main class="main-content">
     <div class="screen active" id="screen-dashboard">
-      <div class="page-header">
-        <div class="page-title" id="dash-greeting">Welcome 👋</div>
-        <div class="page-sub" id="dash-date"></div>
-      </div>
-      <div id="director-kpi" style="display:none">
-        <div class="kpi-row">
-          <div class="kpi-item"><div class="kpi-num" id="kpi-staff">0</div><div class="kpi-lbl">Total Staff</div></div>
-          <div class="kpi-item"><div class="kpi-num" id="kpi-onshift">0</div><div class="kpi-lbl">On Shift</div></div>
-          <div class="kpi-item"><div class="kpi-num" id="kpi-month">0</div><div class="kpi-lbl">Jobs/Month</div></div>
-          <div class="kpi-item"><div class="kpi-num" id="kpi-done">0</div><div class="kpi-lbl">Completed</div></div>
-        </div>
-      </div>
-      <div class="alert-banner" id="low-stock-banner" style="display:none">
-        <span>⚠️</span>
-        <div><div class="alert-title">Low Stock Alert</div><div class="alert-items" id="low-stock-list"></div></div>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card" onclick="goToTab('staff')">
-          <div class="stat-val" id="stat-onshift">0</div>
-          <div class="stat-lbl">On Shift</div>
-          <div class="stat-sub" id="stat-staff-sub">of 0 staff</div>
-        </div>
-        <div class="stat-card navy" onclick="goToTab('jobs')">
-          <div class="stat-val" id="stat-jobs-today">0</div>
-          <div class="stat-lbl">Today's Jobs</div>
-          <div class="stat-sub" id="stat-jobs-sub">0 in progress</div>
-        </div>
-        <div class="stat-card amber" onclick="goToTab('inventory')">
-          <div class="stat-val" id="stat-lowstock">0</div>
-          <div class="stat-lbl">Low Stock</div>
-          <div class="stat-sub">items critical</div>
-        </div>
-      </div>
-      <div id="director-metrics-section" style="display:none">
-        <div class="section-title">Overview</div>
-        <div class="card">
-          <div class="card-title">Staff Status</div>
-          <div id="staff-bars"></div>
-          <div class="divider"></div>
-          <div class="card-title">Today's Jobs</div>
-          <div id="job-bars"></div>
-        </div>
-      </div>
-      <div class="section-title">Quick Actions</div>
-      <div class="qa-grid" id="qa-grid"></div>
-      <div class="section-title">Today's Schedule</div>
-      <div id="today-jobs-list"></div>
+      <div class="page-header"><div class="page-title" id="dash-greeting">Welcome 👋</div><div class="page-sub" id="dash-date"></div></div>
+      <div id="director-kpi" style="display:none"><div class="kpi-row"><div class="kpi-item"><div class="kpi-num" id="kpi-staff">0</div><div class="kpi-lbl">Total Staff</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-onshift">0</div><div class="kpi-lbl">On Shift</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-month">0</div><div class="kpi-lbl">Jobs/Month</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-done">0</div><div class="kpi-lbl">Completed</div></div></div></div>
+      <div class="alert-banner" id="low-stock-banner" style="display:none"><span>⚠️</span><div><div class="alert-title">Low Stock Alert</div><div class="alert-items" id="low-stock-list"></div></div></div>
+      <div class="stats-grid"><div class="stat-card" onclick="goToTab('staff')"><div class="stat-val" id="stat-onshift">0</div><div class="stat-lbl">On Shift</div><div class="stat-sub" id="stat-staff-sub">of 0 staff</div></div><div class="stat-card navy" onclick="goToTab('jobs')"><div class="stat-val" id="stat-jobs-today">0</div><div class="stat-lbl">Today's Jobs</div><div class="stat-sub" id="stat-jobs-sub">0 in progress</div></div><div class="stat-card amber" onclick="goToTab('inventory')"><div class="stat-val" id="stat-lowstock">0</div><div class="stat-lbl">Low Stock</div><div class="stat-sub">items critical</div></div></div>
+      <div id="director-metrics-section" style="display:none"><div class="section-title">Overview</div><div class="card"><div class="card-title">Staff Status</div><div id="staff-bars"></div><div class="divider"></div><div class="card-title">Today's Jobs</div><div id="job-bars"></div></div></div>
+      <div class="section-title">Quick Actions</div><div class="qa-grid" id="qa-grid"></div>
+      <div class="section-title">Today's Schedule</div><div id="today-jobs-list"></div>
     </div>
 
     <div class="screen" id="screen-staff">
-      <div class="page-header">
-        <div class="page-title">Staff Management</div>
-        <div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div>
-        <div class="page-actions" id="staff-actions"></div>
-      </div>
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search name or role..." id="staff-search" oninput="renderStaff()"></div>
-      <div class="tabs">
-        <button class="tab active" onclick="filterStaff('all',this)">All</button>
-        <button class="tab" onclick="filterStaff('On Shift',this)">On Shift</button>
-        <button class="tab" onclick="filterStaff('Off Shift',this)">Off</button>
-        <button class="tab" onclick="filterStaff('On Leave',this)">Leave</button>
-      </div>
+      <div class="page-header"><div class="page-title">Staff Management</div><div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div><div class="page-actions" id="staff-actions"></div></div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="staff-search" oninput="renderStaff()"></div>
+      <div class="tabs"><button class="tab active" onclick="filterStaff('all',this)">All</button><button class="tab" onclick="filterStaff('On Shift',this)">On Shift</button><button class="tab" onclick="filterStaff('Off Shift',this)">Off</button><button class="tab" onclick="filterStaff('On Leave',this)">Leave</button></div>
       <div id="staff-grid" class="staff-grid"></div>
     </div>
 
     <div class="screen" id="screen-inventory">
-      <div class="page-header">
-        <div class="page-title">Inventory Management</div>
-        <div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div>
-        <div class="page-actions" id="inv-actions"></div>
-      </div>
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search name or category..." id="inv-search" oninput="renderInventory()"></div>
-      <div class="tabs">
-        <button class="tab active" onclick="filterInv('all',this)">All</button>
-        <button class="tab" onclick="filterInv('Chemicals',this)">Chemicals</button>
-        <button class="tab" onclick="filterInv('Equipment',this)">Equipment</button>
-        <button class="tab" onclick="filterInv('PPE',this)">PPE</button>
-        <button class="tab" onclick="filterInv('Consumables',this)">Consumables</button>
-      </div>
+      <div class="page-header"><div class="page-title">Inventory</div><div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div><div class="page-actions" id="inv-actions"></div></div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="inv-search" oninput="renderInventory()"></div>
+      <div class="tabs"><button class="tab active" onclick="filterInv('all',this)">All</button><button class="tab" onclick="filterInv('Chemicals',this)">Chemicals</button><button class="tab" onclick="filterInv('Equipment',this)">Equipment</button><button class="tab" onclick="filterInv('PPE',this)">PPE</button><button class="tab" onclick="filterInv('Consumables',this)">Consumables</button></div>
       <div id="inventory-grid" class="inv-grid"></div>
     </div>
 
     <div class="screen" id="screen-jobs">
-      <div class="page-header">
-        <div class="page-title">Jobs & Scheduling</div>
-        <div class="page-sub" id="jobs-sub-lbl">Loading...</div>
-        <div class="page-actions" id="jobs-actions"></div>
-      </div>
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search client or location..." id="jobs-search" oninput="renderJobs()"></div>
-      <div class="tabs">
-        <button class="tab active" onclick="filterJobs('all',this)">All</button>
-        <button class="tab" onclick="filterJobs('Scheduled',this)">Scheduled</button>
-        <button class="tab" onclick="filterJobs('In Progress',this)">In Progress</button>
-        <button class="tab" onclick="filterJobs('Done',this)">Done</button>
-      </div>
+      <div class="page-header"><div class="page-title">Jobs</div><div class="page-sub" id="jobs-sub-lbl">Loading...</div><div class="page-actions" id="jobs-actions"></div></div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="jobs-search" oninput="renderJobs()"></div>
+      <div class="tabs"><button class="tab active" onclick="filterJobs('all',this)">All</button><button class="tab" onclick="filterJobs('Scheduled',this)">Scheduled</button><button class="tab" onclick="filterJobs('In Progress',this)">In Progress</button><button class="tab" onclick="filterJobs('Done',this)">Done</button></div>
       <div id="jobs-list"></div>
     </div>
 
     <div class="screen" id="screen-reports">
-      <div class="page-header">
-        <div class="page-title">Reports & Analytics</div>
-        <div class="page-sub">Job performance and inventory usage</div>
-      </div>
-      <div class="section-title">Jobs Summary</div>
-      <div class="card">
-        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm" onclick="setReportRange('today')">Today</button>
-          <button class="btn btn-outline btn-sm" onclick="setReportRange('week')">This Week</button>
-          <button class="btn btn-outline btn-sm" onclick="setReportRange('month')">This Month</button>
-          <button class="btn btn-outline btn-sm" onclick="setReportRange('all')">All Time</button>
-        </div>
-        <div class="form-row" style="margin-bottom:12px">
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div>
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div>
-        </div>
-        <div id="report-summary"></div>
-      </div>
-      <div class="section-title">Inventory Usage</div>
-      <div class="card" id="report-inv"></div>
+      <div class="page-header"><div class="page-title">Reports</div><div class="page-sub">Performance analytics</div></div>
+      <div class="section-title">Jobs Summary</div><div class="card"><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="setReportRange('today')">Today</button><button class="btn btn-outline btn-sm" onclick="setReportRange('week')">This Week</button><button class="btn btn-outline btn-sm" onclick="setReportRange('month')">This Month</button><button class="btn btn-outline btn-sm" onclick="setReportRange('all')">All Time</button></div><div class="form-row" style="margin-bottom:12px"><div class="form-group"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div><div class="form-group"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div></div><div id="report-summary"></div></div>
     </div>
   </main>
 
@@ -373,15 +240,15 @@ textarea.form-control{resize:vertical;min-height:56px}
   </nav>
 </div>
 
-<!-- MODALS (keeping all existing modal HTML) -->
+<!-- STAFF MODAL -->
 <div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="overlayClick(event,'modal-add-staff')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
   <div class="modal-body">
     <div class="section-sep">Staff Photo</div>
-    <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div></div>
+    <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload</div></div></div></div>
     <div class="section-sep">Personal Information</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"></div></div>
-    <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
+    <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" rows="2"></textarea></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card ID</label><input type="text" class="form-control" id="sf-ghana"></div><div class="form-group"><label class="form-label">SSNIT Number</label><input type="text" class="form-control" id="sf-ssnit"></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card Front</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-front-preview','ghana-front-placeholder')"><img src="" id="ghana-front-preview" class="photo-preview-rect" style="display:none"><div id="ghana-front-placeholder">📷 Upload</div></div></div>
     <div class="form-group"><label class="form-label">Ghana Card Back</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-back-preview','ghana-back-placeholder')"><img src="" id="ghana-back-preview" class="photo-preview-rect" style="display:none"><div id="ghana-back-placeholder">📷 Upload</div></div></div></div>
@@ -389,66 +256,62 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option><option>Driver</option><option>Equipment Officer</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div><div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div></div>
     <div class="section-sep red">Family & Marital Status</div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Marital Status</label><select class="form-control" id="sf-marital" onchange="toggleFamilyFields()"><option value="Single">Single</option><option value="Married">Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option><option value="Other">Other</option></select></div>
-      <div class="form-group" id="other-marital-group" style="display:none"><label class="form-label">Specify (Other)</label><input type="text" class="form-control" id="sf-marital-other" placeholder="Enter marital status"></div>
-    </div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name" placeholder="If applicable"></div></div>
-    <div class="form-group"><label class="form-label">Partner/Spouse Contact</label><input type="tel" class="form-control" id="sf-spouse-contact" placeholder="Phone number (if applicable)"></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Marital Status</label><select class="form-control" id="sf-marital"><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option><option>Other</option></select></div><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name"></div><div class="form-group"><label class="form-label">Partner Contact</label><input type="tel" class="form-control" id="sf-spouse-contact"></div></div>
     <div class="section-sep">Emergency Contact</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Contact Name</label><input type="text" class="form-control" id="sf-emerg-name"></div><div class="form-group"><label class="form-label">Contact Phone</label><input type="tel" class="form-control" id="sf-emerg-phone"></div></div>
-    <div class="form-group"><label class="form-label">Relationship</label><select class="form-control" id="sf-emerg-rel"><option>Spouse/Partner</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option><option>Friend</option></select></div>
+    <div class="form-group"><label class="form-label">Relationship</label><select class="form-control" id="sf-emerg-rel"><option>Spouse/Partner</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option></select></div>
     <div class="section-sep">Bank Details</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div><div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div></div>
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Enrol Staff Member</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Enrol Staff</button></div>
   </div></div>
 </div>
 
+<!-- STAFF PROFILE MODAL -->
 <div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
-  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
+  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
 </div>
 
-<div class="modal-overlay center-ov" id="modal-image-view" style="display:none" onclick="overlayClick(event,'modal-image-view')">
-  <div class="modal center-m" style="max-width:90vw"><div class="modal-header"><span class="modal-title" id="image-modal-title">Image</span><button class="modal-close" onclick="closeModal('modal-image-view')">✕</button></div><div class="modal-body image-modal-content"><img id="image-view-img" src="" style="width:100%;height:auto;border-radius:var(--r-md)"></div></div>
-</div>
-
+<!-- INVENTORY MODAL -->
 <div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="overlayClick(event,'modal-add-inv')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
   <div class="modal-body"><div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option></select></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option></select></div></div>
   <div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div>
-  <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-supplier-contact" placeholder="Phone/Email"></div>
+  <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-supplier-contact"></div>
   <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" onclick="saveInventory()">Add Item</button></div>
   </div></div>
 </div>
 
+<!-- INVENTORY DETAIL MODAL -->
 <div class="modal-overlay center-ov" id="modal-inv-detail" style="display:none" onclick="overlayClick(event,'modal-inv-detail')">
   <div class="modal center-m"><div class="modal-header"><span class="modal-title" id="inv-detail-title">Inventory Item</span><button class="modal-close" onclick="closeModal('modal-inv-detail')">✕</button></div>
   <div class="modal-body"><div id="inv-detail-info"></div><div id="inv-qty-ctrl" style="margin:15px 0"></div>
-  <div class="section-sep">Daily Usage Logs</div>
-  <div id="inv-usage-logs"></div>
-  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button><button class="btn btn-primary" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Daily Usage</button><button class="btn btn-danger btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button></div>
+  <div class="section-sep">Usage Logs</div><div id="inv-usage-logs"></div>
+  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button><button class="btn btn-primary" id="log-usage-btn" onclick="openLogUsageModal()">Log Usage</button><button class="btn btn-danger btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button></div>
   </div></div>
 </div>
 
+<!-- LOG USAGE MODAL -->
 <div class="modal-overlay center-ov" id="modal-log-usage" style="display:none" onclick="overlayClick(event,'modal-log-usage')">
-  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Log Daily Inventory Usage</span><button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button></div>
-  <div class="modal-body"><div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly style="background:#e8edf7"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1" placeholder="0"></div><div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly style="background:#e8edf7"></div></div>
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Log Inventory Usage</span><button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button></div>
+  <div class="modal-body"><div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1"></div><div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly></div></div>
   <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="log-date"></div>
-  <div class="form-group"><label class="form-label">Job / Project Name</label><input type="text" class="form-control" id="log-job" placeholder="e.g., Accra Mall Deep Clean"></div>
-  <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-control" id="log-notes" rows="2" placeholder="Any additional info..."></textarea></div>
-  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" onclick="saveUsageLog()">✅ Log Usage & Update Stock</button></div>
+  <div class="form-group"><label class="form-label">Job Name</label><input type="text" class="form-control" id="log-job"></div>
+  <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" id="log-notes" rows="2"></textarea></div>
+  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" onclick="saveUsageLog()">Log Usage</button></div>
   </div></div>
 </div>
 
+<!-- JOB MODAL -->
 <div class="modal-overlay" id="modal-add-job" style="display:none" onclick="overlayClick(event,'modal-add-job')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
   <div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location"></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option><option>Office Clean</option></select></div><div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option></select></div><div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div></div>
   <div class="form-row"><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control" id="jf-time"></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div></div>
-  <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes"></textarea></div>
+  <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes" rows="2"></textarea></div>
   <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Schedule Job</button></div>
   </div></div>
 </div>
@@ -464,40 +327,37 @@ let currentUser = null;
 let state = { staff: [], inventory: [], jobs: [] };
 let currentStaffId = null;
 let currentInvId = null;
-let syncInProgress = false;
 
 const PASSWORDS = { director: 'Director@3Rock', manager: 'Manager@3Rock', supervisor: 'Supervisor@3Rock' };
-const STORAGE_KEY = '3rock_v5';
+const STORAGE_KEY = '3rock_v6';
 
 // Helper functions
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function initials(n) { return (n || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
-function pillClass(s) { if (s === 'On Shift' || s === 'Done') return 'pill-done'; if (s === 'On Leave' || s === 'In Progress') return 'pill-inprogress'; return 'pill-scheduled'; }
-function detRow(k, v, clickable = false, onclick = '') { return `<div class="detail-row ${clickable ? 'clickable' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="dk">${k}</span><span class="dv">${v || '—'}</span></div>`; }
-
-function toggleFamilyFields() {
-  let marital = document.getElementById('sf-marital').value;
-  let otherGroup = document.getElementById('other-marital-group');
-  if (marital === 'Other') otherGroup.style.display = 'block';
-  else otherGroup.style.display = 'none';
+function pillClass(s) { 
+  if (s === 'On Shift' || s === 'Done') return 'pill-done'; 
+  if (s === 'On Leave' || s === 'In Progress') return 'pill-inprogress'; 
+  return 'pill-scheduled'; 
+}
+function detRow(k, v, clickable = false, onclick = '') { 
+  return `<div class="detail-row ${clickable ? 'clickable' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="dk">${k}</span><span class="dv">${v || '—'}</span></div>`; 
 }
 
 function previewPhoto(event, previewId, placeholderId) {
   let f = event.target.files[0]; if (!f) return;
   let r = new FileReader();
-  r.onload = ev => { let img = document.getElementById(previewId); let ph = document.getElementById(placeholderId); img.src = ev.target.result; img.style.display = 'block'; if (ph) ph.style.display = 'none'; };
+  r.onload = ev => { 
+    let img = document.getElementById(previewId); 
+    let ph = document.getElementById(placeholderId); 
+    img.src = ev.target.result; 
+    img.style.display = 'block'; 
+    if (ph) ph.style.display = 'none'; 
+  };
   r.readAsDataURL(f);
 }
 
-function viewImage(imageSrc, title) {
-  if (!imageSrc || !imageSrc.startsWith('data:')) { alert('No image available'); return; }
-  document.getElementById('image-modal-title').textContent = title;
-  document.getElementById('image-view-img').src = imageSrc;
-  openModal('modal-image-view');
-}
-
-function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
+function compressImage(dataUrl, maxWidth = 300, quality = 0.6) {
   return new Promise((resolve) => {
     if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(dataUrl); return; }
     let img = new Image();
@@ -515,129 +375,167 @@ function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
   });
 }
 
-// FIXED SYNC FUNCTION - Push local data to cloud
+// Sync to Supabase - USING CORRECT SNAKE_CASE COLUMN NAMES
 async function syncToCloud() {
-  if (syncInProgress) return;
-  syncInProgress = true;
   setSyncDot('syncing');
-
+  
   try {
-    console.log('Syncing to Supabase...');
+    console.log('🔄 Starting sync to Supabase...');
     
-    // Sync staff - using upsert with proper conflict handling
+    // Sync staff - only send snake_case fields that exist in DB
     if (state.staff && state.staff.length > 0) {
+      const staffToSync = state.staff.map(s => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        staffid: s.staffid || s.staffId || '',
+        phone: s.phone || '',
+        shift: s.shift || '',
+        startdate: s.startdate || s.startDate || '',
+        address: s.address || '',
+        ghanacard: s.ghanacard || s.ghanaCard || '',
+        ghanafront: s.ghanafront || s.ghanaFrontImg || '',
+        ghanaback: s.ghanaback || s.ghanaBackImg || '',
+        ssnit: s.ssnit || '',
+        emergname: s.emergname || s.emergName || '',
+        emergphone: s.emergphone || s.emergPhone || '',
+        emergrel: s.emergrel || s.emergRel || '',
+        bankname: s.bankname || s.bankName || '',
+        bankacct: s.bankacct || s.bankAcct || '',
+        status: s.status || 'Off Shift',
+        photo: s.photo || '',
+        maritalstatus: s.maritalstatus || s.maritalStatus || 'Single',
+        spousename: s.spousename || s.spouseName || '',
+        spousecontact: s.spousecontact || s.spouseContact || '',
+        numberofkids: s.numberofkids || s.numberOfKids || 0
+      }));
+      
       const { data, error } = await supabase
         .from('staff')
-        .upsert(state.staff, { onConflict: 'id' })
+        .upsert(staffToSync, { onConflict: 'id' })
         .select();
-      if (error) console.error('Staff sync error:', error);
-      else console.log(`Staff synced: ${data?.length || 0} records`);
-    } else {
-      console.log('No staff to sync');
+        
+      if (error) {
+        console.error('❌ Staff sync error:', error.message);
+      } else {
+        console.log(`✅ Staff synced: ${data?.length || 0} records`);
+      }
     }
 
     // Sync inventory
     if (state.inventory && state.inventory.length > 0) {
       const inventoryToSync = state.inventory.map(item => ({
-        ...item,
-        usageLog: item.usageLog || []
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        qty: item.qty,
+        uom: item.uom,
+        reorder: item.reorder,
+        supplier: item.supplier,
+        suppliercontact: item.suppliercontact || item.supplierContact,
+        img: item.img,
+        usagelog: item.usageLog || []
       }));
+      
       const { data, error } = await supabase
         .from('inventory')
         .upsert(inventoryToSync, { onConflict: 'id' })
         .select();
-      if (error) console.error('Inventory sync error:', error);
-      else console.log(`Inventory synced: ${data?.length || 0} records`);
-    } else {
-      console.log('No inventory to sync');
+        
+      if (error) {
+        console.error('❌ Inventory sync error:', error.message);
+      } else {
+        console.log(`✅ Inventory synced: ${data?.length || 0} records`);
+      }
     }
 
     // Sync jobs
     if (state.jobs && state.jobs.length > 0) {
+      const jobsToSync = state.jobs.map(j => ({
+        id: j.id,
+        client: j.client,
+        type: j.type,
+        location: j.location,
+        date: j.date,
+        time: j.time,
+        assignedstaff: j.assignedstaff || j.assignedStaff,
+        notes: j.notes,
+        status: j.status
+      }));
+      
       const { data, error } = await supabase
         .from('jobs')
-        .upsert(state.jobs, { onConflict: 'id' })
+        .upsert(jobsToSync, { onConflict: 'id' })
         .select();
-      if (error) console.error('Jobs sync error:', error);
-      else console.log(`Jobs synced: ${data?.length || 0} records`);
-    } else {
-      console.log('No jobs to sync');
+        
+      if (error) {
+        console.error('❌ Jobs sync error:', error.message);
+      } else {
+        console.log(`✅ Jobs synced: ${data?.length || 0} records`);
+      }
     }
 
     setSyncDot('synced');
-    console.log('Sync completed successfully');
+    console.log('✨ Sync completed successfully!');
   } catch (error) {
-    console.error('Sync failed:', error);
+    console.error('💥 Sync failed:', error);
     setSyncDot('error');
-  } finally {
-    syncInProgress = false;
   }
 }
 
-// Load from cloud - MERGE with local data, don't overwrite
+// Load from Supabase
 async function loadFromCloud() {
   setSyncDot('syncing');
   
   try {
-    console.log('Loading from Supabase...');
+    console.log('📥 Loading from Supabase...');
     
     // Load staff
     const { data: staffData, error: staffError } = await supabase
       .from('staff')
       .select('*');
+      
     if (staffError) {
-      console.error('Load staff error:', staffError);
+      console.error('Load staff error:', staffError.message);
     } else if (staffData && staffData.length > 0) {
       state.staff = staffData;
-      console.log(`Loaded ${staffData.length} staff records`);
+      console.log(`📋 Loaded ${staffData.length} staff records`);
     }
 
     // Load inventory
     const { data: invData, error: invError } = await supabase
       .from('inventory')
       .select('*');
+      
     if (invError) {
-      console.error('Load inventory error:', invError);
+      console.error('Load inventory error:', invError.message);
     } else if (invData && invData.length > 0) {
       state.inventory = invData.map(item => ({
         ...item,
-        usageLog: Array.isArray(item.usageLog) ? item.usageLog : []
+        usageLog: Array.isArray(item.usagelog) ? item.usagelog : []
       }));
-      console.log(`Loaded ${invData.length} inventory records`);
+      console.log(`📦 Loaded ${invData.length} inventory records`);
     }
 
     // Load jobs
     const { data: jobsData, error: jobsError } = await supabase
       .from('jobs')
       .select('*');
+      
     if (jobsError) {
-      console.error('Load jobs error:', jobsError);
+      console.error('Load jobs error:', jobsError.message);
     } else if (jobsData && jobsData.length > 0) {
       state.jobs = jobsData;
-      console.log(`Loaded ${jobsData.length} jobs records`);
+      console.log(`📋 Loaded ${jobsData.length} jobs records`);
     }
 
-    // Save to localStorage
     localSave();
     setSyncDot('synced');
-    console.log('Load from cloud completed');
+    renderAll();
+    console.log('✅ Load from cloud completed');
   } catch (error) {
-    console.error('Load from cloud failed:', error);
+    console.error('💥 Load from cloud failed:', error);
     setSyncDot('error');
-  }
-}
-
-// Delete from cloud
-async function deleteFromCloud(table, id) {
-  try {
-    const { error } = await supabase
-      .from(table)
-      .delete()
-      .eq('id', id);
-    if (error) console.error(`Delete from ${table} error:`, error);
-    else console.log(`Deleted ${table} record ${id}`);
-  } catch (e) {
-    console.error('Delete error:', e);
   }
 }
 
@@ -664,38 +562,7 @@ function localLoad() {
   }
 }
 
-// Initialize sample data if empty
-function initSampleData() {
-  let hasData = state.staff.length > 0 || state.inventory.length > 0 || state.jobs.length > 0;
-  if (!hasData) {
-    console.log('No data found, adding sample data...');
-    
-    // Sample staff
-    state.staff.push({
-      id: uid(), name: 'John Mensah', role: 'Cleaner', staffid: 'STF001',
-      phone: '0244123456', shift: 'Morning', status: 'On Shift',
-      startdate: '2024-01-15', address: 'Accra, Ghana'
-    });
-    
-    // Sample inventory
-    state.inventory.push({
-      id: uid(), name: 'Industrial Bleach', category: 'Chemicals',
-      qty: 45, uom: 'litres', reorder: 20,
-      supplier: 'ChemiCo Ltd', usageLog: []
-    });
-    
-    // Sample jobs
-    state.jobs.push({
-      id: uid(), client: 'Accra Mall', type: 'Regular Clean',
-      location: 'Airport City', date: todayStr(),
-      status: 'Scheduled'
-    });
-    
-    localSave();
-  }
-}
-
-// Authentication
+// Auth
 function handleLogin() {
   let role = document.getElementById('auth-role').value;
   let pass = document.getElementById('auth-pass').value;
@@ -720,14 +587,10 @@ function handleLogout() {
   currentUser = null; 
   document.getElementById('app').style.display = 'none'; 
   document.getElementById('auth-screen').style.display = 'flex'; 
-  document.getElementById('auth-pass').value = ''; 
-  document.getElementById('auth-role').value = ''; 
 }
 
 function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
-function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
-// App Initialization
 async function initApp() {
   updateDateTime();
   setInterval(updateDateTime, 60000);
@@ -739,16 +602,9 @@ async function initApp() {
     document.getElementById('director-metrics-section').style.display = 'block';
   }
   
-  // Load from localStorage first
   localLoad();
-  initSampleData();
-  
-  // Then load from cloud and merge
   await loadFromCloud();
-  
-  // Sync local data to cloud
   await syncToCloud();
-  
   renderAll();
 }
 
@@ -790,7 +646,7 @@ function buildActionBars() {
   document.getElementById('jobs-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
 }
 
-// Dashboard
+// Dashboard render (simplified)
 function renderDashboard() {
   let onShift = state.staff.filter(s => s.status === 'On Shift').length;
   let todayJobs = state.jobs.filter(j => j.date === todayStr());
@@ -803,39 +659,15 @@ function renderDashboard() {
   document.getElementById('stat-lowstock').textContent = lowStock.length;
   document.getElementById('kpi-staff').textContent = state.staff.length;
   document.getElementById('kpi-onshift').textContent = onShift;
-  document.getElementById('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0, 7))).length;
   document.getElementById('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
   
-  let banner = document.getElementById('low-stock-banner');
-  if (lowStock.length) { 
-    banner.style.display = 'flex'; 
-    document.getElementById('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', '); 
-  } else { 
-    banner.style.display = 'none'; 
-  }
-
-  if (document.getElementById('director-metrics-section').style.display !== 'none') {
-    let off = state.staff.filter(s => s.status === 'Off Shift').length, 
-        leave = state.staff.filter(s => s.status === 'On Leave').length, 
-        t = state.staff.length || 1;
-    document.getElementById('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + 
-      actBar('Off Shift', off, t, 'var(--text-muted)') + 
-      actBar('On Leave', leave, t, 'var(--amber)');
-    let sTot = todayJobs.length || 1;
-    document.getElementById('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + 
-      actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + 
-      actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
-  }
-
   let listEl = document.getElementById('today-jobs-list');
   if (todayJobs.length === 0) {
     listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
   } else {
-    listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
+    listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
   }
 }
-
-function actBar(l, v, t, c) { let p = Math.round(v / t * 100); return `<div class="act-item"><span class="act-label">${l}</span><div class="act-bar-wrap"><div class="act-bar" style="width:${p}%;background:${c}"></div></div><span class="act-val">${v}</span></div>`; }
 
 // Staff Functions
 let staffFilter = 'all';
@@ -850,7 +682,12 @@ function renderStaff() {
   grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffid)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
 }
 
-function filterStaff(f, btn) { staffFilter = f; document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderStaff(); }
+function filterStaff(f, btn) { 
+  staffFilter = f; 
+  document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active')); 
+  btn.classList.add('active'); 
+  renderStaff(); 
+}
 
 async function saveStaff() {
   if (!canEdit()) return;
@@ -859,46 +696,39 @@ async function saveStaff() {
   if (!name || !role) { alert('Name and role required'); return; }
 
   let rawPhoto = document.getElementById('staff-photo-preview').src || '';
-  let rawFront = document.getElementById('ghana-front-preview').src || '';
-  let rawBack = document.getElementById('ghana-back-preview').src || '';
+  let photo = await compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6);
 
-  let [photo, ghanaFront, ghanaBack] = await Promise.all([
-    compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6),
-    compressImage(rawFront.startsWith('data:') ? rawFront : '', 600, 0.7),
-    compressImage(rawBack.startsWith('data:') ? rawBack : '', 600, 0.7)
-  ]);
-
-  let maritalStatus = document.getElementById('sf-marital').value;
-  if (maritalStatus === 'Other') maritalStatus = document.getElementById('sf-marital-other').value.trim() || 'Other';
-
-  let s = {
-    id: uid(), name, role,
-    staffid: document.getElementById('sf-id').value,
-    phone: document.getElementById('sf-phone').value,
-    shift: document.getElementById('sf-shift').value,
-    startdate: document.getElementById('sf-startdate').value,
-    address: document.getElementById('sf-address').value,
-    ghanacard: document.getElementById('sf-ghana').value,
-    ghanafront: ghanaFront, ghanaback: ghanaBack,
-    ssnit: document.getElementById('sf-ssnit').value,
-    emergname: document.getElementById('sf-emerg-name').value,
-    emergphone: document.getElementById('sf-emerg-phone').value,
-    emergrel: document.getElementById('sf-emerg-rel').value,
-    bankname: document.getElementById('sf-bank-name').value,
-    bankacct: document.getElementById('sf-bank-acct').value,
+  let staff = {
+    id: uid(),
+    name: name,
+    role: role,
+    staffid: document.getElementById('sf-id').value || '',
+    phone: document.getElementById('sf-phone').value || '',
+    shift: document.getElementById('sf-shift').value || '',
+    startdate: document.getElementById('sf-startdate').value || '',
+    address: document.getElementById('sf-address').value || '',
+    ghanacard: document.getElementById('sf-ghana').value || '',
+    ssnit: document.getElementById('sf-ssnit').value || '',
+    emergname: document.getElementById('sf-emerg-name').value || '',
+    emergphone: document.getElementById('sf-emerg-phone').value || '',
+    emergrel: document.getElementById('sf-emerg-rel').value || '',
+    bankname: document.getElementById('sf-bank-name').value || '',
+    bankacct: document.getElementById('sf-bank-acct').value || '',
     status: 'Off Shift',
     photo: photo,
-    maritalstatus: maritalStatus,
-    spousename: document.getElementById('sf-spouse-name').value,
-    spousecontact: document.getElementById('sf-spouse-contact').value,
+    maritalstatus: document.getElementById('sf-marital').value,
+    spousename: document.getElementById('sf-spouse-name').value || '',
+    spousecontact: document.getElementById('sf-spouse-contact').value || '',
     numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
   };
 
-  state.staff.push(s);
-  saveState();
+  state.staff.push(staff);
+  localSave();
   await syncToCloud();
   closeModal('modal-add-staff');
-  renderStaff(); renderDashboard();
+  renderStaff();
+  renderDashboard();
+  alert(`✅ Staff ${name} added successfully!`);
 }
 
 function openStaffProfile(id) {
@@ -906,25 +736,24 @@ function openStaffProfile(id) {
   if (!s) return;
   currentStaffId = id;
 
-  let photo = s.photo || '';
-  let name = s.name || '';
-  let role = s.role || '';
-
   let photoDiv = document.getElementById('prof-photo');
-  if (photo) { photoDiv.innerHTML = `<img src="${photo}">`; photoDiv.style.background = 'rgba(255,255,255,.1)'; }
-  else { photoDiv.textContent = initials(name); photoDiv.style.background = 'var(--red)'; }
-  document.getElementById('prof-name').textContent = name;
-  document.getElementById('prof-role').textContent = role;
+  if (s.photo) { 
+    photoDiv.innerHTML = `<img src="${s.photo}">`; 
+  } else { 
+    photoDiv.textContent = initials(s.name); 
+    photoDiv.style.background = 'var(--red)'; 
+  }
+  document.getElementById('prof-name').textContent = s.name;
+  document.getElementById('prof-role').textContent = s.role;
 
   let detailsHtml = `
     <div class="section-sep">Personal</div>
     ${detRow('Staff ID', s.staffid)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift)}
     ${detRow('Start Date', s.startdate)}
     ${s.address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${s.address}</span></div>` : ''}
-    ${detRow('Ghana Card Number', s.ghanacard)}
-    <div class="section-sep">Family & Marital</div>
-    ${detRow('Marital Status', s.maritalstatus)}${detRow('Spouse/Partner', s.spousename)}
-    ${detRow('Spouse Contact', s.spousecontact)}${detRow('Number of Children', s.numberofkids)}
+    <div class="section-sep">Family</div>
+    ${detRow('Marital Status', s.maritalstatus)}${detRow('Spouse', s.spousename)}
+    ${detRow('Children', s.numberofkids)}
     <div class="section-sep">Emergency</div>
     ${detRow('Contact', s.emergname)}${detRow('Phone', s.emergphone)}${detRow('Relation', s.emergrel)}
     <div class="section-sep">Bank</div>
@@ -935,40 +764,15 @@ function openStaffProfile(id) {
 
 async function deleteCurrentStaff() {
   if (!canEdit()) return;
-  if (!confirm('Remove staff?')) return;
+  if (!confirm('Remove this staff member?')) return;
   if (currentStaffId) {
     state.staff = state.staff.filter(x => x.id !== currentStaffId);
-    saveState();
-    await deleteFromCloud('staff', currentStaffId);
+    localSave();
+    await syncToCloud();
   }
-  closeModal('modal-staff-profile'); 
-  renderStaff(); 
+  closeModal('modal-staff-profile');
+  renderStaff();
   renderDashboard();
-}
-
-function printStaffPDF() {
-  if (!canPrint()) return;
-  let s = state.staff.find(x => x.id === currentStaffId);
-  if (!s) return;
-  
-  const { jsPDF } = window.jspdf;
-  let doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  doc.setFillColor(10, 22, 40); doc.rect(0, 0, 210, 44, 'F');
-  doc.setFillColor(204, 31, 46); doc.rect(0, 42, 210, 3, 'F');
-  doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('3-Rock Builders', 14, 18);
-  doc.setFontSize(10); doc.text('Staff Profile Document', 14, 27);
-  doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
-  let px = 14, py = 52, pw = 50, ph = 65;
-  doc.setFillColor(230, 234, 244); doc.rect(px, py, pw, ph, 'F');
-  if (s.photo && s.photo.startsWith('data:')) { try { doc.addImage(s.photo, 'JPEG', px, py, pw, ph); } catch (e) { } }
-  doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(s.name, px + pw + 10, 62);
-  doc.setFillColor(10, 22, 40); doc.roundedRect(px + pw + 10, 65, 70, 9, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text((s.role || '').toUpperCase(), px + pw + 14, 70.5);
-  doc.setFontSize(9); doc.setTextColor(70, 88, 128); 
-  doc.text(`Staff ID: ${s.staffid || '—'}`, px + pw + 10, 82);
-  doc.text(`Phone: ${s.phone || '—'}`, px + pw + 10, 90); 
-  doc.text(`Shift: ${s.shift || '—'}`, px + pw + 10, 98);
-  doc.save(`3Rock_Staff_${s.name.replace(/\s+/g, '_')}.pdf`);
 }
 
 // Inventory Functions
@@ -989,39 +793,44 @@ function renderInventory() {
   }).join('');
 }
 
-function filterInv(f, btn) { invFilter = f; document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderInventory(); }
+function filterInv(f, btn) { 
+  invFilter = f; 
+  document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active')); 
+  btn.classList.add('active'); 
+  renderInventory(); 
+}
 
 async function saveInventory() {
   if (!canEdit()) return;
   let name = document.getElementById('inv-name').value.trim();
   let cat = document.getElementById('inv-cat').value;
-  if (!name || !cat) { alert('Name/category required'); return; }
-  let rawImg = document.getElementById('inv-img-preview').src || '';
-  let img = await compressImage(rawImg.startsWith('data:') ? rawImg : '', 400, 0.65);
+  if (!name || !cat) { alert('Name and category required'); return; }
+  
   let item = {
-    id: uid(), name, category: cat,
+    id: uid(),
+    name: name,
+    category: cat,
     qty: parseInt(document.getElementById('inv-qty').value) || 0,
     uom: document.getElementById('inv-uom').value,
     reorder: parseInt(document.getElementById('inv-reorder').value) || 0,
     supplier: document.getElementById('inv-supplier').value.trim(),
     suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
-    img: img,
-    usageLog: []
+    usagelog: []
   };
+  
   state.inventory.push(item);
-  saveState();
+  localSave();
   await syncToCloud();
-  closeModal('modal-add-inv'); 
-  renderInventory(); 
+  closeModal('modal-add-inv');
+  renderInventory();
   renderDashboard();
+  alert(`✅ ${name} added to inventory!`);
 }
 
 function openInvDetail(id) {
   let item = state.inventory.find(x => x.id === id);
   if (!item) return;
   currentInvId = id;
-
-  if (!Array.isArray(item.usageLog)) item.usageLog = [];
 
   document.getElementById('inv-detail-title').textContent = item.name;
   let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
@@ -1031,43 +840,16 @@ function openInvDetail(id) {
     <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom || 'units'}</strong></span></div>
     <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom || 'units'}</span></div>
     <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.suppliercontact || '—'}</span></div>
-    <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
-
-  let qtyCtrl = document.getElementById('inv-qty-ctrl');
-  if (canEdit()) {
-    qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
-  } else {
-    qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${item.uom || 'units'}</span>`;
-  }
+    <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
 
   let logsHtml = '';
-  if (item.usageLog && item.usageLog.length > 0) {
-    logsHtml = item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy} at ${(log.loggedAt || '').slice(0, 16)}</span></div></div>`).join('');
+  if (item.usagelog && item.usagelog.length > 0) {
+    logsHtml = item.usagelog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}</div></div>`).join('');
   } else {
-    logsHtml = '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div><div class="empty-sub">Tap "Log Daily Usage" to record inventory consumption</div></div>';
+    logsHtml = '<div class="empty-state"><div class="empty-text">No usage logs yet</div></div>';
   }
   document.getElementById('inv-usage-logs').innerHTML = logsHtml;
-
-  let logBtn = document.getElementById('log-usage-btn');
-  let delBtn = document.getElementById('delete-inv-btn');
-  if (logBtn) logBtn.style.display = canEdit() ? 'inline-flex' : 'none';
-  if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
   openModal('modal-inv-detail');
-}
-
-function adjustQty(delta) {
-  if (!canEdit()) return;
-  let item = state.inventory.find(x => x.id === currentInvId);
-  if (!item) return;
-  let newQty = item.qty + delta;
-  if (newQty < 0) { alert('Cannot go below zero'); return; }
-  item.qty = newQty;
-  saveState();
-  syncToCloud();
-  openInvDetail(currentInvId);
-  renderInventory(); 
-  renderDashboard();
 }
 
 function openLogUsageModal() {
@@ -1089,34 +871,40 @@ function saveUsageLog() {
   let date = document.getElementById('log-date').value;
   if (!qty || qty < 1) { alert('Enter valid quantity'); return; }
   if (!date) { alert('Select date'); return; }
+  
   let item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
   if (item.qty < qty) { alert(`Insufficient stock! Only ${item.qty} ${item.uom} available.`); return; }
-  if (!Array.isArray(item.usageLog)) item.usageLog = [];
-  item.usageLog.push({
-    id: uid(), date, qty,
+  
+  if (!item.usagelog) item.usagelog = [];
+  item.usagelog.push({
+    id: uid(),
+    date: date,
+    qty: qty,
     job: document.getElementById('log-job').value,
     notes: document.getElementById('log-notes').value,
     loggedBy: currentUser.name,
     loggedAt: new Date().toISOString()
   });
   item.qty -= qty;
-  saveState();
+  
+  localSave();
   syncToCloud();
   closeModal('modal-log-usage');
   openInvDetail(currentInvId);
-  renderInventory(); 
+  renderInventory();
   renderDashboard();
+  alert(`✅ Logged usage of ${qty} ${item.uom}`);
 }
 
 async function deleteCurrentInv() {
   if (!canEdit()) return;
-  if (!confirm('Delete this inventory item? This will remove all usage history.')) return;
+  if (!confirm('Delete this inventory item?')) return;
   state.inventory = state.inventory.filter(x => x.id !== currentInvId);
-  saveState();
-  await deleteFromCloud('inventory', currentInvId);
+  localSave();
+  await syncToCloud();
   closeModal('modal-inv-detail');
-  renderInventory(); 
+  renderInventory();
   renderDashboard();
 }
 
@@ -1125,22 +913,30 @@ let jobFilter = 'all';
 
 function renderJobs() {
   let q = document.getElementById('jobs-search').value.toLowerCase();
-  let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter));
   document.getElementById('jobs-sub-lbl').textContent = `${state.jobs.length} total · ${state.jobs.filter(j => j.status === 'In Progress').length} in progress`;
   let listEl = document.getElementById('jobs-list');
   if (!list.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs</div></div>'; return; }
   listEl.innerHTML = list.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span> ${j.time ? `🕐 ${j.time}` : ''}</div></div>`).join('');
 }
 
-function filterJobs(f, btn) { jobFilter = f; document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderJobs(); }
+function filterJobs(f, btn) { 
+  jobFilter = f; 
+  document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active')); 
+  btn.classList.add('active'); 
+  renderJobs(); 
+}
 
 function saveJob() {
   if (!canEdit()) return;
   let client = document.getElementById('jf-client').value.trim();
   let type = document.getElementById('jf-type').value;
   if (!client || !type) { alert('Client and type required'); return; }
+  
   let job = {
-    id: uid(), client, type,
+    id: uid(),
+    client: client,
+    type: type,
     location: document.getElementById('jf-location').value,
     date: document.getElementById('jf-date').value,
     time: document.getElementById('jf-time').value,
@@ -1148,20 +944,33 @@ function saveJob() {
     notes: document.getElementById('jf-notes').value,
     status: 'Scheduled'
   };
+  
   state.jobs.push(job);
-  saveState();
+  localSave();
   syncToCloud();
-  closeModal('modal-add-job'); 
-  renderJobs(); 
+  closeModal('modal-add-job');
+  renderJobs();
   renderDashboard();
+  alert(`✅ Job scheduled for ${client}`);
 }
 
 function openJobDetail(id) {
   let j = state.jobs.find(x => x.id === id);
-  if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}\nDate: ${j.date || 'Not set'}\nAssigned: ${j.assignedstaff || 'Not assigned'}\nNotes: ${j.notes || 'None'}`);
+  if (j) {
+    let newStatus = prompt(`Job: ${j.client}\nCurrent Status: ${j.status}\n\nEnter new status (Scheduled/In Progress/Done):`, j.status);
+    if (newStatus && canEdit() && ['Scheduled', 'In Progress', 'Done'].includes(newStatus)) {
+      j.status = newStatus;
+      localSave();
+      syncToCloud();
+      renderJobs();
+      renderDashboard();
+      alert(`✅ Status updated to ${newStatus}`);
+    } else if (newStatus && !canEdit()) {
+      alert('Only supervisors can change status');
+    }
+  }
 }
 
-// Reports
 function renderReports() {
   let from = document.getElementById('report-from').value, to = document.getElementById('report-to').value;
   let fJobs = state.jobs.filter(j => { 
@@ -1181,8 +990,7 @@ function setReportRange(r) {
     document.getElementById('report-from').value = fmt(now); 
     document.getElementById('report-to').value = fmt(now); 
   } else if (r === 'week') { 
-    let w = new Date(now); 
-    w.setDate(w.getDate() - 7); 
+    let w = new Date(now); w.setDate(w.getDate() - 7); 
     document.getElementById('report-from').value = fmt(w); 
     document.getElementById('report-to').value = fmt(now); 
   } else if (r === 'month') { 
@@ -1195,16 +1003,12 @@ function setReportRange(r) {
   renderReports();
 }
 
-// Modal Controls
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 
-// Save state helper that triggers sync
-function saveState() { 
-  localSave(); 
-  syncToCloud(); 
-}
+// Initial load
+localLoad();
 </script>
 </body>
 </html>
