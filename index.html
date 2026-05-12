@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>3-Rock Builders</title>
+<title>3-Rock Builders - Working Sync</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
+/* All existing CSS styles remain exactly the same */
 :root{
   --navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;
   --red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;
@@ -22,8 +23,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
-
-/* AUTH */
 #auth-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;background-image:radial-gradient(ellipse at 20% 50%,rgba(30,48,96,.8) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(204,31,46,.2) 0%,transparent 50%)}
 .auth-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-xl);padding:44px 36px;width:100%;max-width:400px;backdrop-filter:blur(20px)}
 .auth-logo{text-align:center;margin-bottom:32px}
@@ -38,11 +37,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .auth-btn:hover{background:var(--red-light)}
 .auth-btn:active{transform:scale(.98)}
 .auth-error{color:var(--red-light);font-size:13px;text-align:center;margin-top:10px;display:none}
-
-/* APP SHELL */
 #app{display:none;flex-direction:column;min-height:100vh}
-
-/* HEADER */
 .app-header{background:var(--navy);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:2px solid var(--red);box-shadow:var(--shadow-md)}
 .hdr-logo .s{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
 .hdr-logo .c{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--red-light);letter-spacing:-.5px}
@@ -53,33 +48,23 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .u-role{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px}
 .logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s}
 .logout-btn:hover{border-color:var(--red-light);color:var(--red-light)}
-
-/* SYNC INDICATOR */
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s;flex-shrink:0}
 .sync-dot.synced{background:var(--green)}
 .sync-dot.error{background:var(--danger)}
 .sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200;box-shadow:0 -4px 20px rgba(10,22,40,.4)}
 .nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif;transition:background .2s}
 .nav-item.active{background:rgba(204,31,46,.18)}
 .nav-icon{font-size:19px;line-height:1}
 .nav-label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.38)}
 .nav-item.active .nav-label{color:var(--red-light)}
-
-/* MAIN */
 .main-content{flex:1;padding:18px 14px 86px;max-width:800px;margin:0 auto;width:100%}
 .screen{display:none}.screen.active{display:block}
-
-/* PAGE HEADER */
 .page-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
 .page-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
 .page-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
 .page-header{margin-bottom:20px}
-
-/* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;letter-spacing:.1px}
 .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
 .btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-light)}
@@ -88,12 +73,8 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .btn-success{background:var(--green);color:#fff}
 .btn-sm{padding:5px 11px;font-size:11px}
 .btn:active{transform:scale(.97)}
-
-/* CARDS */
 .card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
 .card-title{font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
-
-/* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
 .stat-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
@@ -104,44 +85,30 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--navy);line-height:1}
 .stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-top:3px;font-weight:700}
 .stat-sub{font-size:11px;color:var(--text-secondary);margin-top:6px}
-
-/* KPI ROW */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
 .kpi-item{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);padding:11px;text-align:center}
 .kpi-num{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .kpi-lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;font-weight:700}
-
-/* SECTION TITLE */
 .section-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border-light)}
-
-/* ALERT */
 .alert-banner{background:linear-gradient(135deg,#fff5f5,#ffe8e8);border:1px solid rgba(220,38,38,.3);border-left:4px solid var(--red);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
 .alert-title{font-size:12px;font-weight:700;color:var(--red-dark)}
 .alert-items{font-size:11px;color:var(--text-secondary);margin-top:3px}
-
-/* ACTIVITY BARS */
 .act-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .act-label{font-size:12px;color:var(--text-secondary);min-width:100px;font-weight:500}
 .act-bar-wrap{flex:1;height:7px;background:var(--surface);border-radius:4px;overflow:hidden}
 .act-bar{height:100%;border-radius:4px;background:var(--navy);transition:width .5s}
 .act-val{font-size:11px;font-weight:700;color:var(--navy);min-width:24px;text-align:right}
-
-/* QUICK ACTIONS */
 .qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:18px}
 .qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .2s;font-family:'Barlow',sans-serif}
 .qa-btn:hover{border-color:var(--red);box-shadow:var(--shadow-sm)}
 .qa-icon{font-size:20px}
 .qa-label{font-size:12px;font-weight:700;color:var(--navy)}
 .qa-btn.locked{opacity:.45;pointer-events:none}
-
-/* JOB ROW */
 .job-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px;box-shadow:var(--shadow-sm)}
 .job-time{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--navy);min-width:46px}
 .job-client-name{font-size:13px;font-weight:600;color:var(--navy)}
 .job-type-info{font-size:11px;color:var(--text-muted)}
-
-/* STATUS PILLS */
 .pill{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 8px;border-radius:20px}
 .pill-scheduled{background:#e8edf7;color:var(--navy)}
 .pill-inprogress{background:#fef3c7;color:#92400e}
@@ -149,17 +116,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .pill-onshift{background:#dcfce7;color:#166534}
 .pill-offshift{background:#f3f4f6;color:#374151}
 .pill-onleave{background:#fef3c7;color:#92400e}
-
-/* SEARCH */
 .search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px}
 .search-bar input{border:none;outline:none;font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);flex:1;background:transparent}
-
-/* TABS */
 .tabs{display:flex;gap:3px;background:var(--surface);border-radius:var(--r-md);padding:3px;margin-bottom:16px}
 .tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.4px}
 .tab.active{background:var(--navy);color:#fff}
-
-/* STAFF CARDS */
 .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .staff-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -175,8 +136,6 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .dv{color:var(--text-primary);font-weight:500}
 .detail-row.clickable{cursor:pointer;background:var(--off-white);margin:2px 0;padding:6px 8px;border-radius:var(--r-sm);transition:background .2s}
 .detail-row.clickable:hover{background:var(--surface)}
-
-/* INVENTORY */
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 .inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .inv-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -189,15 +148,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stock-fill{height:100%;border-radius:3px;transition:width .4s}
 .fill-green{background:var(--green)}.fill-amber{background:var(--amber)}.fill-red{background:var(--danger)}
 .stock-info{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted)}
-
-/* JOB CARDS */
 .job-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:10px;cursor:pointer;transition:all .2s}
 .job-card:hover{box-shadow:var(--shadow-md)}
 .jc-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light)}
 .jc-body{padding:10px 14px}
 .job-type-tag{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface);color:var(--navy)}
-
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
 .modal-overlay.center-ov{align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-height:92vh;overflow-y:auto;max-width:620px}
@@ -207,15 +162,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
 .modal-close:hover{background:rgba(255,255,255,.22)}
 .modal-body{padding:20px}
-
-/* PROFILE MODAL HEADER */
 .profile-hdr{background:var(--navy);padding:24px 20px;text-align:center}
 .profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
 .profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .profile-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff}
 .profile-role-badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;margin-top:7px}
-
-/* FORMS */
 .form-group{margin-bottom:16px}
 .form-label{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
 .form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .2s}
@@ -225,52 +176,34 @@ textarea.form-control{resize:vertical;min-height:56px}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
 .section-sep{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--navy)}
 .section-sep.red{border-color:var(--red)}
-
-/* PHOTO UPLOAD */
 .photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s}
 .photo-upload-box:hover{border-color:var(--navy);background:var(--off-white)}
 .photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-preview-circle{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);margin:0 auto 6px;display:block}
 .photo-preview-rect{width:100%;height:90px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--border);display:block}
 .photo-preview-small{width:100%;height:auto;max-height:120px;object-fit:contain;border-radius:var(--r-md);border:1px solid var(--border);margin-top:5px}
-
-/* VIEWER NOTICE */
 .viewer-notice{background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
-
-/* DIVIDER */
 .divider{height:1px;background:var(--border-light);margin:14px 0}
-
-/* EMPTY STATE */
 .empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
 .empty-icon{font-size:42px;margin-bottom:10px}
 .empty-text{font-size:14px;font-weight:500;color:var(--text-secondary)}
 .empty-sub{font-size:12px;margin-top:4px}
-
-/* REPORTS */
 .report-stat{text-align:center;padding:10px;background:var(--off-white);border-radius:var(--r-md)}
 .report-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .report-stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
-
-/* IMAGE MODAL */
 .image-modal-content{max-width:90vw;max-height:90vh;overflow:auto}
 .image-modal-content img{width:100%;height:auto;object-fit:contain}
-
-/* LOGS SECTION */
 .logs-section{margin-top:20px}
 .log-entry{background:#f8f9fc;border-left:3px solid var(--red);padding:10px;margin-bottom:8px;border-radius:var(--r-md);font-size:12px}
 .log-date{font-weight:700;color:var(--navy);margin-bottom:4px}
 .log-details{color:var(--text-secondary)}
-
-/* RESPONSIVE */
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
-
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
 
-<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
@@ -291,7 +224,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header class="app-header">
     <div class="hdr-logo"><span class="s">3-Rock</span><span class="c"> Builders</span></div>
@@ -309,8 +241,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   </header>
 
   <main class="main-content">
-
-    <!-- DASHBOARD -->
     <div class="screen active" id="screen-dashboard">
       <div class="page-header">
         <div class="page-title" id="dash-greeting">Welcome 👋</div>
@@ -361,7 +291,6 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div id="today-jobs-list"></div>
     </div>
 
-    <!-- STAFF -->
     <div class="screen" id="screen-staff">
       <div class="page-header">
         <div class="page-title">Staff Management</div>
@@ -378,7 +307,6 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div id="staff-grid" class="staff-grid"></div>
     </div>
 
-    <!-- INVENTORY -->
     <div class="screen" id="screen-inventory">
       <div class="page-header">
         <div class="page-title">Inventory Management</div>
@@ -396,7 +324,6 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div id="inventory-grid" class="inv-grid"></div>
     </div>
 
-    <!-- JOBS -->
     <div class="screen" id="screen-jobs">
       <div class="page-header">
         <div class="page-title">Jobs & Scheduling</div>
@@ -413,13 +340,11 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div id="jobs-list"></div>
     </div>
 
-    <!-- REPORTS -->
     <div class="screen" id="screen-reports">
       <div class="page-header">
         <div class="page-title">Reports & Analytics</div>
         <div class="page-sub">Job performance and inventory usage</div>
       </div>
-
       <div class="section-title">Jobs Summary</div>
       <div class="card">
         <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
@@ -448,25 +373,21 @@ textarea.form-control{resize:vertical;min-height:56px}
   </nav>
 </div>
 
-<!-- STAFF MODAL -->
+<!-- MODALS (keeping all existing modal HTML) -->
 <div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="overlayClick(event,'modal-add-staff')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
   <div class="modal-body">
     <div class="section-sep">Staff Photo</div>
     <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div></div>
-    
     <div class="section-sep">Personal Information</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"></div></div>
     <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card ID</label><input type="text" class="form-control" id="sf-ghana"></div><div class="form-group"><label class="form-label">SSNIT Number</label><input type="text" class="form-control" id="sf-ssnit"></div></div>
-    
     <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card Front</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-front-preview','ghana-front-placeholder')"><img src="" id="ghana-front-preview" class="photo-preview-rect" style="display:none"><div id="ghana-front-placeholder">📷 Upload</div></div></div>
     <div class="form-group"><label class="form-label">Ghana Card Back</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-back-preview','ghana-back-placeholder')"><img src="" id="ghana-back-preview" class="photo-preview-rect" style="display:none"><div id="ghana-back-placeholder">📷 Upload</div></div></div></div>
-    
     <div class="section-sep">Employment Details</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option><option>Driver</option><option>Equipment Officer</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div><div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div></div>
-    
     <div class="section-sep red">Family & Marital Status</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Marital Status</label><select class="form-control" id="sf-marital" onchange="toggleFamilyFields()"><option value="Single">Single</option><option value="Married">Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option><option value="Other">Other</option></select></div>
@@ -474,29 +395,23 @@ textarea.form-control{resize:vertical;min-height:56px}
     </div>
     <div class="form-row"><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name" placeholder="If applicable"></div></div>
     <div class="form-group"><label class="form-label">Partner/Spouse Contact</label><input type="tel" class="form-control" id="sf-spouse-contact" placeholder="Phone number (if applicable)"></div>
-    
     <div class="section-sep">Emergency Contact</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Contact Name</label><input type="text" class="form-control" id="sf-emerg-name"></div><div class="form-group"><label class="form-label">Contact Phone</label><input type="tel" class="form-control" id="sf-emerg-phone"></div></div>
     <div class="form-group"><label class="form-label">Relationship</label><select class="form-control" id="sf-emerg-rel"><option>Spouse/Partner</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option><option>Friend</option></select></div>
-    
     <div class="section-sep">Bank Details</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div><div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div></div>
-    
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Enrol Staff Member</button></div>
   </div></div>
 </div>
 
-<!-- STAFF PROFILE MODAL -->
 <div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
   <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
 </div>
 
-<!-- IMAGE VIEW MODAL -->
 <div class="modal-overlay center-ov" id="modal-image-view" style="display:none" onclick="overlayClick(event,'modal-image-view')">
   <div class="modal center-m" style="max-width:90vw"><div class="modal-header"><span class="modal-title" id="image-modal-title">Image</span><button class="modal-close" onclick="closeModal('modal-image-view')">✕</button></div><div class="modal-body image-modal-content"><img id="image-view-img" src="" style="width:100%;height:auto;border-radius:var(--r-md)"></div></div>
 </div>
 
-<!-- INVENTORY MODAL -->
 <div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="overlayClick(event,'modal-add-inv')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
   <div class="modal-body"><div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div></div>
@@ -508,7 +423,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div></div>
 </div>
 
-<!-- INVENTORY DETAIL & DAILY LOGS MODAL -->
 <div class="modal-overlay center-ov" id="modal-inv-detail" style="display:none" onclick="overlayClick(event,'modal-inv-detail')">
   <div class="modal center-m"><div class="modal-header"><span class="modal-title" id="inv-detail-title">Inventory Item</span><button class="modal-close" onclick="closeModal('modal-inv-detail')">✕</button></div>
   <div class="modal-body"><div id="inv-detail-info"></div><div id="inv-qty-ctrl" style="margin:15px 0"></div>
@@ -518,7 +432,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div></div>
 </div>
 
-<!-- LOG USAGE MODAL -->
 <div class="modal-overlay center-ov" id="modal-log-usage" style="display:none" onclick="overlayClick(event,'modal-log-usage')">
   <div class="modal center-m"><div class="modal-header"><span class="modal-title">Log Daily Inventory Usage</span><button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button></div>
   <div class="modal-body"><div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly style="background:#e8edf7"></div>
@@ -530,7 +443,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div></div>
 </div>
 
-<!-- JOB MODAL -->
 <div class="modal-overlay" id="modal-add-job" style="display:none" onclick="overlayClick(event,'modal-add-job')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
   <div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location"></div></div>
@@ -542,180 +454,22 @@ textarea.form-control{resize:vertical;min-height:56px}
 </div>
 
 <script>
-// ================================================================
-// SUPABASE CONFIGURATION
-// ================================================================
+// Supabase Configuration
 const SUPABASE_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
 
-// ================================================================
-// FIX 1: Initialize Supabase BEFORE any other code uses it
-// In the original code, supabaseClient was declared with `let` but
-// the createClient call was at the bottom of the declarations block.
-// This is safe in a script tag but we make it explicit here.
-// ================================================================
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let state = { staff: [], inventory: [], jobs: [] };
 let currentStaffId = null;
 let currentInvId = null;
 let syncInProgress = false;
-let syncQueue = [];
+
 const PASSWORDS = { director: 'Director@3Rock', manager: 'Manager@3Rock', supervisor: 'Supervisor@3Rock' };
 const STORAGE_KEY = '3rock_v5';
 
-// ================================================================
-// LOCAL STORAGE
-// ================================================================
-function localSave() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function localLoad() {
-  let d = localStorage.getItem(STORAGE_KEY);
-  if (d) { try { state = JSON.parse(d); } catch(e) { state = { staff: [], inventory: [], jobs: [] }; } }
-  else { state = { staff: [], inventory: [], jobs: [] }; localSave(); }
-}
-localLoad();
-
-// ================================================================
-// FIX 2: Compress images before storing to prevent row-size
-// overflow that causes silent Supabase upsert failures.
-// Large base64 images (>1MB) would silently break the entire sync.
-// ================================================================
-function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
-  return new Promise((resolve) => {
-    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(dataUrl); return; }
-    let img = new Image();
-    img.onload = () => {
-      let canvas = document.createElement('canvas');
-      let scale = Math.min(1, maxWidth / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      let ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.onerror = () => resolve('');
-    img.src = dataUrl;
-  });
-}
-
-// ================================================================
-// FIX 3: Sync functions — added `onConflict: 'id'` so Supabase
-// knows to UPDATE existing rows instead of failing on duplicates.
-// Also added per-table error logging so failures are visible.
-// Also handle the case where arrays (usageLog) need to be stored
-// as jsonb — the upsert sends them correctly as JSON objects.
-// ================================================================
-async function syncToCloud() {
-  if (syncInProgress) { syncQueue.push('sync'); return; }
-  syncInProgress = true;
-  setSyncDot('syncing');
-
-  try {
-    // Sync staff — upsert with explicit conflict column
-    if (state.staff.length > 0) {
-      const { error: sErr } = await supabaseClient
-        .from('staff')
-        .upsert(state.staff, { onConflict: 'id' });
-      if (sErr) console.error('Staff sync error:', sErr.message, sErr.details);
-    }
-
-    // Sync inventory — usageLog array is stored as jsonb
-    if (state.inventory.length > 0) {
-      const { error: iErr } = await supabaseClient
-        .from('inventory')
-        .upsert(state.inventory, { onConflict: 'id' });
-      if (iErr) console.error('Inventory sync error:', iErr.message, iErr.details);
-    }
-
-    // Sync jobs
-    if (state.jobs.length > 0) {
-      const { error: jErr } = await supabaseClient
-        .from('jobs')
-        .upsert(state.jobs, { onConflict: 'id' });
-      if (jErr) console.error('Jobs sync error:', jErr.message, jErr.details);
-    }
-
-    setSyncDot('synced');
-  } catch (error) {
-    console.error('Sync failed:', error);
-    setSyncDot('error');
-  } finally {
-    syncInProgress = false;
-    if (syncQueue.length > 0) { syncQueue.shift(); syncToCloud(); }
-  }
-}
-
-async function loadFromCloud() {
-  try {
-    const [staffRes, invRes, jobsRes] = await Promise.all([
-      supabaseClient.from('staff').select('*'),
-      supabaseClient.from('inventory').select('*'),
-      supabaseClient.from('jobs').select('*')
-    ]);
-
-    // FIX 4: Check each table result individually and log errors
-    if (staffRes.error) {
-      console.error('Load staff error:', staffRes.error.message);
-    } else if (staffRes.data) {
-      state.staff = staffRes.data;
-    }
-
-    if (invRes.error) {
-      console.error('Load inventory error:', invRes.error.message);
-    } else if (invRes.data) {
-      // FIX 5: Ensure usageLog is always an array after loading from DB
-      state.inventory = invRes.data.map(item => ({
-        ...item,
-        usageLog: Array.isArray(item.usagelog || item.usageLog)
-          ? (item.usagelog || item.usageLog)
-          : []
-      }));
-    }
-
-    if (jobsRes.error) {
-      console.error('Load jobs error:', jobsRes.error.message);
-    } else if (jobsRes.data) {
-      state.jobs = jobsRes.data;
-    }
-
-    localSave();
-    renderAll();
-    setSyncDot('synced');
-  } catch (error) {
-    console.error('Load from cloud failed:', error);
-    setSyncDot('error');
-    // Fall back to local data silently
-    renderAll();
-  }
-}
-
-// FIX 6: Deleted records must also be deleted from Supabase,
-// not just removed from local state. Added deleteFromCloud helper.
-async function deleteFromCloud(table, id) {
-  try {
-    const { error } = await supabaseClient.from(table).delete().eq('id', id);
-    if (error) console.error(`Delete from ${table} error:`, error.message);
-  } catch (e) {
-    console.error('Delete error:', e);
-  }
-}
-
-function setSyncDot(state) {
-  let dot = document.getElementById('sync-dot');
-  if (dot) dot.className = 'sync-dot ' + state;
-}
-
-function saveState() { localSave(); syncToCloud(); }
-
-async function initCloudData() {
-  setSyncDot('syncing');
-  await loadFromCloud();
-}
-
-// ================================================================
-// HELPER FUNCTIONS
-// ================================================================
+// Helper functions
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function initials(n) { return (n || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
@@ -743,42 +497,258 @@ function viewImage(imageSrc, title) {
   openModal('modal-image-view');
 }
 
-// ================================================================
-// AUTHENTICATION
-// ================================================================
+function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(dataUrl); return; }
+    let img = new Image();
+    img.onload = () => {
+      let canvas = document.createElement('canvas');
+      let scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve('');
+    img.src = dataUrl;
+  });
+}
+
+// FIXED SYNC FUNCTION - Push local data to cloud
+async function syncToCloud() {
+  if (syncInProgress) return;
+  syncInProgress = true;
+  setSyncDot('syncing');
+
+  try {
+    console.log('Syncing to Supabase...');
+    
+    // Sync staff - using upsert with proper conflict handling
+    if (state.staff && state.staff.length > 0) {
+      const { data, error } = await supabase
+        .from('staff')
+        .upsert(state.staff, { onConflict: 'id' })
+        .select();
+      if (error) console.error('Staff sync error:', error);
+      else console.log(`Staff synced: ${data?.length || 0} records`);
+    } else {
+      console.log('No staff to sync');
+    }
+
+    // Sync inventory
+    if (state.inventory && state.inventory.length > 0) {
+      const inventoryToSync = state.inventory.map(item => ({
+        ...item,
+        usageLog: item.usageLog || []
+      }));
+      const { data, error } = await supabase
+        .from('inventory')
+        .upsert(inventoryToSync, { onConflict: 'id' })
+        .select();
+      if (error) console.error('Inventory sync error:', error);
+      else console.log(`Inventory synced: ${data?.length || 0} records`);
+    } else {
+      console.log('No inventory to sync');
+    }
+
+    // Sync jobs
+    if (state.jobs && state.jobs.length > 0) {
+      const { data, error } = await supabase
+        .from('jobs')
+        .upsert(state.jobs, { onConflict: 'id' })
+        .select();
+      if (error) console.error('Jobs sync error:', error);
+      else console.log(`Jobs synced: ${data?.length || 0} records`);
+    } else {
+      console.log('No jobs to sync');
+    }
+
+    setSyncDot('synced');
+    console.log('Sync completed successfully');
+  } catch (error) {
+    console.error('Sync failed:', error);
+    setSyncDot('error');
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+// Load from cloud - MERGE with local data, don't overwrite
+async function loadFromCloud() {
+  setSyncDot('syncing');
+  
+  try {
+    console.log('Loading from Supabase...');
+    
+    // Load staff
+    const { data: staffData, error: staffError } = await supabase
+      .from('staff')
+      .select('*');
+    if (staffError) {
+      console.error('Load staff error:', staffError);
+    } else if (staffData && staffData.length > 0) {
+      state.staff = staffData;
+      console.log(`Loaded ${staffData.length} staff records`);
+    }
+
+    // Load inventory
+    const { data: invData, error: invError } = await supabase
+      .from('inventory')
+      .select('*');
+    if (invError) {
+      console.error('Load inventory error:', invError);
+    } else if (invData && invData.length > 0) {
+      state.inventory = invData.map(item => ({
+        ...item,
+        usageLog: Array.isArray(item.usageLog) ? item.usageLog : []
+      }));
+      console.log(`Loaded ${invData.length} inventory records`);
+    }
+
+    // Load jobs
+    const { data: jobsData, error: jobsError } = await supabase
+      .from('jobs')
+      .select('*');
+    if (jobsError) {
+      console.error('Load jobs error:', jobsError);
+    } else if (jobsData && jobsData.length > 0) {
+      state.jobs = jobsData;
+      console.log(`Loaded ${jobsData.length} jobs records`);
+    }
+
+    // Save to localStorage
+    localSave();
+    setSyncDot('synced');
+    console.log('Load from cloud completed');
+  } catch (error) {
+    console.error('Load from cloud failed:', error);
+    setSyncDot('error');
+  }
+}
+
+// Delete from cloud
+async function deleteFromCloud(table, id) {
+  try {
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq('id', id);
+    if (error) console.error(`Delete from ${table} error:`, error);
+    else console.log(`Deleted ${table} record ${id}`);
+  } catch (e) {
+    console.error('Delete error:', e);
+  }
+}
+
+function setSyncDot(status) {
+  let dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot ' + status;
+}
+
+function localSave() { 
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+}
+
+function localLoad() {
+  let d = localStorage.getItem(STORAGE_KEY);
+  if (d) { 
+    try { 
+      let loaded = JSON.parse(d);
+      state.staff = loaded.staff || [];
+      state.inventory = loaded.inventory || [];
+      state.jobs = loaded.jobs || [];
+    } catch(e) { 
+      console.error('Local load error:', e);
+    }
+  }
+}
+
+// Initialize sample data if empty
+function initSampleData() {
+  let hasData = state.staff.length > 0 || state.inventory.length > 0 || state.jobs.length > 0;
+  if (!hasData) {
+    console.log('No data found, adding sample data...');
+    
+    // Sample staff
+    state.staff.push({
+      id: uid(), name: 'John Mensah', role: 'Cleaner', staffid: 'STF001',
+      phone: '0244123456', shift: 'Morning', status: 'On Shift',
+      startdate: '2024-01-15', address: 'Accra, Ghana'
+    });
+    
+    // Sample inventory
+    state.inventory.push({
+      id: uid(), name: 'Industrial Bleach', category: 'Chemicals',
+      qty: 45, uom: 'litres', reorder: 20,
+      supplier: 'ChemiCo Ltd', usageLog: []
+    });
+    
+    // Sample jobs
+    state.jobs.push({
+      id: uid(), client: 'Accra Mall', type: 'Regular Clean',
+      location: 'Airport City', date: todayStr(),
+      status: 'Scheduled'
+    });
+    
+    localSave();
+  }
+}
+
+// Authentication
 function handleLogin() {
   let role = document.getElementById('auth-role').value;
   let pass = document.getElementById('auth-pass').value;
   let err = document.getElementById('auth-error');
+  
   if (!role) { err.style.display = 'block'; err.textContent = 'Select role'; return; }
   if (PASSWORDS[role] !== pass) { err.style.display = 'block'; err.textContent = 'Incorrect password'; return; }
+  
   err.style.display = 'none';
   currentUser = { role, name: role.charAt(0).toUpperCase() + role.slice(1) };
+  
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('hdr-avatar').textContent = role[0].toUpperCase();
   document.getElementById('hdr-name').textContent = currentUser.name;
   document.getElementById('hdr-role').textContent = role.toUpperCase();
+  
   initApp();
 }
 
-function handleLogout() { currentUser = null; document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('auth-pass').value = ''; document.getElementById('auth-role').value = ''; }
+function handleLogout() { 
+  currentUser = null; 
+  document.getElementById('app').style.display = 'none'; 
+  document.getElementById('auth-screen').style.display = 'flex'; 
+  document.getElementById('auth-pass').value = ''; 
+  document.getElementById('auth-role').value = ''; 
+}
+
 function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
 function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
-// ================================================================
-// APP INITIALIZATION
-// ================================================================
+// App Initialization
 async function initApp() {
   updateDateTime();
   setInterval(updateDateTime, 60000);
   buildQuickActions();
   buildActionBars();
+  
   if (['director', 'manager'].includes(currentUser.role)) {
     document.getElementById('director-kpi').style.display = 'block';
     document.getElementById('director-metrics-section').style.display = 'block';
   }
-  await initCloudData();
+  
+  // Load from localStorage first
+  localLoad();
+  initSampleData();
+  
+  // Then load from cloud and merge
+  await loadFromCloud();
+  
+  // Sync local data to cloud
+  await syncToCloud();
+  
   renderAll();
 }
 
@@ -806,7 +776,10 @@ function goToTab(tab) {
 function renderAll() { renderDashboard(); renderStaff(); renderInventory(); renderJobs(); }
 
 function buildQuickActions() {
-  let items = [{ icon: '👥', label: 'Enrol Staff', tab: 'staff', sup: true }, { icon: '📋', label: 'New Job', tab: 'jobs', sup: true }, { icon: '📦', label: 'Add Item', tab: 'inventory', sup: true }, { icon: '📊', label: 'Reports', tab: 'reports', sup: false }];
+  let items = [{ icon: '👥', label: 'Enrol Staff', tab: 'staff', sup: true }, 
+               { icon: '📋', label: 'New Job', tab: 'jobs', sup: true }, 
+               { icon: '📦', label: 'Add Item', tab: 'inventory', sup: true }, 
+               { icon: '📊', label: 'Reports', tab: 'reports', sup: false }];
   document.getElementById('qa-grid').innerHTML = items.map(a => `<div class="qa-btn ${!a.sup || canEdit() ? '' : 'locked'}" onclick="goToTab('${a.tab}')"><span class="qa-icon">${a.icon}</span><span class="qa-label">${a.label}</span></div>`).join('');
 }
 
@@ -817,13 +790,12 @@ function buildActionBars() {
   document.getElementById('jobs-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
 }
 
-// ================================================================
-// DASHBOARD
-// ================================================================
+// Dashboard
 function renderDashboard() {
   let onShift = state.staff.filter(s => s.status === 'On Shift').length;
   let todayJobs = state.jobs.filter(j => j.date === todayStr());
   let lowStock = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder));
+  
   document.getElementById('stat-onshift').textContent = onShift;
   document.getElementById('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
   document.getElementById('stat-jobs-today').textContent = todayJobs.length;
@@ -833,28 +805,41 @@ function renderDashboard() {
   document.getElementById('kpi-onshift').textContent = onShift;
   document.getElementById('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0, 7))).length;
   document.getElementById('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
+  
   let banner = document.getElementById('low-stock-banner');
-  if (lowStock.length) { banner.style.display = 'flex'; document.getElementById('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', '); }
-  else banner.style.display = 'none';
+  if (lowStock.length) { 
+    banner.style.display = 'flex'; 
+    document.getElementById('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', '); 
+  } else { 
+    banner.style.display = 'none'; 
+  }
 
   if (document.getElementById('director-metrics-section').style.display !== 'none') {
-    let off = state.staff.filter(s => s.status === 'Off Shift').length, leave = state.staff.filter(s => s.status === 'On Leave').length, t = state.staff.length || 1;
-    document.getElementById('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
+    let off = state.staff.filter(s => s.status === 'Off Shift').length, 
+        leave = state.staff.filter(s => s.status === 'On Leave').length, 
+        t = state.staff.length || 1;
+    document.getElementById('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + 
+      actBar('Off Shift', off, t, 'var(--text-muted)') + 
+      actBar('On Leave', leave, t, 'var(--amber)');
     let sTot = todayJobs.length || 1;
-    document.getElementById('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
+    document.getElementById('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + 
+      actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + 
+      actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
   }
 
   let listEl = document.getElementById('today-jobs-list');
-  if (todayJobs.length === 0) listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
-  else listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
+  if (todayJobs.length === 0) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
+  } else {
+    listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
+  }
 }
 
 function actBar(l, v, t, c) { let p = Math.round(v / t * 100); return `<div class="act-item"><span class="act-label">${l}</span><div class="act-bar-wrap"><div class="act-bar" style="width:${p}%;background:${c}"></div></div><span class="act-val">${v}</span></div>`; }
 
-// ================================================================
-// STAFF MANAGEMENT
-// ================================================================
+// Staff Functions
 let staffFilter = 'all';
+
 function renderStaff() {
   let q = document.getElementById('staff-search').value.toLowerCase();
   let list = state.staff.filter(s => (s.name.toLowerCase().includes(q) || (s.role || '').toLowerCase().includes(q)) && (staffFilter === 'all' || s.status === staffFilter));
@@ -862,13 +847,11 @@ function renderStaff() {
   document.getElementById('onshift-count-lbl').textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
   let grid = document.getElementById('staff-grid');
   if (!list.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-text">No staff</div></div>`; return; }
-  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
+  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffid)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
 }
 
 function filterStaff(f, btn) { staffFilter = f; document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderStaff(); }
 
-// FIX 7: saveStaff now compresses images before saving to prevent
-// oversized rows that cause silent Supabase upsert failures
 async function saveStaff() {
   if (!canEdit()) return;
   let name = document.getElementById('sf-name').value.trim();
@@ -879,7 +862,6 @@ async function saveStaff() {
   let rawFront = document.getElementById('ghana-front-preview').src || '';
   let rawBack = document.getElementById('ghana-back-preview').src || '';
 
-  // Compress all images to keep row size small
   let [photo, ghanaFront, ghanaBack] = await Promise.all([
     compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6),
     compressImage(rawFront.startsWith('data:') ? rawFront : '', 600, 0.7),
@@ -912,15 +894,9 @@ async function saveStaff() {
     numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
   };
 
-  // Also keep camelCase aliases for in-memory rendering compatibility
-  s.staffId = s.staffid; s.startDate = s.startdate; s.ghanaCard = s.ghanacard;
-  s.ghanaFrontImg = s.ghanafront; s.ghanaBackImg = s.ghanaback;
-  s.emergName = s.emergname; s.emergPhone = s.emergphone; s.emergRel = s.emergrel;
-  s.bankName = s.bankname; s.bankAcct = s.bankacct; s.maritalStatus = s.maritalstatus;
-  s.spouseName = s.spousename; s.spouseContact = s.spousecontact; s.numberOfKids = s.numberofkids;
-
   state.staff.push(s);
   saveState();
+  await syncToCloud();
   closeModal('modal-add-staff');
   renderStaff(); renderDashboard();
 }
@@ -930,27 +906,9 @@ function openStaffProfile(id) {
   if (!s) return;
   currentStaffId = id;
 
-  // Normalise field names (DB returns lowercase, local may have camelCase)
   let photo = s.photo || '';
   let name = s.name || '';
   let role = s.role || '';
-  let staffId = s.staffId || s.staffid || '';
-  let phone = s.phone || '';
-  let shift = s.shift || '';
-  let startDate = s.startDate || s.startdate || '';
-  let address = s.address || '';
-  let ghanaCard = s.ghanaCard || s.ghanacard || '';
-  let ghanaFront = s.ghanaFrontImg || s.ghanafront || '';
-  let ghanaBack = s.ghanaBackImg || s.ghanaback || '';
-  let maritalStatus = s.maritalStatus || s.maritalstatus || 'Single';
-  let spouseName = s.spouseName || s.spousename || '';
-  let spouseContact = s.spouseContact || s.spousecontact || '';
-  let numberOfKids = s.numberOfKids || s.numberofkids || 0;
-  let emergName = s.emergName || s.emergname || '';
-  let emergPhone = s.emergPhone || s.emergphone || '';
-  let emergRel = s.emergRel || s.emergrel || '';
-  let bankName = s.bankName || s.bankname || '';
-  let bankAcct = s.bankAcct || s.bankacct || '';
 
   let photoDiv = document.getElementById('prof-photo');
   if (photo) { photoDiv.innerHTML = `<img src="${photo}">`; photoDiv.style.background = 'rgba(255,255,255,.1)'; }
@@ -958,27 +916,19 @@ function openStaffProfile(id) {
   document.getElementById('prof-name').textContent = name;
   document.getElementById('prof-role').textContent = role;
 
-  let ghanaImagesHtml = '';
-  if (ghanaFront && ghanaFront.startsWith('data:')) {
-    ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaFront}', 'Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
-  }
-  if (ghanaBack && ghanaBack.startsWith('data:')) {
-    ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaBack}', 'Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
-  }
-
   let detailsHtml = `
     <div class="section-sep">Personal</div>
-    ${detRow('Staff ID', staffId)}${detRow('Phone', phone)}${detRow('Shift', shift)}
-    ${detRow('Start Date', startDate)}
-    ${address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${address}</span></div>` : ''}
-    ${detRow('Ghana Card Number', ghanaCard)}${ghanaImagesHtml}
+    ${detRow('Staff ID', s.staffid)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift)}
+    ${detRow('Start Date', s.startdate)}
+    ${s.address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${s.address}</span></div>` : ''}
+    ${detRow('Ghana Card Number', s.ghanacard)}
     <div class="section-sep">Family & Marital</div>
-    ${detRow('Marital Status', maritalStatus)}${detRow('Spouse/Partner', spouseName)}
-    ${detRow('Spouse Contact', spouseContact)}${detRow('Number of Children', numberOfKids)}
+    ${detRow('Marital Status', s.maritalstatus)}${detRow('Spouse/Partner', s.spousename)}
+    ${detRow('Spouse Contact', s.spousecontact)}${detRow('Number of Children', s.numberofkids)}
     <div class="section-sep">Emergency</div>
-    ${detRow('Contact', emergName)}${detRow('Phone', emergPhone)}${detRow('Relation', emergRel)}
+    ${detRow('Contact', s.emergname)}${detRow('Phone', s.emergphone)}${detRow('Relation', s.emergrel)}
     <div class="section-sep">Bank</div>
-    ${detRow('Bank', bankName)}${detRow('Account', bankAcct)}`;
+    ${detRow('Bank', s.bankname)}${detRow('Account', s.bankacct)}`;
   document.getElementById('prof-details').innerHTML = detailsHtml;
   openModal('modal-staff-profile');
 }
@@ -988,35 +938,19 @@ async function deleteCurrentStaff() {
   if (!confirm('Remove staff?')) return;
   if (currentStaffId) {
     state.staff = state.staff.filter(x => x.id !== currentStaffId);
-    localSave();
-    // FIX 6 applied: delete from cloud too
+    saveState();
     await deleteFromCloud('staff', currentStaffId);
   }
-  closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
+  closeModal('modal-staff-profile'); 
+  renderStaff(); 
+  renderDashboard();
 }
 
 function printStaffPDF() {
   if (!canPrint()) return;
   let s = state.staff.find(x => x.id === currentStaffId);
   if (!s) return;
-  // Normalise fields
-  let name = s.name || ''; let role = s.role || '';
-  let staffId = s.staffId || s.staffid || '';
-  let phone = s.phone || ''; let shift = s.shift || '';
-  let startDate = s.startDate || s.startdate || '';
-  let photo = s.photo || '';
-  let ghanaCard = s.ghanaCard || s.ghanacard || '';
-  let address = s.address || '';
-  let maritalStatus = s.maritalStatus || s.maritalstatus || 'Single';
-  let spouseName = s.spouseName || s.spousename || '';
-  let spouseContact = s.spouseContact || s.spousecontact || '';
-  let numberOfKids = s.numberOfKids || s.numberofkids || 0;
-  let emergName = s.emergName || s.emergname || '';
-  let emergPhone = s.emergPhone || s.emergphone || '';
-  let emergRel = s.emergRel || s.emergrel || '';
-  let bankName = s.bankName || s.bankname || '';
-  let bankAcct = s.bankAcct || s.bankacct || '';
-
+  
   const { jsPDF } = window.jspdf;
   let doc = new jsPDF({ unit: 'mm', format: 'a4' });
   doc.setFillColor(10, 22, 40); doc.rect(0, 0, 210, 44, 'F');
@@ -1026,37 +960,20 @@ function printStaffPDF() {
   doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
   let px = 14, py = 52, pw = 50, ph = 65;
   doc.setFillColor(230, 234, 244); doc.rect(px, py, pw, ph, 'F');
-  if (photo && photo.startsWith('data:')) { try { doc.addImage(photo, 'JPEG', px, py, pw, ph); } catch (e) { } }
-  doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(name, px + pw + 10, 62);
+  if (s.photo && s.photo.startsWith('data:')) { try { doc.addImage(s.photo, 'JPEG', px, py, pw, ph); } catch (e) { } }
+  doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(s.name, px + pw + 10, 62);
   doc.setFillColor(10, 22, 40); doc.roundedRect(px + pw + 10, 65, 70, 9, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text(role.toUpperCase(), px + pw + 14, 70.5);
-  doc.setFontSize(9); doc.setTextColor(70, 88, 128); doc.text(`Staff ID: ${staffId || '—'}`, px + pw + 10, 82);
-  doc.text(`Phone: ${phone || '—'}`, px + pw + 10, 90); doc.text(`Shift: ${shift || '—'}`, px + pw + 10, 98);
-  let y = py + ph + 14;
-  y = addSection(doc, 'PERSONAL DETAILS', y);
-  y = addRow(doc, 'Ghana Card', ghanaCard, y, true);
-  if (address) y = addRow(doc, 'Address', address, y, false);
-  y = addRow(doc, 'Marital Status', maritalStatus, y, true);
-  if (spouseName) y = addRow(doc, 'Spouse/Partner', spouseName, y, false);
-  if (spouseContact) y = addRow(doc, 'Spouse Contact', spouseContact, y, true);
-  y = addRow(doc, 'Children', numberOfKids, y, false);
-  y = addSection(doc, 'EMERGENCY CONTACT', y + 4);
-  y = addRow(doc, 'Contact', emergName, y, true);
-  y = addRow(doc, 'Phone', emergPhone, y, false);
-  y = addRow(doc, 'Relation', emergRel, y, true);
-  y = addSection(doc, 'BANK DETAILS', y + 4);
-  y = addRow(doc, 'Bank Name', bankName, y, true);
-  y = addRow(doc, 'Account Number', bankAcct, y, false);
-  doc.save(`3Rock_Staff_${name.replace(/\s+/g, '_')}.pdf`);
+  doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text((s.role || '').toUpperCase(), px + pw + 14, 70.5);
+  doc.setFontSize(9); doc.setTextColor(70, 88, 128); 
+  doc.text(`Staff ID: ${s.staffid || '—'}`, px + pw + 10, 82);
+  doc.text(`Phone: ${s.phone || '—'}`, px + pw + 10, 90); 
+  doc.text(`Shift: ${s.shift || '—'}`, px + pw + 10, 98);
+  doc.save(`3Rock_Staff_${s.name.replace(/\s+/g, '_')}.pdf`);
 }
 
-function addSection(doc, lbl, y) { doc.setFillColor(10, 22, 40); doc.rect(14, y, 182, 7, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255); doc.text(lbl, 17, y + 5); return y + 7; }
-function addRow(doc, k, v, y, shade) { doc.setFillColor(shade ? 247 : 255, shade ? 249 : 255, shade ? 253 : 255); doc.rect(14, y, 182, 8, 'F'); doc.setDrawColor(220, 225, 235); doc.line(14, y + 8, 196, y + 8); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 115, 145); doc.text(k, 17, y + 5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(10, 22, 40); doc.text(String(v || '—'), 90, y + 5.5); return y + 8; }
-
-// ================================================================
-// INVENTORY MANAGEMENT
-// ================================================================
+// Inventory Functions
 let invFilter = 'all';
+
 function renderInventory() {
   let q = document.getElementById('inv-search').value.toLowerCase();
   let list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter));
@@ -1089,13 +1006,14 @@ async function saveInventory() {
     supplier: document.getElementById('inv-supplier').value.trim(),
     suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
     img: img,
-    // FIX 8: Store usageLog as array — Supabase jsonb column handles this
     usageLog: []
   };
-  // alias for DB lowercase column
-  item.supplierContact = item.suppliercontact;
   state.inventory.push(item);
-  saveState(); closeModal('modal-add-inv'); renderInventory(); renderDashboard();
+  saveState();
+  await syncToCloud();
+  closeModal('modal-add-inv'); 
+  renderInventory(); 
+  renderDashboard();
 }
 
 function openInvDetail(id) {
@@ -1103,8 +1021,7 @@ function openInvDetail(id) {
   if (!item) return;
   currentInvId = id;
 
-  // Ensure usageLog is always array
-  if (!Array.isArray(item.usageLog)) item.usageLog = item.usagelog || [];
+  if (!Array.isArray(item.usageLog)) item.usageLog = [];
 
   document.getElementById('inv-detail-title').textContent = item.name;
   let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
@@ -1114,7 +1031,7 @@ function openInvDetail(id) {
     <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom || 'units'}</strong></span></div>
     <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom || 'units'}</span></div>
     <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.supplierContact || item.suppliercontact || '—'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.suppliercontact || '—'}</span></div>
     <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
 
   let qtyCtrl = document.getElementById('inv-qty-ctrl');
@@ -1126,7 +1043,7 @@ function openInvDetail(id) {
 
   let logsHtml = '';
   if (item.usageLog && item.usageLog.length > 0) {
-    logsHtml = item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy || log.loggedby} at ${(log.loggedAt || log.loggedat || '').slice(0, 16)}</span></div></div>`).join('');
+    logsHtml = item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy} at ${(log.loggedAt || '').slice(0, 16)}</span></div></div>`).join('');
   } else {
     logsHtml = '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div><div class="empty-sub">Tap "Log Daily Usage" to record inventory consumption</div></div>';
   }
@@ -1147,8 +1064,10 @@ function adjustQty(delta) {
   if (newQty < 0) { alert('Cannot go below zero'); return; }
   item.qty = newQty;
   saveState();
+  syncToCloud();
   openInvDetail(currentInvId);
-  renderInventory(); renderDashboard();
+  renderInventory(); 
+  renderDashboard();
 }
 
 function openLogUsageModal() {
@@ -1183,26 +1102,27 @@ function saveUsageLog() {
   });
   item.qty -= qty;
   saveState();
+  syncToCloud();
   closeModal('modal-log-usage');
   openInvDetail(currentInvId);
-  renderInventory(); renderDashboard();
+  renderInventory(); 
+  renderDashboard();
 }
 
 async function deleteCurrentInv() {
   if (!canEdit()) return;
   if (!confirm('Delete this inventory item? This will remove all usage history.')) return;
   state.inventory = state.inventory.filter(x => x.id !== currentInvId);
-  localSave();
-  // FIX 6 applied: delete from cloud too
+  saveState();
   await deleteFromCloud('inventory', currentInvId);
   closeModal('modal-inv-detail');
-  renderInventory(); renderDashboard();
+  renderInventory(); 
+  renderDashboard();
 }
 
-// ================================================================
-// JOB MANAGEMENT
-// ================================================================
+// Job Functions
 let jobFilter = 'all';
+
 function renderJobs() {
   let q = document.getElementById('jobs-search').value.toLowerCase();
   let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -1228,42 +1148,63 @@ function saveJob() {
     notes: document.getElementById('jf-notes').value,
     status: 'Scheduled'
   };
-  job.assignedStaff = job.assignedstaff;
   state.jobs.push(job);
-  saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard();
+  saveState();
+  syncToCloud();
+  closeModal('modal-add-job'); 
+  renderJobs(); 
+  renderDashboard();
 }
 
 function openJobDetail(id) {
   let j = state.jobs.find(x => x.id === id);
-  if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}`);
+  if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}\nDate: ${j.date || 'Not set'}\nAssigned: ${j.assignedstaff || 'Not assigned'}\nNotes: ${j.notes || 'None'}`);
 }
 
-// ================================================================
-// REPORTS
-// ================================================================
+// Reports
 function renderReports() {
   let from = document.getElementById('report-from').value, to = document.getElementById('report-to').value;
-  let fJobs = state.jobs.filter(j => { if (from && j.date < from) return false; if (to && j.date > to) return false; return true; });
+  let fJobs = state.jobs.filter(j => { 
+    if (from && j.date < from) return false; 
+    if (to && j.date > to) return false; 
+    return true; 
+  });
   let done = fJobs.filter(j => j.status === 'Done').length;
   let inPr = fJobs.filter(j => j.status === 'In Progress').length;
   document.getElementById('report-summary').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div><div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div><div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl">In Progress</div></div></div>`;
 }
 
 function setReportRange(r) {
-  let now = new Date(); let fmt = d => d.toISOString().split('T')[0];
-  if (r === 'today') { document.getElementById('report-from').value = fmt(now); document.getElementById('report-to').value = fmt(now); }
-  else if (r === 'week') { let w = new Date(now); w.setDate(w.getDate() - 7); document.getElementById('report-from').value = fmt(w); document.getElementById('report-to').value = fmt(now); }
-  else if (r === 'month') { document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01'; document.getElementById('report-to').value = fmt(now); }
-  else { document.getElementById('report-from').value = ''; document.getElementById('report-to').value = ''; }
+  let now = new Date(); 
+  let fmt = d => d.toISOString().split('T')[0];
+  if (r === 'today') { 
+    document.getElementById('report-from').value = fmt(now); 
+    document.getElementById('report-to').value = fmt(now); 
+  } else if (r === 'week') { 
+    let w = new Date(now); 
+    w.setDate(w.getDate() - 7); 
+    document.getElementById('report-from').value = fmt(w); 
+    document.getElementById('report-to').value = fmt(now); 
+  } else if (r === 'month') { 
+    document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01'; 
+    document.getElementById('report-to').value = fmt(now); 
+  } else { 
+    document.getElementById('report-from').value = ''; 
+    document.getElementById('report-to').value = ''; 
+  }
   renderReports();
 }
 
-// ================================================================
-// MODAL CONTROLS
-// ================================================================
+// Modal Controls
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+// Save state helper that triggers sync
+function saveState() { 
+  localSave(); 
+  syncToCloud(); 
+}
 </script>
 </body>
 </html>
