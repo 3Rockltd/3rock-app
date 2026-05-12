@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>3-Rock Builders</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
@@ -134,7 +135,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .qa-label{font-size:12px;font-weight:700;color:var(--navy)}
 .qa-btn.locked{opacity:.45;pointer-events:none}
 
-/* JOB ROW (dashboard) */
+/* JOB ROW */
 .job-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px;box-shadow:var(--shadow-sm)}
 .job-time{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--navy);min-width:46px}
 .job-client-name{font-size:13px;font-weight:600;color:var(--navy)}
@@ -159,7 +160,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .tab.active{background:var(--navy);color:#fff}
 
 /* STAFF CARDS */
-.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .staff-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .sc-header{background:var(--navy);padding:14px;display:flex;align-items:center;gap:10px}
@@ -172,6 +173,8 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .detail-row:last-child{border-bottom:none}
 .dk{color:var(--text-muted);font-weight:600}
 .dv{color:var(--text-primary);font-weight:500}
+.detail-row.clickable{cursor:pointer;background:var(--off-white);margin:2px 0;padding:6px 8px;border-radius:var(--r-sm);transition:background .2s}
+.detail-row.clickable:hover{background:var(--surface)}
 
 /* INVENTORY */
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
@@ -198,7 +201,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
 .modal-overlay.center-ov{align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-height:92vh;overflow-y:auto;max-width:620px}
-.modal.center-m{border-radius:var(--r-xl);max-width:480px;width:calc(100% - 28px);margin:0 auto}
+.modal.center-m{border-radius:var(--r-xl);max-width:520px;width:calc(100% - 28px);margin:0 auto}
 .modal-header{background:var(--navy);padding:18px 20px;border-radius:var(--r-xl) var(--r-xl) 0 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
 .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:.3px}
 .modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
@@ -217,7 +220,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .form-label{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
 .form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .2s}
 .form-control:focus{border-color:var(--navy)}
-textarea.form-control{resize:vertical;min-height:72px}
+textarea.form-control{resize:vertical;min-height:56px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
 .section-sep{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--navy)}
@@ -229,6 +232,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 .photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-preview-circle{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);margin:0 auto 6px;display:block}
 .photo-preview-rect{width:100%;height:90px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--border);display:block}
+.photo-preview-small{width:100%;height:auto;max-height:120px;object-fit:contain;border-radius:var(--r-md);border:1px solid var(--border);margin-top:5px}
 
 /* VIEWER NOTICE */
 .viewer-notice{background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
@@ -247,19 +251,22 @@ textarea.form-control{resize:vertical;min-height:72px}
 .report-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .report-stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
 
-/* SYNC PANEL */
-.sync-panel{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;margin-bottom:14px}
-.sync-status-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-md);font-size:12px;font-weight:600;margin-bottom:14px}
-.sync-status-bar.ok{background:#f0fdf4;color:#166534;border:1px solid rgba(22,163,74,.25)}
-.sync-status-bar.err{background:#fef2f2;color:#991b1b;border:1px solid rgba(220,38,38,.25)}
-.sync-status-bar.idle{background:var(--off-white);color:var(--text-muted);border:1px solid var(--border-light)}
-.sync-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+/* ADMIN PANEL */
+.admin-panel{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;margin-bottom:14px}
+.admin-status-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-md);font-size:12px;font-weight:600;margin-bottom:14px}
+.admin-status-bar.ok{background:#f0fdf4;color:#166534;border:1px solid rgba(22,163,74,.25)}
+.admin-status-bar.err{background:#fef2f2;color:#991b1b;border:1px solid rgba(220,38,38,.25)}
+.admin-status-bar.idle{background:var(--off-white);color:var(--text-muted);border:1px solid var(--border-light)}
+.admin-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* IMAGE MODAL */
+.image-modal-content{max-width:90vw;max-height:90vh;overflow:auto}
+.image-modal-content img{width:100%;height:auto;object-fit:contain}
 
 /* RESPONSIVE */
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
 
-/* SCROLLBAR */
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
@@ -291,7 +298,7 @@ textarea.form-control{resize:vertical;min-height:72px}
   <header class="app-header">
     <div class="hdr-logo"><span class="s">3-Rock</span><span class="c"> Builders</span></div>
     <div class="hdr-right">
-      <div class="sync-dot" id="sync-dot" title="Sync status"></div>
+      <div class="sync-dot" id="sync-dot" title="Cloud sync status"></div>
       <div class="user-badge">
         <div class="u-avatar" id="hdr-avatar">D</div>
         <div>
@@ -408,33 +415,32 @@ textarea.form-control{resize:vertical;min-height:72px}
       <div id="jobs-list"></div>
     </div>
 
-    <!-- REPORTS / SYNC -->
+    <!-- REPORTS & ADMIN -->
     <div class="screen" id="screen-reports">
       <div class="page-header">
-        <div class="page-title">Reports & Sync</div>
-        <div class="page-sub" id="sync-subtitle">Local data only</div>
+        <div class="page-title">Reports & Cloud</div>
+        <div class="page-sub" id="sync-subtitle">Local data storage</div>
       </div>
 
-      <div class="section-title">Google Sheets Sync</div>
-      <div class="sync-panel">
-        <div class="sync-status-bar idle" id="sync-status-bar">
-          <div class="sync-dot" id="sync-dot2"></div>
-          <span id="sync-status-msg">Not connected — paste your Web App URL below</span>
+      <div id="admin-panel" data-admin-only="true" style="display:none">
+        <div class="section-title">☁️ Cloud Sync (Supabase)</div>
+        <div class="admin-panel">
+          <div class="admin-status-bar idle" id="admin-status-bar">
+            <div class="sync-dot" id="admin-dot"></div>
+            <span id="admin-status-msg">Configure cloud sync once</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Supabase URL</label><input type="url" class="form-control" id="sb-url" placeholder="https://xxxxx.supabase.co"></div>
+            <div class="form-group"><label class="form-label">Anon Key</label><input type="password" class="form-control" id="sb-key" placeholder="your-anon-key"></div>
+          </div>
+          <div class="admin-btns">
+            <button class="btn btn-primary" onclick="connectSupabase()">🔌 Connect Cloud</button>
+            <button class="btn btn-outline" onclick="loadFromSupabase()">⬇ Load from Cloud</button>
+            <button class="btn btn-outline" onclick="saveToSupabase()">⬆ Save to Cloud</button>
+          </div>
+          <div id="admin-result" style="margin-top:10px;font-size:12px"></div>
+          <div class="viewer-notice" style="margin-top:12px">ℹ️ Configure once - data syncs automatically after setup</div>
         </div>
-        <div class="form-group" style="margin-bottom:8px">
-          <label class="form-label">Google Apps Script Web App URL</label>
-          <input type="url" class="form-control" id="sheets-url" placeholder="https://script.google.com/macros/s/..." oninput="onUrlInput()">
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
-          Deploy your Apps Script as a Web App with access set to <strong>Anyone</strong>. Paste the URL above, then tap Connect.
-        </div>
-        <div class="sync-btns">
-          <button class="btn btn-primary" onclick="connectSheets()">🔗 Connect</button>
-          <button class="btn btn-outline" onclick="pullFromSheets()">⬇ Pull Data</button>
-          <button class="btn btn-outline" onclick="pushToSheets()">⬆ Push Data</button>
-          <button class="btn btn-outline btn-sm" onclick="forceFullSync()">🔄 Force Sync</button>
-        </div>
-        <div id="sync-result" style="margin-top:10px;font-size:12px;min-height:18px"></div>
       </div>
 
       <div class="section-title">Jobs Summary</div>
@@ -446,22 +452,14 @@ textarea.form-control{resize:vertical;min-height:72px}
           <button class="btn btn-outline btn-sm" onclick="setReportRange('all')">All Time</button>
         </div>
         <div class="form-row" style="margin-bottom:12px">
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">From</label>
-            <input type="date" class="form-control" id="report-from" onchange="renderReports()">
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">To</label>
-            <input type="date" class="form-control" id="report-to" onchange="renderReports()">
-          </div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div>
         </div>
         <div id="report-summary"></div>
       </div>
-
       <div class="section-title">Inventory Usage</div>
       <div class="card" id="report-inv"></div>
     </div>
-
   </main>
 
   <nav class="bottom-nav">
@@ -473,1259 +471,480 @@ textarea.form-control{resize:vertical;min-height:72px}
   </nav>
 </div>
 
-<!-- ============================================================ -->
-<!-- MODALS -->
-<!-- ============================================================ -->
-
-<!-- Add Staff Modal -->
+<!-- STAFF MODAL -->
 <div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="overlayClick(event,'modal-add-staff')">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Enrol New Staff Member</span>
-      <button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button>
+  <div class="modal"><div class="modal-header"><span class="modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
+  <div class="modal-body">
+    <div class="section-sep">Staff Photo</div>
+    <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div></div>
+    
+    <div class="section-sep">Personal Information</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"></div></div>
+    <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card ID</label><input type="text" class="form-control" id="sf-ghana"></div><div class="form-group"><label class="form-label">SSNIT Number</label><input type="text" class="form-control" id="sf-ssnit"></div></div>
+    
+    <!-- Ghana Card Upload Front/Back -->
+    <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card Front</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-front-preview','ghana-front-placeholder')"><img src="" id="ghana-front-preview" class="photo-preview-rect" style="display:none"><div id="ghana-front-placeholder">📷 Upload</div></div></div>
+    <div class="form-group"><label class="form-label">Ghana Card Back</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-back-preview','ghana-back-placeholder')"><img src="" id="ghana-back-preview" class="photo-preview-rect" style="display:none"><div id="ghana-back-placeholder">📷 Upload</div></div></div></div>
+    
+    <div class="section-sep">Employment Details</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option><option>Driver</option><option>Equipment Officer</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div><div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div></div>
+    
+    <div class="section-sep red">Family & Marital Status</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Marital Status</label><select class="form-control" id="sf-marital" onchange="toggleFamilyFields()"><option value="Single">Single</option><option value="Married">Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option><option value="Other">Other</option></select></div>
+      <div class="form-group" id="other-marital-group" style="display:none"><label class="form-label">Specify (Other)</label><input type="text" class="form-control" id="sf-marital-other" placeholder="Enter marital status"></div>
     </div>
-    <div class="modal-body">
-      <div class="section-sep">Staff Photo</div>
-      <div class="form-group">
-        <div class="photo-upload-box" id="staff-photo-box">
-          <input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')">
-          <img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none">
-          <div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div style="font-size:12px;color:var(--text-muted);margin-top:5px">Tap to upload passport photo</div></div>
-        </div>
-      </div>
-      <div class="section-sep">Personal Information</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name" placeholder="e.g. Ama Owusu"></div>
-        <div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id" placeholder="e.g. 3RB-001"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" placeholder="House number, street, area, city" style="min-height:56px"></textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Ghana Card ID</label><input type="text" class="form-control" id="sf-ghana" placeholder="GHA-XXXXXXXXX-X"></div>
-        <div class="form-group"><label class="form-label">SSNIT Number</label><input type="text" class="form-control" id="sf-ssnit" placeholder="e.g. P000123456"></div>
-      </div>
-      <div class="section-sep">Employment Details</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Role *</label>
-          <select class="form-control" id="sf-role">
-            <option value="">Select role...</option>
-            <option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option>
-            <option>Supervisor</option><option>Driver</option><option>Equipment Officer</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone" placeholder="e.g. 024-000-0000"></div>
-      <div class="section-sep red">Emergency Contact</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Contact Name</label><input type="text" class="form-control" id="sf-emerg-name" placeholder="Full name"></div>
-        <div class="form-group"><label class="form-label">Contact Phone</label><input type="tel" class="form-control" id="sf-emerg-phone" placeholder="e.g. 055-000-0000"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Relationship</label>
-        <select class="form-control" id="sf-emerg-rel">
-          <option value="">Select...</option>
-          <option>Spouse</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option><option>Friend</option><option>Other</option>
-        </select>
-      </div>
-      <div class="section-sep">Bank Details</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name" placeholder="e.g. GCB Bank"></div>
-        <div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct" placeholder="e.g. 1234567890"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Additional Notes</label><textarea class="form-control" id="sf-notes" placeholder="Any additional information..."></textarea></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button>
-        <button class="btn btn-primary" onclick="saveStaff()">Enrol Staff Member</button>
-      </div>
-    </div>
-  </div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name" placeholder="If applicable"></div></div>
+    <div class="form-group"><label class="form-label">Partner/Spouse Contact</label><input type="tel" class="form-control" id="sf-spouse-contact" placeholder="Phone number (if applicable)"></div>
+    
+    <div class="section-sep">Emergency Contact</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Contact Name</label><input type="text" class="form-control" id="sf-emerg-name"></div><div class="form-group"><label class="form-label">Contact Phone</label><input type="tel" class="form-control" id="sf-emerg-phone"></div></div>
+    <div class="form-group"><label class="form-label">Relationship</label><select class="form-control" id="sf-emerg-rel"><option>Spouse/Partner</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option><option>Friend</option><option>Other</option></select></div>
+    
+    <div class="section-sep">Bank Details</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div><div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div></div>
+    
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Enrol Staff Member</button></div>
+  </div></div>
 </div>
 
-<!-- Staff Profile Modal -->
-<div class="modal-overlay" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
-  <div class="modal">
-    <div class="profile-hdr">
-      <div class="profile-photo" id="prof-photo"></div>
-      <div class="profile-name" id="prof-name"></div>
-      <div class="profile-role-badge" id="prof-role"></div>
-    </div>
-    <div style="background:#fff;border-radius:0 0 var(--r-xl) var(--r-xl)">
-      <div class="modal-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Shift Status</div>
-          <div id="prof-status-btns" style="display:flex;gap:6px"></div>
-        </div>
-        <div id="prof-details"></div>
-        <div class="form-actions">
-          <button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button>
-          <button class="btn btn-outline btn-sm" id="prof-pdf-btn" onclick="printStaffPDF()">📄 PDF</button>
-          <button class="btn btn-danger btn-sm" id="prof-del-btn" onclick="deleteCurrentStaff()">Remove</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- STAFF PROFILE MODAL -->
+<div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
+  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
 </div>
 
-<!-- Add Inventory Modal -->
+<!-- IMAGE VIEW MODAL -->
+<div class="modal-overlay center-ov" id="modal-image-view" style="display:none" onclick="overlayClick(event,'modal-image-view')">
+  <div class="modal center-m" style="max-width:90vw"><div class="modal-header"><span class="modal-title" id="image-modal-title">Image</span><button class="modal-close" onclick="closeModal('modal-image-view')">✕</button></div><div class="modal-body image-modal-content"><img id="image-view-img" src="" style="width:100%;height:auto;border-radius:var(--r-md)"></div></div>
+</div>
+
+<!-- INVENTORY MODAL -->
 <div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="overlayClick(event,'modal-add-inv')">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Add Inventory Item</span>
-      <button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Product Image</label>
-        <div class="photo-upload-box">
-          <input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder')">
-          <img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none">
-          <div id="inv-img-placeholder"><div style="font-size:26px">📷</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">Tap to add product image</div></div>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name" placeholder="e.g. Floor Cleaner"></div>
-        <div class="form-group">
-          <label class="form-label">Category *</label>
-          <select class="form-control" id="inv-cat">
-            <option value="">Select...</option>
-            <option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Current Qty *</label><input type="number" class="form-control" id="inv-qty" placeholder="0" min="0"></div>
-        <div class="form-group"><label class="form-label">Reorder Level *</label><input type="number" class="form-control" id="inv-reorder" placeholder="0" min="0"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier" placeholder="Supplier name"></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button>
-        <button class="btn btn-primary" onclick="saveInventory()">Add Item</button>
-      </div>
-    </div>
-  </div>
+  <div class="modal"><div class="modal-header"><span class="modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
+  <div class="modal-body"><div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div>
+  <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-supplier-contact" placeholder="Phone/Email"></div>
+  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" onclick="saveInventory()">Add Item</button></div>
+  </div></div>
 </div>
 
-<!-- Inventory Detail Modal -->
-<div class="modal-overlay center-ov" id="modal-inv-detail" style="display:none" onclick="overlayClick(event,'modal-inv-detail')">
-  <div class="modal center-m">
-    <div class="modal-header" style="border-radius:var(--r-xl) var(--r-xl) 0 0">
-      <span class="modal-title" id="inv-detail-title">Item</span>
-      <button class="modal-close" onclick="closeModal('modal-inv-detail')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="inv-detail-img" style="margin-bottom:14px;border-radius:var(--r-md);overflow:hidden;height:130px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:40px"></div>
-      <div id="inv-detail-info"></div>
-      <div id="inv-qty-ctrl" style="display:flex;align-items:center;gap:14px;margin:16px 0"></div>
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Recent Usage</div>
-      <div id="inv-recent-usage"></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button>
-        <button class="btn btn-outline btn-sm" id="btn-log-usage" onclick="openLogUsage()">Log Usage</button>
-        <button class="btn btn-outline btn-sm" onclick="openUsageHistory()">History</button>
-        <button class="btn btn-danger btn-sm" id="btn-del-inv" onclick="deleteCurrentInv()">Delete</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Log Usage Modal -->
-<div class="modal-overlay center-ov" id="modal-log-usage" style="display:none" onclick="overlayClick(event,'modal-log-usage')">
-  <div class="modal center-m">
-    <div class="modal-header" style="border-radius:var(--r-xl) var(--r-xl) 0 0">
-      <span class="modal-title">Log Usage</span>
-      <button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Recording usage for: <strong id="usage-item-name" style="color:var(--navy)"></strong></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Units Used *</label><input type="number" class="form-control" id="usage-qty" placeholder="0" min="1"></div>
-        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="usage-date"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Linked Job / Location</label><input type="text" class="form-control" id="usage-job" placeholder="e.g. Accra Mall Deep Clean"></div>
-      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-control" id="usage-notes" placeholder="Any additional info..."></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button>
-        <button class="btn btn-red" onclick="saveUsageLog()">Log Usage</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Usage History Modal -->
-<div class="modal-overlay" id="modal-usage-history" style="display:none" onclick="overlayClick(event,'modal-usage-history')">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Usage History — <span id="uh-name"></span></span>
-      <button class="modal-close" onclick="closeModal('modal-usage-history')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
-        <select class="form-control" id="uh-period" onchange="renderUsageHistory()" style="max-width:150px">
-          <option value="all">All Time</option><option value="today">Today</option>
-          <option value="week">This Week</option><option value="month">This Month</option>
-        </select>
-        <div style="background:var(--navy);color:#fff;border-radius:var(--r-md);padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700" id="uh-total">Total: 0</div>
-      </div>
-      <div id="uh-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Add Job Modal -->
+<!-- JOB MODAL -->
 <div class="modal-overlay" id="modal-add-job" style="display:none" onclick="overlayClick(event,'modal-add-job')">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Schedule New Job</span>
-      <button class="modal-close" onclick="closeModal('modal-add-job')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client" placeholder="Client or company"></div>
-        <div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location" placeholder="Address / area"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Job Type *</label>
-          <select class="form-control" id="jf-type">
-            <option value="">Select type...</option>
-            <option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option>
-            <option>Office Clean</option><option>Move-out Clean</option><option>Industrial Clean</option><option>Hotel Clean</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control" id="jf-time"></div>
-        <div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff" placeholder="Staff name(s)"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Special Instructions</label><textarea class="form-control" id="jf-notes" placeholder="Any special requirements..."></textarea></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button>
-        <button class="btn btn-primary" onclick="saveJob()">Schedule Job</button>
-      </div>
-    </div>
-  </div>
+  <div class="modal"><div class="modal-header"><span class="modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
+  <div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option><option>Office Clean</option></select></div><div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control" id="jf-time"></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div></div>
+  <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes"></textarea></div>
+  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Schedule Job</button></div>
+  </div></div>
 </div>
 
-<!-- Job Detail Modal -->
-<div class="modal-overlay center-ov" id="modal-job-detail" style="display:none" onclick="overlayClick(event,'modal-job-detail')">
-  <div class="modal center-m">
-    <div class="modal-header" style="border-radius:var(--r-xl) var(--r-xl) 0 0">
-      <span class="modal-title" id="jd-title">Job</span>
-      <button class="modal-close" onclick="closeModal('modal-job-detail')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="jd-content"></div>
-      <div id="jd-status-ctrl" style="margin:14px 0"></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-job-detail')">Close</button>
-        <button class="btn btn-danger btn-sm" id="jd-del-btn" onclick="deleteCurrentJob()">Delete Job</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================ -->
 <script>
-// ================================================================
-// DATA & STATE
-// ================================================================
-const STORAGE_KEY = '3rock_v2';
-const PASSWORDS   = {director:'Director@3Rock', manager:'Manager@3Rock', supervisor:'Supervisor@3Rock'};
-
-let state = { staff:[], inventory:[], jobs:[] };
-let currentUser  = null;
+// Supabase Client
+let supabaseClient = null;
+let currentUser = null;
+let state = { staff: [], inventory: [], jobs: [] };
 let currentStaffId = null;
-let currentInvId   = null;
-let currentJobId   = null;
-let staffFilter = 'all';
-let invFilter   = 'all';
-let jobFilter   = 'all';
+const PASSWORDS = { director: 'Director@3Rock', manager: 'Manager@3Rock', supervisor: 'Supervisor@3Rock' };
+const STORAGE_KEY = '3rock_v3';
 
-// Sync state
-let sheetsUrl   = '';
-let syncActive  = false;
-let syncTimer   = null;
-let isSyncing   = false;
-
-// ================================================================
-// PERSISTENCE — local storage
-// ================================================================
-function localSave(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch(e){ console.warn('localSave error', e); }
-}
-function localLoad(){
-  try{
-    const d = localStorage.getItem(STORAGE_KEY);
-    if(d) state = JSON.parse(d);
-  } catch(e){ console.warn('localLoad error', e); }
-}
+function localSave() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function localLoad() { let d = localStorage.getItem(STORAGE_KEY); if (d) state = JSON.parse(d); else { state = { staff: [], inventory: [], jobs: [] }; localSave(); } }
 localLoad();
 
-// saveState is the one function called everywhere — it saves locally
-// then fires a push to Sheets if connected
-function saveState(){
-  localSave();
-  if(syncActive && sheetsUrl){ pushToSheets(true); } // silent push
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function initials(n) { return (n || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+function pillClass(s) { if (s === 'On Shift' || s === 'Done') return 'pill-done'; if (s === 'On Leave' || s === 'In Progress') return 'pill-inprogress'; return 'pill-scheduled'; }
+function detRow(k, v, clickable = false, onclick = '') { return `<div class="detail-row ${clickable ? 'clickable' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="dk">${k}</span><span class="dv">${v || '—'}</span></div>`; }
+
+function toggleFamilyFields() {
+  let marital = document.getElementById('sf-marital').value;
+  let otherGroup = document.getElementById('other-marital-group');
+  if (marital === 'Other') otherGroup.style.display = 'block';
+  else otherGroup.style.display = 'none';
 }
 
-// ================================================================
-// AUTH
-// ================================================================
-function handleLogin(){
-  const role = document.getElementById('auth-role').value;
-  const pass = document.getElementById('auth-pass').value;
-  const errEl = document.getElementById('auth-error');
-  if(!role){ errEl.style.display='block'; errEl.textContent='Please select your role.'; return; }
-  if(PASSWORDS[role] !== pass){ errEl.style.display='block'; errEl.textContent='Incorrect password.'; return; }
-  errEl.style.display = 'none';
+function previewPhoto(event, previewId, placeholderId) { 
+  let f = event.target.files[0]; if (!f) return; 
+  let r = new FileReader(); 
+  r.onload = ev => { let img = document.getElementById(previewId); let ph = document.getElementById(placeholderId); img.src = ev.target.result; img.style.display = 'block'; if (ph) ph.style.display = 'none'; }; 
+  r.readAsDataURL(f); 
+}
+
+function viewImage(imageSrc, title) {
+  if (!imageSrc || !imageSrc.startsWith('data:')) { alert('No image available'); return; }
+  document.getElementById('image-modal-title').textContent = title;
+  document.getElementById('image-view-img').src = imageSrc;
+  openModal('modal-image-view');
+}
+
+function handleLogin() {
+  let role = document.getElementById('auth-role').value;
+  let pass = document.getElementById('auth-pass').value;
+  let err = document.getElementById('auth-error');
+  if (!role) { err.style.display = 'block'; err.textContent = 'Select role'; return; }
+  if (PASSWORDS[role] !== pass) { err.style.display = 'block'; err.textContent = 'Incorrect password'; return; }
+  err.style.display = 'none';
   currentUser = { role, name: role.charAt(0).toUpperCase() + role.slice(1) };
   document.getElementById('auth-screen').style.display = 'none';
-  const appEl = document.getElementById('app');
-  appEl.style.display = 'flex';
-  appEl.style.flexDirection = 'column';
+  document.getElementById('app').style.display = 'flex';
   document.getElementById('hdr-avatar').textContent = role[0].toUpperCase();
   document.getElementById('hdr-name').textContent = currentUser.name;
   document.getElementById('hdr-role').textContent = role.toUpperCase();
+  
+  let adminPanel = document.getElementById('admin-panel');
+  if (role === 'supervisor' || role === 'director') {
+    adminPanel.style.display = 'block';
+    let savedUrl = localStorage.getItem('sb_url');
+    let savedKey = localStorage.getItem('sb_key');
+    if (savedUrl) document.getElementById('sb-url').value = savedUrl;
+    if (savedKey) document.getElementById('sb-key').value = savedKey;
+    if (savedUrl && savedKey) autoConnectSupabase();
+  } else {
+    adminPanel.style.display = 'none';
+  }
   initApp();
 }
-document.getElementById('auth-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
 
-function handleLogout(){
-  currentUser = null;
-  stopAutoSync();
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('auth-pass').value = '';
-  document.getElementById('auth-role').value = '';
-}
+function handleLogout() { currentUser = null; document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('auth-pass').value = ''; document.getElementById('auth-role').value = ''; }
+function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
+function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
-// ================================================================
-// ROLE HELPERS
-// ================================================================
-function canEdit(){ return currentUser && currentUser.role === 'supervisor'; }
-function canPrint(){ return currentUser && ['director','manager','supervisor'].includes(currentUser.role); }
-
-// ================================================================
-// APP INIT
-// ================================================================
-function initApp(){
-  updateDateTime();
-  setInterval(updateDateTime, 60000);
-  buildQuickActions();
-  buildActionBars();
-  if(['director','manager'].includes(currentUser.role)){
+function initApp() {
+  updateDateTime(); setInterval(updateDateTime, 60000);
+  buildQuickActions(); buildActionBars();
+  if (['director', 'manager'].includes(currentUser.role)) {
     document.getElementById('director-kpi').style.display = 'block';
     document.getElementById('director-metrics-section').style.display = 'block';
   }
   renderAll();
-  // Restore sheets URL and auto-connect if previously connected
-  const savedUrl = localStorage.getItem('3rb_url');
-  if(savedUrl){
-    sheetsUrl = savedUrl;
-    document.getElementById('sheets-url').value = savedUrl;
-    autoReconnect();
-  }
 }
 
-function renderAll(){
-  renderDashboard();
-  renderStaff();
-  renderInventory();
-  renderJobs();
-}
-
-// ================================================================
-// DATE / TIME
-// ================================================================
-function updateDateTime(){
-  if(!currentUser) return;
-  const now = new Date();
-  const h = now.getHours();
-  const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+function updateDateTime() {
+  if (!currentUser) return;
+  let now = new Date();
+  let h = now.getHours();
+  let g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('dash-greeting').textContent = `${g}, ${currentUser.name} 👋`;
-  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// ================================================================
-// NAVIGATION
-// ================================================================
-function goToTab(tab){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('screen-'+tab).classList.add('active');
-  document.getElementById('nav-'+tab).classList.add('active');
-  if(tab==='dashboard') renderDashboard();
-  if(tab==='staff')     renderStaff();
-  if(tab==='inventory') renderInventory();
-  if(tab==='jobs')      renderJobs();
-  if(tab==='reports'){  renderReports(); restoreReportsUI(); }
+function goToTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'staff') renderStaff();
+  if (tab === 'inventory') renderInventory();
+  if (tab === 'jobs') renderJobs();
+  if (tab === 'reports') renderReports();
 }
 
-// ================================================================
-// MODALS
-// ================================================================
-function openModal(id){ document.getElementById(id).style.display='flex'; }
-function closeModal(id){ document.getElementById(id).style.display='none'; }
-function overlayClick(e, id){ if(e.target===document.getElementById(id)) closeModal(id); }
+function renderAll() { renderDashboard(); renderStaff(); renderInventory(); renderJobs(); }
 
-// ================================================================
-// BUILD ROLE-BASED UI
-// ================================================================
-function buildQuickActions(){
-  const items = [
-    {icon:'👥', label:'Enrol Staff',   tab:'staff',     sup:true},
-    {icon:'📋', label:'New Job',       tab:'jobs',      sup:true},
-    {icon:'📦', label:'Add Item',      tab:'inventory', sup:true},
-    {icon:'📊', label:'Reports',       tab:'reports',   sup:false},
-  ];
-  document.getElementById('qa-grid').innerHTML = items.map(a=>`
-    <div class="qa-btn ${!a.sup||canEdit()?'':'locked'}" onclick="goToTab('${a.tab}')">
-      <span class="qa-icon">${a.icon}</span><span class="qa-label">${a.label}</span>
-    </div>`).join('');
+function buildQuickActions() {
+  let items = [{ icon: '👥', label: 'Enrol Staff', tab: 'staff', sup: true }, { icon: '📋', label: 'New Job', tab: 'jobs', sup: true }, { icon: '📦', label: 'Add Item', tab: 'inventory', sup: true }, { icon: '📊', label: 'Reports', tab: 'reports', sup: false }];
+  document.getElementById('qa-grid').innerHTML = items.map(a => `<div class="qa-btn ${!a.sup || canEdit() ? '' : 'locked'}" onclick="goToTab('${a.tab}')"><span class="qa-icon">${a.icon}</span><span class="qa-label">${a.label}</span></div>`).join('');
 }
 
-function buildActionBars(){
-  const notice = `<div class="viewer-notice">👁 View only — supervisor can make changes</div>`;
-  const staffBtn  = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-staff')">+ Enrol Staff</button>` : notice;
-  const invBtn    = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-inv')">+ Add Item</button>`     : notice;
-  const jobBtn    = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
-  document.getElementById('staff-actions').innerHTML = staffBtn;
-  document.getElementById('inv-actions').innerHTML   = invBtn;
-  document.getElementById('jobs-actions').innerHTML  = jobBtn;
+function buildActionBars() {
+  let notice = `<div class="viewer-notice">👁 View only — supervisor can make changes</div>`;
+  document.getElementById('staff-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-staff')">+ Enrol Staff</button>` : notice;
+  document.getElementById('inv-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-inv')">+ Add Item</button>` : notice;
+  document.getElementById('jobs-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
 }
 
-// ================================================================
-// DASHBOARD
-// ================================================================
-function renderDashboard(){
-  const today = todayStr();
-  const onShift     = state.staff.filter(s=>s.status==='On Shift').length;
-  const todayJobs   = state.jobs.filter(j=>j.date===today);
-  const inProg      = todayJobs.filter(j=>j.status==='In Progress').length;
-  const lowStock    = state.inventory.filter(i=>Number(i.qty)<=Number(i.reorder));
-  const monthJobs   = state.jobs.filter(j=>j.date && j.date.startsWith(today.slice(0,7)));
-  const doneAll     = state.jobs.filter(j=>j.status==='Done').length;
-
-  // Stats
-  document.getElementById('stat-onshift').textContent    = onShift;
-  document.getElementById('stat-staff-sub').textContent  = `of ${state.staff.length} staff`;
+function renderDashboard() {
+  let onShift = state.staff.filter(s => s.status === 'On Shift').length;
+  let todayJobs = state.jobs.filter(j => j.date === todayStr());
+  let lowStock = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder));
+  document.getElementById('stat-onshift').textContent = onShift;
+  document.getElementById('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
   document.getElementById('stat-jobs-today').textContent = todayJobs.length;
-  document.getElementById('stat-jobs-sub').textContent   = `${inProg} in progress`;
-  document.getElementById('stat-lowstock').textContent   = lowStock.length;
-
-  // KPI
-  document.getElementById('kpi-staff').textContent   = state.staff.length;
+  document.getElementById('stat-jobs-sub').textContent = `${todayJobs.filter(j => j.status === 'In Progress').length} in progress`;
+  document.getElementById('stat-lowstock').textContent = lowStock.length;
+  document.getElementById('kpi-staff').textContent = state.staff.length;
   document.getElementById('kpi-onshift').textContent = onShift;
-  document.getElementById('kpi-month').textContent   = monthJobs.length;
-  document.getElementById('kpi-done').textContent    = doneAll;
-
-  // Low stock banner
-  const banner = document.getElementById('low-stock-banner');
-  if(lowStock.length > 0){
-    banner.style.display = 'flex';
-    document.getElementById('low-stock-list').textContent = lowStock.map(i=>i.name).join(', ');
-  } else {
-    banner.style.display = 'none';
+  document.getElementById('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0, 7))).length;
+  document.getElementById('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
+  let banner = document.getElementById('low-stock-banner');
+  if (lowStock.length) { banner.style.display = 'flex'; document.getElementById('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', '); }
+  else banner.style.display = 'none';
+  
+  if (document.getElementById('director-metrics-section').style.display !== 'none') {
+    let off = state.staff.filter(s => s.status === 'Off Shift').length, leave = state.staff.filter(s => s.status === 'On Leave').length, t = state.staff.length || 1;
+    document.getElementById('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
+    let sTot = todayJobs.length || 1;
+    document.getElementById('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
   }
-
-  // Activity bars (director/manager)
-  if(document.getElementById('director-metrics-section').style.display !== 'none'){
-    const offShift = state.staff.filter(s=>s.status==='Off Shift').length;
-    const onLeave  = state.staff.filter(s=>s.status==='On Leave').length;
-    const tot      = state.staff.length || 1;
-    document.getElementById('staff-bars').innerHTML = actBar('On Shift', onShift, tot, 'var(--green)')
-      + actBar('Off Shift', offShift, tot, 'var(--text-muted)')
-      + actBar('On Leave',  onLeave,  tot, 'var(--amber)');
-    const sTot = todayJobs.length || 1;
-    const sched = todayJobs.filter(j=>j.status==='Scheduled').length;
-    const doneT = todayJobs.filter(j=>j.status==='Done').length;
-    document.getElementById('job-bars').innerHTML = actBar('Scheduled',  sched,  sTot, 'var(--navy)')
-      + actBar('In Progress', inProg, sTot, 'var(--amber)')
-      + actBar('Completed',   doneT,  sTot, 'var(--green)');
-  }
-
-  // Today schedule
-  const listEl = document.getElementById('today-jobs-list');
-  if(todayJobs.length === 0){
-    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
-  } else {
-    const sorted = [...todayJobs].sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-    listEl.innerHTML = sorted.map(j=>`
-      <div class="job-row">
-        <div class="job-time">${j.time||'--:--'}</div>
-        <div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location||''}</div></div>
-        <span class="pill ${pillClass(j.status)}">${j.status}</span>
-      </div>`).join('');
-  }
+  
+  let listEl = document.getElementById('today-jobs-list');
+  if (todayJobs.length === 0) listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
+  else listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
 }
 
-function actBar(label, val, total, color){
-  const pct = Math.round(val / total * 100);
-  return `<div class="act-item">
-    <span class="act-label">${label}</span>
-    <div class="act-bar-wrap"><div class="act-bar" style="width:${pct}%;background:${color}"></div></div>
-    <span class="act-val">${val}</span>
-  </div>`;
+function actBar(l, v, t, c) { let p = Math.round(v / t * 100); return `<div class="act-item"><span class="act-label">${l}</span><div class="act-bar-wrap"><div class="act-bar" style="width:${p}%;background:${c}"></div></div><span class="act-val">${v}</span></div>`; }
+
+let staffFilter = 'all';
+function renderStaff() {
+  let q = document.getElementById('staff-search').value.toLowerCase();
+  let list = state.staff.filter(s => (s.name.toLowerCase().includes(q) || (s.role || '').toLowerCase().includes(q)) && (staffFilter === 'all' || s.status === staffFilter));
+  document.getElementById('staff-count-lbl').textContent = `${state.staff.length} staff`;
+  document.getElementById('onshift-count-lbl').textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
+  let grid = document.getElementById('staff-grid');
+  if (!list.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-text">No staff</div></div>`; return; }
+  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
 }
 
-// ================================================================
-// STAFF
-// ================================================================
-function renderStaff(){
-  const q = (document.getElementById('staff-search').value||'').toLowerCase();
-  const list = state.staff.filter(s=>{
-    const match = s.name.toLowerCase().includes(q) || (s.role||'').toLowerCase().includes(q);
-    const filt  = staffFilter==='all' || s.status===staffFilter;
-    return match && filt;
-  });
-  document.getElementById('staff-count-lbl').textContent   = `${state.staff.length} staff`;
-  document.getElementById('onshift-count-lbl').textContent = `${state.staff.filter(s=>s.status==='On Shift').length} on shift`;
-  const grid = document.getElementById('staff-grid');
-  if(list.length === 0){
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👥</div><div class="empty-text">No staff found</div><div class="empty-sub">${canEdit()?'Tap + Enrol Staff to add.':''}</div></div>`;
-    return;
-  }
-  grid.innerHTML = list.map(s=>`
-    <div class="staff-card" onclick="openStaffProfile('${s.id}')">
-      <div class="sc-header">
-        <div class="sc-avatar">${s.photo ? `<img src="${s.photo}" alt="">` : initials(s.name)}</div>
-        <div style="flex:1"><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div>
-        <span class="pill ${pillClass(s.status)}">${s.status}</span>
-      </div>
-      <div class="sc-body">
-        <div class="detail-row"><span class="dk">Staff ID</span><span class="dv">${s.staffId||'—'}</span></div>
-        <div class="detail-row"><span class="dk">Phone</span><span class="dv">${s.phone||'—'}</span></div>
-        <div class="detail-row"><span class="dk">Start Date</span><span class="dv">${s.startDate||'—'}</span></div>
-      </div>
-    </div>`).join('');
-}
+function filterStaff(f, btn) { staffFilter = f; document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderStaff(); }
 
-function filterStaff(f, btn){
-  staffFilter = f;
-  document.querySelectorAll('#screen-staff .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderStaff();
-}
-
-function saveStaff(){
-  if(!canEdit()) return;
-  const name = document.getElementById('sf-name').value.trim();
-  const role = document.getElementById('sf-role').value;
-  if(!name || !role){ alert('Name and role are required.'); return; }
-  const photo = document.getElementById('staff-photo-preview').src || '';
-  const s = {
-    id: uid(), name, role,
-    staffId:    document.getElementById('sf-id').value.trim(),
-    phone:      document.getElementById('sf-phone').value.trim(),
-    startDate:  document.getElementById('sf-startdate').value,
-    address:    document.getElementById('sf-address').value.trim(),
-    ghanaCard:  document.getElementById('sf-ghana').value.trim(),
-    ssnit:      document.getElementById('sf-ssnit').value.trim(),
-    emergName:  document.getElementById('sf-emerg-name').value.trim(),
-    emergPhone: document.getElementById('sf-emerg-phone').value.trim(),
-    emergRel:   document.getElementById('sf-emerg-rel').value,
-    bankName:   document.getElementById('sf-bank-name').value.trim(),
-    bankAcct:   document.getElementById('sf-bank-acct').value.trim(),
-    notes:      document.getElementById('sf-notes').value.trim(),
-    status:     'Off Shift',
-    photo:      photo.startsWith('data:') ? photo : ''
+function saveStaff() {
+  if (!canEdit()) return;
+  let name = document.getElementById('sf-name').value.trim();
+  let role = document.getElementById('sf-role').value;
+  if (!name || !role) { alert('Name and role required'); return; }
+  let photo = document.getElementById('staff-photo-preview').src || '';
+  let ghanaFront = document.getElementById('ghana-front-preview').src || '';
+  let ghanaBack = document.getElementById('ghana-back-preview').src || '';
+  let maritalStatus = document.getElementById('sf-marital').value;
+  if (maritalStatus === 'Other') maritalStatus = document.getElementById('sf-marital-other').value.trim() || 'Other';
+  
+  let s = {
+    id: uid(), name, role, staffId: document.getElementById('sf-id').value, phone: document.getElementById('sf-phone').value,
+    shift: document.getElementById('sf-shift').value, startDate: document.getElementById('sf-startdate').value,
+    address: document.getElementById('sf-address').value, ghanaCard: document.getElementById('sf-ghana').value,
+    ghanaFrontImg: ghanaFront, ghanaBackImg: ghanaBack, ssnit: document.getElementById('sf-ssnit').value,
+    emergName: document.getElementById('sf-emerg-name').value, emergPhone: document.getElementById('sf-emerg-phone').value,
+    emergRel: document.getElementById('sf-emerg-rel').value, bankName: document.getElementById('sf-bank-name').value,
+    bankAcct: document.getElementById('sf-bank-acct').value, status: 'Off Shift', photo: photo.startsWith('data:') ? photo : '',
+    maritalStatus: maritalStatus, spouseName: document.getElementById('sf-spouse-name').value,
+    spouseContact: document.getElementById('sf-spouse-contact').value, numberOfKids: parseInt(document.getElementById('sf-kids').value) || 0
   };
   state.staff.push(s);
   saveState();
   closeModal('modal-add-staff');
-  resetForm(['sf-name','sf-id','sf-phone','sf-startdate','sf-address','sf-ghana','sf-ssnit','sf-emerg-name','sf-emerg-phone','sf-bank-name','sf-bank-acct','sf-notes']);
-  document.getElementById('sf-role').value = '';
-  document.getElementById('sf-emerg-rel').value = '';
-  resetPhotoPreview('staff-photo-preview','staff-photo-placeholder');
   renderStaff(); renderDashboard();
 }
 
-function openStaffProfile(id){
-  const s = state.staff.find(x=>x.id===id);
-  if(!s) return;
+function openStaffProfile(id) {
+  let s = state.staff.find(x => x.id === id);
+  if (!s) return;
   currentStaffId = id;
-  const photoEl = document.getElementById('prof-photo');
-  if(s.photo){ photoEl.innerHTML = `<img src="${s.photo}" alt="">`; photoEl.style.background='rgba(255,255,255,.1)'; }
-  else{ photoEl.textContent = initials(s.name); photoEl.style.background='var(--red)'; }
+  let photoDiv = document.getElementById('prof-photo');
+  if (s.photo) { photoDiv.innerHTML = `<img src="${s.photo}">`; photoDiv.style.background = 'rgba(255,255,255,.1)'; }
+  else { photoDiv.textContent = initials(s.name); photoDiv.style.background = 'var(--red)'; }
   document.getElementById('prof-name').textContent = s.name;
   document.getElementById('prof-role').textContent = s.role;
-  // Status buttons
-  const btns = ['On Shift','Off Shift','On Leave'].map(st=>`
-    <button class="btn btn-sm ${s.status===st?'btn-primary':'btn-outline'}"
-      onclick="${canEdit()?`updateStaffStatus('${id}','${st}')`:''}"
-      style="${!canEdit()?'opacity:.5;cursor:not-allowed':''}">${st}</button>`).join('');
-  document.getElementById('prof-status-btns').innerHTML = btns;
-  // Details
-  document.getElementById('prof-details').innerHTML = `
-    <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">Personal</div>
-    ${detRow('Staff ID',s.staffId)}${detRow('Phone',s.phone)}${detRow('Start Date',s.startDate)}
-    ${detRow('Address',s.address)}${detRow('Ghana Card',s.ghanaCard)}${detRow('SSNIT',s.ssnit)}
-    <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">Emergency Contact</div>
-    ${detRow('Contact Name',s.emergName)}${detRow('Contact Phone',s.emergPhone)}${detRow('Relationship',s.emergRel)}
-    <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">Bank Details</div>
-    ${detRow('Bank Name',s.bankName)}${detRow('Account No.',s.bankAcct)}
-    ${s.notes?`<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">Notes</div><div style="font-size:12px;color:var(--text-secondary);padding:4px 0">${s.notes}</div>`:''}
-  `;
-  document.getElementById('prof-pdf-btn').style.display = canPrint() ? 'inline-flex' : 'none';
-  document.getElementById('prof-del-btn').style.display = canEdit()  ? 'inline-flex' : 'none';
+  
+  let familyHtml = `<div class="section-sep">Family & Marital</div>${detRow('Marital Status', s.maritalStatus || 'Single')}${detRow('Spouse/Partner', s.spouseName)}${detRow('Spouse Contact', s.spouseContact)}${detRow('Number of Children', s.numberOfKids || 0)}`;
+  
+  // Ghana card images with view option
+  let ghanaImagesHtml = '';
+  if (s.ghanaFrontImg && s.ghanaFrontImg.startsWith('data:')) {
+    ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${s.ghanaFrontImg}', 'Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
+  }
+  if (s.ghanaBackImg && s.ghanaBackImg.startsWith('data:')) {
+    ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${s.ghanaBackImg}', 'Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
+  }
+  
+  let detailsHtml = `<div class="section-sep">Personal</div>${detRow('Staff ID', s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift)}${detRow('Start Date', s.startDate)}${detRow('Address', s.address)}${detRow('Ghana Card Number', s.ghanaCard)}${ghanaImagesHtml}${familyHtml}<div class="section-sep">Emergency</div>${detRow('Contact', s.emergName)}${detRow('Phone', s.emergPhone)}${detRow('Relation', s.emergRel)}<div class="section-sep">Bank</div>${detRow('Bank', s.bankName)}${detRow('Account', s.bankAcct)}`;
+  document.getElementById('prof-details').innerHTML = detailsHtml;
   openModal('modal-staff-profile');
 }
 
-function updateStaffStatus(id, status){
-  if(!canEdit()) return;
-  const s = state.staff.find(x=>x.id===id);
-  if(!s) return;
-  s.status = status;
-  saveState();
-  closeModal('modal-staff-profile');
-  renderStaff(); renderDashboard();
-  setTimeout(()=>openStaffProfile(id), 80);
+function deleteCurrentStaff() {
+  if (!canEdit()) return;
+  if (!confirm('Remove staff?')) return;
+  if (currentStaffId) state.staff = state.staff.filter(x => x.id !== currentStaffId);
+  saveState(); closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
 }
 
-function deleteCurrentStaff(){
-  if(!canEdit()) return;
-  if(!confirm('Remove this staff member?')) return;
-  state.staff = state.staff.filter(s=>s.id!==currentStaffId);
-  saveState();
-  closeModal('modal-staff-profile');
-  renderStaff(); renderDashboard();
+function printStaffPDF() {
+  if (!canPrint()) return;
+  let s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  doc.setFillColor(10, 22, 40); doc.rect(0, 0, 210, 44, 'F');
+  doc.setFillColor(204, 31, 46); doc.rect(0, 42, 210, 3, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('3-Rock Builders', 14, 18);
+  doc.setFontSize(10); doc.text('Staff Profile Document', 14, 27);
+  doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
+  let px = 14, py = 52, pw = 50, ph = 65;
+  doc.setFillColor(230, 234, 244); doc.rect(px, py, pw, ph, 'F');
+  if (s.photo && s.photo.startsWith('data:')) { try { doc.addImage(s.photo, 'JPEG', px, py, pw, ph); } catch (e) { } }
+  else { doc.setFontSize(8); doc.text('No Photo', px + pw / 2, py + ph / 2, 'center'); }
+  doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(s.name, px + pw + 10, 62);
+  doc.setFillColor(10, 22, 40); doc.roundedRect(px + pw + 10, 65, 70, 9, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text(s.role.toUpperCase(), px + pw + 14, 70.5);
+  doc.setFontSize(9); doc.setTextColor(70, 88, 128); doc.text(`Staff ID: ${s.staffId || '—'}`, px + pw + 10, 82);
+  doc.text(`Phone: ${s.phone || '—'}`, px + pw + 10, 90); doc.text(`Shift: ${s.shift || '—'}`, px + pw + 10, 98);
+  let y = py + ph + 14;
+  y = addSection(doc, 'PERSONAL DETAILS', y);
+  y = addRow(doc, 'Ghana Card', s.ghanaCard, y, true);
+  y = addRow(doc, 'Marital Status', s.maritalStatus || 'Single', y, false);
+  y = addRow(doc, 'Spouse/Partner', s.spouseName, y, true);
+  y = addRow(doc, 'Spouse Contact', s.spouseContact, y, false);
+  y = addRow(doc, 'Children', s.numberOfKids || 0, y, true);
+  y = addSection(doc, 'EMERGENCY CONTACT', y + 4);
+  y = addRow(doc, 'Contact', s.emergName, y, true);
+  y = addRow(doc, 'Phone', s.emergPhone, y, false);
+  y = addRow(doc, 'Relation', s.emergRel, y, true);
+  y = addSection(doc, 'BANK DETAILS', y + 4);
+  y = addRow(doc, 'Bank Name', s.bankName, y, true);
+  y = addRow(doc, 'Account Number', s.bankAcct, y, false);
+  doc.save(`3Rock_Staff_${s.name.replace(/\s+/g, '_')}.pdf`);
 }
 
-function printStaffPDF(){
-  if(!canPrint()) return;
-  const s = state.staff.find(x=>x.id===currentStaffId);
-  if(!s) return;
-  const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({unit:'mm',format:'a4'});
-  const W=210, ml=14;
-  doc.setFillColor(10,22,40); doc.rect(0,0,W,44,'F');
-  doc.setFillColor(204,31,46); doc.rect(0,42,W,3,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(24);
-  doc.text('3-Rock Builders', ml, 18);
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(180,195,220);
-  doc.text('Staff Profile Document', ml, 27);
-  doc.text('Generated: '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}), ml, 35);
-  const px=ml, py=52, pw=50, ph=65;
-  doc.setFillColor(230,234,244); doc.rect(px,py,pw,ph,'F');
-  doc.setDrawColor(10,22,40); doc.setLineWidth(.8); doc.rect(px,py,pw,ph);
-  if(s.photo && s.photo.startsWith('data:')){
-    try{ doc.addImage(s.photo,'JPEG',px,py,pw,ph); } catch(e){}
-  } else {
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(150,160,180);
-    doc.text('No Photo',px+pw/2,py+ph/2,'center');
-  }
-  doc.setFontSize(7); doc.setTextColor(120,130,150);
-  doc.text('PASSPORT PHOTO',px+pw/2,py+ph+5,'center');
-  const nx=px+pw+10;
-  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(10,22,40);
-  doc.text(s.name,nx,62);
-  doc.setFillColor(10,22,40); doc.roundedRect(nx,65,70,9,2,2,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
-  doc.text(s.role.toUpperCase(),nx+4,70.5);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(70,88,128);
-  doc.text('Staff ID: '+(s.staffId||'—'),nx,82);
-  doc.text('Phone: '+(s.phone||'—'),nx,90);
-  doc.text('Start Date: '+(s.startDate||'—'),nx,98);
-  let y=py+ph+14;
-  const secHdr=(lbl,yy)=>{
-    doc.setFillColor(10,22,40);doc.rect(ml,yy,W-ml*2,7,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);
-    doc.text(lbl,ml+3,yy+5); return yy+7;
-  };
-  const row=(k,v,yy,shade)=>{
-    doc.setFillColor(shade?247:255,shade?249:255,shade?253:255);doc.rect(ml,yy,W-ml*2,8,'F');
-    doc.setDrawColor(220,225,235);doc.setLineWidth(.3);doc.line(ml,yy+8,W-ml,yy+8);
-    doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(100,115,145);doc.text(k,ml+3,yy+5.5);
-    doc.setFont('helvetica','normal');doc.setTextColor(10,22,40);doc.text(String(v||'—'),ml+90,yy+5.5);
-    return yy+8;
-  };
-  y=secHdr('PERSONAL INFORMATION',y);
-  y=row('Ghana Card ID',s.ghanaCard,y,true);y=row('SSNIT Number',s.ssnit,y,false);
-  y=secHdr('BANK DETAILS',y+4);
-  y=row('Bank Name',s.bankName,y,true);y=row('Account Number',s.bankAcct,y,false);
-  y=secHdr('EMERGENCY CONTACT',y+4);
-  y=row('Contact Person',s.emergName,y,true);y=row('Contact Phone',s.emergPhone,y,false);y=row('Relationship',s.emergRel,y,true);
-  if(s.notes){ y=secHdr('NOTES',y+4); doc.setFillColor(255,255,255);doc.rect(ml,y,W-ml*2,20,'F');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(40,50,70);doc.text(doc.splitTextToSize(s.notes,W-ml*2-6),ml+3,y+6);y+=24; }
-  doc.setFillColor(10,22,40);doc.rect(0,277,W,20,'F');
-  doc.setFillColor(204,31,46);doc.rect(0,275,W,2,'F');
-  doc.setTextColor(140,160,200);doc.setFontSize(8);doc.setFont('helvetica','normal');
-  doc.text('3-Rock Builders · Staff Records · Confidential',ml,286);
-  doc.text(new Date().toLocaleDateString('en-GB'),W-ml,286,'right');
-  doc.save('3Rock_Staff_'+s.name.replace(/\s+/g,'_')+'.pdf');
-}
+function addSection(doc, lbl, y) { doc.setFillColor(10, 22, 40); doc.rect(14, y, 182, 7, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255); doc.text(lbl, 17, y + 5); return y + 7; }
+function addRow(doc, k, v, y, shade) { doc.setFillColor(shade ? 247 : 255, shade ? 249 : 255, shade ? 253 : 255); doc.rect(14, y, 182, 8, 'F'); doc.setDrawColor(220, 225, 235); doc.line(14, y + 8, 196, y + 8); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 115, 145); doc.text(k, 17, y + 5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(10, 22, 40); doc.text(String(v || '—'), 90, y + 5.5); return y + 8; }
 
-// ================================================================
-// INVENTORY
-// ================================================================
-function renderInventory(){
-  const q = (document.getElementById('inv-search').value||'').toLowerCase();
-  const list = state.inventory.filter(i=>{
-    const match = i.name.toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q);
-    const filt  = invFilter==='all'||i.category===invFilter;
-    return match && filt;
-  });
-  const lowCount = state.inventory.filter(i=>Number(i.qty)<=Number(i.reorder)).length;
+let invFilter = 'all';
+function renderInventory() {
+  let q = document.getElementById('inv-search').value.toLowerCase();
+  let list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter));
+  let lowCount = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder)).length;
   document.getElementById('inv-count-lbl').textContent = `${state.inventory.length} items`;
-  document.getElementById('inv-low-lbl').textContent   = `${lowCount} low stock`;
-  const grid = document.getElementById('inventory-grid');
-  if(list.length===0){
-    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📦</div><div class="empty-text">No items found</div></div>`;
-    return;
-  }
-  grid.innerHTML = list.map(item=>{
-    const pct = Math.min(100, Math.round(Number(item.qty)/(Number(item.reorder)*2||1)*100));
-    const cls = pct>60?'fill-green':pct>30?'fill-amber':'fill-red';
-    const imgHtml = item.img ? `<img src="${item.img}" alt="">` : `<span>${catEmoji(item.category)}</span>`;
-    return `<div class="inv-card" onclick="openInvDetail('${item.id}')">
-      <div class="inv-img">${imgHtml}</div>
-      <div class="inv-body">
-        <div class="inv-name">${item.name}</div>
-        <div class="inv-cat">${item.category}</div>
-        ${item.supplier?`<div style="font-size:10px;color:var(--text-muted);margin-top:3px">📦 ${item.supplier}</div>`:''}
-        <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
-        <div class="stock-info"><span>Qty: <strong>${item.qty}</strong></span><span>Reorder: ${item.reorder}</span></div>
-        ${Number(item.qty)<=Number(item.reorder)?`<div style="margin-top:7px"><span class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW STOCK</span></div>`:''}
-      </div>
-    </div>`;
-  }).join('');
+  document.getElementById('inv-low-lbl').textContent = `${lowCount} low stock`;
+  let grid = document.getElementById('inventory-grid');
+  if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; }
+  grid.innerHTML = list.map(item => { let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100)); let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red'; return `<div class="inv-card" onclick="openInvDetail('${item.id}')"><div class="inv-img">${item.img ? `<img src="${item.img}">` : '📦'}</div><div class="inv-body"><div class="inv-name">${item.name}</div><div class="inv-cat">${item.category}</div><div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${item.uom || ''}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty) <= Number(item.reorder) ? '<div class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW</div>' : ''}</div></div>`; }).join('');
 }
 
-function filterInv(f, btn){
-  invFilter = f;
-  document.querySelectorAll('#screen-inventory .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderInventory();
-}
+function filterInv(f, btn) { invFilter = f; document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderInventory(); }
 
-function saveInventory(){
-  if(!canEdit()) return;
-  const name = document.getElementById('inv-name').value.trim();
-  const cat  = document.getElementById('inv-cat').value;
-  if(!name||!cat){ alert('Name and category required.'); return; }
-  const img = document.getElementById('inv-img-preview').src||'';
-  const item = {
-    id: uid(), name, category: cat,
-    qty:      parseInt(document.getElementById('inv-qty').value)||0,
-    reorder:  parseInt(document.getElementById('inv-reorder').value)||0,
-    supplier: document.getElementById('inv-supplier').value.trim(),
-    img:      img.startsWith('data:')?img:'',
-    usageLog: []
-  };
+function saveInventory() {
+  if (!canEdit()) return;
+  let name = document.getElementById('inv-name').value.trim();
+  let cat = document.getElementById('inv-cat').value;
+  if (!name || !cat) { alert('Name/category required'); return; }
+  let img = document.getElementById('inv-img-preview').src || '';
+  let item = { id: uid(), name, category: cat, qty: parseInt(document.getElementById('inv-qty').value) || 0, uom: document.getElementById('inv-uom').value, reorder: parseInt(document.getElementById('inv-reorder').value) || 0, supplier: document.getElementById('inv-supplier').value.trim(), supplierContact: document.getElementById('inv-supplier-contact').value.trim(), img: img.startsWith('data:') ? img : '', usageLog: [] };
   state.inventory.push(item);
-  saveState();
-  closeModal('modal-add-inv');
-  resetForm(['inv-name','inv-qty','inv-reorder','inv-supplier']);
-  document.getElementById('inv-cat').value='';
-  resetPhotoPreview('inv-img-preview','inv-img-placeholder');
-  renderInventory(); renderDashboard();
+  saveState(); closeModal('modal-add-inv'); renderInventory(); renderDashboard();
 }
 
-function openInvDetail(id){
-  const item = state.inventory.find(x=>x.id===id);
-  if(!item) return;
-  currentInvId = id;
-  document.getElementById('inv-detail-title').textContent = item.name;
-  const imgWrap = document.getElementById('inv-detail-img');
-  imgWrap.innerHTML = item.img ? `<img src="${item.img}" alt="" style="width:100%;height:130px;object-fit:cover">` : `<span>${catEmoji(item.category)}</span>`;
-  const pct = Math.min(100, Math.round(Number(item.qty)/(Number(item.reorder)*2||1)*100));
-  const cls = pct>60?'fill-green':pct>30?'fill-amber':'fill-red';
-  document.getElementById('inv-detail-info').innerHTML = `
-    <div class="detail-row"><span class="dk">Category</span><span class="dv">${item.category}</span></div>
-    <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier||'—'}</span></div>
-    <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder}</span></div>
-    <div class="stock-bar" style="margin:10px 0 5px"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
-    ${Number(item.qty)<=Number(item.reorder)?`<span class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW STOCK — Reorder now</span>`:''}
-  `;
-  const qtyCtrl = document.getElementById('inv-qty-ctrl');
-  if(canEdit()){
-    qtyCtrl.innerHTML = `
-      <button class="btn btn-outline" onclick="adjustQty('${id}',-1)">− Remove</button>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:var(--navy)">${item.qty}</span>
-      <button class="btn btn-primary" onclick="adjustQty('${id}',1)">+ Add</button>`;
-  } else {
-    qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:var(--navy)">${item.qty} units</span>`;
-  }
-  // Recent usage
-  const logs = (item.usageLog||[]).slice(0,3);
-  document.getElementById('inv-recent-usage').innerHTML = logs.length===0
-    ? '<div style="font-size:11px;color:var(--text-muted)">No usage logged yet.</div>'
-    : logs.map(l=>`
-        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light);font-size:11px">
-          <span style="color:var(--text-secondary)">${l.date}${l.job?' · '+l.job:''}</span>
-          <span style="font-weight:700;color:var(--navy)">−${l.qty}</span>
-        </div>`).join('');
-  document.getElementById('btn-log-usage').style.display = canEdit()?'inline-flex':'none';
-  document.getElementById('btn-del-inv').style.display   = canEdit()?'inline-flex':'none';
-  openModal('modal-inv-detail');
+function openInvDetail(id) { let item = state.inventory.find(x => x.id === id); if (item) alert(`Item: ${item.name}\nQty: ${item.qty} ${item.uom}\nSupplier: ${item.supplier || '—'} ${item.supplierContact ? '(' + item.supplierContact + ')' : ''}`); }
+
+let jobFilter = 'all';
+function renderJobs() {
+  let q = document.getElementById('jobs-search').value.toLowerCase();
+  let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  document.getElementById('jobs-sub-lbl').textContent = `${state.jobs.length} total · ${state.jobs.filter(j => j.status === 'In Progress').length} in progress`;
+  let listEl = document.getElementById('jobs-list');
+  if (!list.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs</div></div>'; return; }
+  listEl.innerHTML = list.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span> ${j.time ? `🕐 ${j.time}` : ''}</div></div>`).join('');
 }
 
-function adjustQty(id, delta){
-  if(!canEdit()) return;
-  const item = state.inventory.find(x=>x.id===id);
-  if(!item) return;
-  item.qty = Math.max(0, Number(item.qty) + delta);
-  saveState();
-  openInvDetail(id);
-  renderInventory(); renderDashboard();
-}
+function filterJobs(f, btn) { jobFilter = f; document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderJobs(); }
 
-function deleteCurrentInv(){
-  if(!canEdit()) return;
-  if(!confirm('Delete this inventory item?')) return;
-  state.inventory = state.inventory.filter(x=>x.id!==currentInvId);
-  saveState();
-  closeModal('modal-inv-detail');
-  renderInventory(); renderDashboard();
-}
-
-// ================================================================
-// USAGE LOG
-// ================================================================
-function openLogUsage(){
-  if(!canEdit()) return;
-  const item = state.inventory.find(x=>x.id===currentInvId);
-  if(!item) return;
-  document.getElementById('usage-item-name').textContent = item.name;
-  document.getElementById('usage-qty').value   = '';
-  document.getElementById('usage-date').value  = todayStr();
-  document.getElementById('usage-job').value   = '';
-  document.getElementById('usage-notes').value = '';
-  closeModal('modal-inv-detail');
-  openModal('modal-log-usage');
-}
-
-function saveUsageLog(){
-  if(!canEdit()) return;
-  const qty  = parseInt(document.getElementById('usage-qty').value);
-  const date = document.getElementById('usage-date').value;
-  if(!qty||qty<1){ alert('Enter a valid quantity.'); return; }
-  if(!date){ alert('Date is required.'); return; }
-  const item = state.inventory.find(x=>x.id===currentInvId);
-  if(!item) return;
-  if(!item.usageLog) item.usageLog = [];
-  item.usageLog.unshift({
-    id: uid(), date, qty,
-    job:      document.getElementById('usage-job').value.trim(),
-    notes:    document.getElementById('usage-notes').value.trim(),
-    loggedBy: currentUser.name,
-    loggedAt: new Date().toISOString()
-  });
-  item.qty = Math.max(0, Number(item.qty) - qty);
-  saveState();
-  closeModal('modal-log-usage');
-  openInvDetail(currentInvId);
-  renderInventory(); renderDashboard();
-}
-
-function openUsageHistory(){
-  const item = state.inventory.find(x=>x.id===currentInvId);
-  if(!item) return;
-  document.getElementById('uh-name').textContent = item.name;
-  document.getElementById('uh-period').value = 'all';
-  renderUsageHistory();
-  closeModal('modal-inv-detail');
-  openModal('modal-usage-history');
-}
-
-function renderUsageHistory(){
-  const item   = state.inventory.find(x=>x.id===currentInvId);
-  if(!item) return;
-  const period = document.getElementById('uh-period').value;
-  const now    = new Date();
-  const logs   = (item.usageLog||[]).filter(l=>{
-    if(period==='all')   return true;
-    if(period==='today') return l.date===todayStr();
-    const d = new Date(l.date);
-    if(period==='week'){ const w=new Date(now); w.setDate(w.getDate()-7); return d>=w; }
-    if(period==='month') return l.date.startsWith(todayStr().slice(0,7));
-    return true;
-  });
-  const total = logs.reduce((s,l)=>s+l.qty,0);
-  document.getElementById('uh-total').textContent = 'Total: '+total;
-  const el = document.getElementById('uh-list');
-  el.innerHTML = logs.length===0
-    ? '<div class="empty-state" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-text">No records for this period</div></div>'
-    : logs.map(l=>`
-        <div style="padding:10px;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px;background:#fff">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--navy)">${l.qty} units</span>
-            <span style="font-size:11px;color:var(--text-muted)">${l.date}</span>
-          </div>
-          ${l.job?`<div style="font-size:11px;color:var(--text-secondary)">📍 ${l.job}</div>`:''}
-          ${l.notes?`<div style="font-size:11px;color:var(--text-muted);font-style:italic">"${l.notes}"</div>`:''}
-          <div style="font-size:10px;color:var(--text-muted);margin-top:3px">by ${l.loggedBy}</div>
-        </div>`).join('');
-}
-
-// ================================================================
-// JOBS
-// ================================================================
-function renderJobs(){
-  const q = (document.getElementById('jobs-search').value||'').toLowerCase();
-  const list = state.jobs.filter(j=>{
-    const match = j.client.toLowerCase().includes(q)||(j.location||'').toLowerCase().includes(q);
-    const filt  = jobFilter==='all'||j.status===jobFilter;
-    return match && filt;
-  }).sort((a,b)=> a.date===b.date ? (a.time||'').localeCompare(b.time||'') : (a.date||'').localeCompare(b.date||''));
-  const inProg = state.jobs.filter(j=>j.status==='In Progress').length;
-  document.getElementById('jobs-sub-lbl').textContent = `${state.jobs.length} total · ${inProg} in progress`;
-  const listEl = document.getElementById('jobs-list');
-  if(list.length===0){
-    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs found</div></div>`;
-    return;
-  }
-  listEl.innerHTML = list.map(j=>`
-    <div class="job-card" onclick="openJobDetail('${j.id}')">
-      <div class="jc-header">
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700;color:var(--navy)">${j.client}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:1px">📍 ${j.location||'—'}</div>
-        </div>
-        <span class="pill ${pillClass(j.status)}">${j.status}</span>
-      </div>
-      <div class="jc-body">
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <span class="job-type-tag">${j.type}</span>
-          <span style="font-size:11px;color:var(--text-secondary)">📅 ${j.date||'—'}</span>
-          <span style="font-size:11px;color:var(--text-secondary)">🕐 ${j.time||'—'}</span>
-          ${j.assignedStaff?`<span style="font-size:11px;color:var(--text-secondary)">👤 ${j.assignedStaff}</span>`:''}
-        </div>
-        ${j.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text-muted);font-style:italic">"${j.notes}"</div>`:''}
-      </div>
-    </div>`).join('');
-}
-
-function filterJobs(f, btn){
-  jobFilter = f;
-  document.querySelectorAll('#screen-jobs .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderJobs();
-}
-
-function saveJob(){
-  if(!canEdit()) return;
-  const client = document.getElementById('jf-client').value.trim();
-  const type   = document.getElementById('jf-type').value;
-  if(!client||!type){ alert('Client name and job type required.'); return; }
-  const job = {
-    id: uid(), client, type,
-    location:      document.getElementById('jf-location').value.trim(),
-    date:          document.getElementById('jf-date').value,
-    time:          document.getElementById('jf-time').value,
-    assignedStaff: document.getElementById('jf-staff').value.trim(),
-    notes:         document.getElementById('jf-notes').value.trim(),
-    status:        'Scheduled'
-  };
+function saveJob() {
+  if (!canEdit()) return;
+  let client = document.getElementById('jf-client').value.trim();
+  let type = document.getElementById('jf-type').value;
+  if (!client || !type) { alert('Client and type required'); return; }
+  let job = { id: uid(), client, type, location: document.getElementById('jf-location').value, date: document.getElementById('jf-date').value, time: document.getElementById('jf-time').value, assignedStaff: document.getElementById('jf-staff').value, notes: document.getElementById('jf-notes').value, status: 'Scheduled' };
   state.jobs.push(job);
-  saveState();
-  closeModal('modal-add-job');
-  resetForm(['jf-client','jf-location','jf-date','jf-time','jf-staff','jf-notes']);
-  document.getElementById('jf-type').value = '';
-  renderJobs(); renderDashboard();
+  saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard();
 }
 
-function openJobDetail(id){
-  const j = state.jobs.find(x=>x.id===id);
-  if(!j) return;
-  currentJobId = id;
-  document.getElementById('jd-title').textContent = j.client;
-  document.getElementById('jd-content').innerHTML = `
-    ${detRow('Location',j.location)}${detRow('Job Type',j.type)}
-    ${detRow('Date',j.date)}${detRow('Time',j.time)}
-    ${detRow('Assigned Staff',j.assignedStaff)}
-    ${j.notes?`<div class="detail-row" style="flex-direction:column;gap:3px"><span class="dk">Notes</span><span class="dv">${j.notes}</span></div>`:''}
-  `;
-  const ctrl = document.getElementById('jd-status-ctrl');
-  if(canEdit()){
-    const statuses = ['Scheduled','In Progress','Done'];
-    ctrl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Update Status</div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap">${statuses.map(st=>`<button class="btn btn-sm ${j.status===st?'btn-primary':'btn-outline'}" onclick="updateJobStatus('${id}','${st}')">${st}</button>`).join('')}</div>`;
-  } else {
-    ctrl.innerHTML = `<span class="pill ${pillClass(j.status)}" style="font-size:11px">${j.status}</span>`;
-  }
-  document.getElementById('jd-del-btn').style.display = canEdit() ? 'inline-flex' : 'none';
-  openModal('modal-job-detail');
+function openJobDetail(id) { let j = state.jobs.find(x => x.id === id); if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}`); }
+
+function renderReports() {
+  let from = document.getElementById('report-from').value, to = document.getElementById('report-to').value;
+  let fJobs = state.jobs.filter(j => { if (from && j.date < from) return false; if (to && j.date > to) return false; return true; });
+  let done = fJobs.filter(j => j.status === 'Done').length;
+  let inPr = fJobs.filter(j => j.status === 'In Progress').length;
+  document.getElementById('report-summary').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div><div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div><div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl">In Progress</div></div></div>`;
 }
 
-function updateJobStatus(id, status){
-  if(!canEdit()) return;
-  const j = state.jobs.find(x=>x.id===id);
-  if(!j) return;
-  j.status = status;
-  saveState();
-  closeModal('modal-job-detail');
-  renderJobs(); renderDashboard();
-  setTimeout(()=>openJobDetail(id), 80);
-}
-
-function deleteCurrentJob(){
-  if(!canEdit()) return;
-  if(!confirm('Delete this job?')) return;
-  state.jobs = state.jobs.filter(x=>x.id!==currentJobId);
-  saveState();
-  closeModal('modal-job-detail');
-  renderJobs(); renderDashboard();
-}
-
-// ================================================================
-// REPORTS
-// ================================================================
-function renderReports(){
-  const from = document.getElementById('report-from').value;
-  const to   = document.getElementById('report-to').value;
-  const inRange = j => { if(!from&&!to) return true; if(from&&j.date<from) return false; if(to&&j.date>to) return false; return true; };
-  const fJobs = state.jobs.filter(inRange);
-  const done  = fJobs.filter(j=>j.status==='Done').length;
-  const inPr  = fJobs.filter(j=>j.status==='In Progress').length;
-  const typeCounts = {};
-  fJobs.forEach(j=>{ typeCounts[j.type]=(typeCounts[j.type]||0)+1; });
-  document.getElementById('report-summary').innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-      <div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div>
-      <div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl" style="color:#166534">Completed</div></div>
-      <div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl" style="color:#92400e">In Progress</div></div>
-    </div>
-    ${Object.keys(typeCounts).length ? `
-      <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">By Job Type</div>
-      ${Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([type,count])=>`
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-          <span style="font-size:11px;color:var(--text-secondary);min-width:120px">${type}</span>
-          <div style="flex:1;height:7px;background:var(--surface);border-radius:4px;overflow:hidden">
-            <div style="height:100%;background:var(--navy);border-radius:4px;width:${Math.round(count/fJobs.length*100)}%"></div>
-          </div>
-          <span style="font-size:11px;font-weight:700;color:var(--navy)">${count}</span>
-        </div>`).join('')}` : '<div style="color:var(--text-muted);font-size:12px">No jobs in this period.</div>'}
-  `;
-  // Inventory usage
-  const allUsage = [];
-  state.inventory.forEach(item=>{
-    (item.usageLog||[]).forEach(l=>{ if(inRange({date:l.date})) allUsage.push({...l,itemName:item.name}); });
-  });
-  const invEl = document.getElementById('report-inv');
-  if(allUsage.length===0){
-    invEl.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:4px 0">No usage logged in this period.</div>';
-  } else {
-    const byItem={};
-    allUsage.forEach(l=>{ byItem[l.itemName]=(byItem[l.itemName]||0)+l.qty; });
-    invEl.innerHTML = Object.entries(byItem).sort((a,b)=>b[1]-a[1]).map(([name,qty])=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light)">
-        <span style="font-size:12px;color:var(--text-secondary)">${name}</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--navy)">${qty} units</span>
-      </div>`).join('');
-  }
-}
-
-function setReportRange(r){
-  const now=new Date(), fmt=d=>d.toISOString().split('T')[0];
-  const f=document.getElementById('report-from'), t=document.getElementById('report-to');
-  if(r==='today'){f.value=fmt(now);t.value=fmt(now);}
-  else if(r==='week'){const w=new Date(now);w.setDate(w.getDate()-7);f.value=fmt(w);t.value=fmt(now);}
-  else if(r==='month'){f.value=fmt(now).slice(0,7)+'-01';t.value=fmt(now);}
-  else{f.value='';t.value='';}
+function setReportRange(r) {
+  let now = new Date(); let fmt = d => d.toISOString().split('T')[0];
+  if (r === 'today') { document.getElementById('report-from').value = fmt(now); document.getElementById('report-to').value = fmt(now); }
+  else if (r === 'week') { let w = new Date(now); w.setDate(w.getDate() - 7); document.getElementById('report-from').value = fmt(w); document.getElementById('report-to').value = fmt(now); }
+  else if (r === 'month') { document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01'; document.getElementById('report-to').value = fmt(now); }
+  else { document.getElementById('report-from').value = ''; document.getElementById('report-to').value = ''; }
   renderReports();
 }
 
-function restoreReportsUI(){
-  const saved = localStorage.getItem('3rb_url');
-  if(saved){ document.getElementById('sheets-url').value=saved; sheetsUrl=saved; }
-  renderReports();
+// Supabase Functions
+async function connectSupabase() {
+  let url = document.getElementById('sb-url').value.trim();
+  let key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { showAdminResult('Enter URL and anon key', 'error'); return; }
+  try {
+    supabaseClient = supabase.createClient(url, key);
+    let { error } = await supabaseClient.from('staff').select('id').limit(1);
+    if (error) throw error;
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+    showAdminResult('✓ Connected to Supabase!', 'success');
+    setAdminStatus('ok', 'Connected to cloud');
+  } catch (e) { showAdminResult('✗ Connection failed: ' + e.message, 'error'); setAdminStatus('error', 'Connection failed'); }
 }
 
-// ================================================================
-// GOOGLE SHEETS SYNC ENGINE
-// ================================================================
-
-function onUrlInput(){
-  sheetsUrl = document.getElementById('sheets-url').value.trim();
-  localStorage.setItem('3rb_url', sheetsUrl);
+async function loadFromSupabase() {
+  if (!supabaseClient) { showAdminResult('Connect to Supabase first', 'error'); return; }
+  try {
+    let { data: staff, error: sErr } = await supabaseClient.from('staff').select('*');
+    let { data: inventory, error: iErr } = await supabaseClient.from('inventory').select('*');
+    let { data: jobs, error: jErr } = await supabaseClient.from('jobs').select('*');
+    if (sErr || iErr || jErr) throw new Error('Fetch error');
+    if (staff) state.staff = staff;
+    if (inventory) state.inventory = inventory;
+    if (jobs) state.jobs = jobs;
+    localSave(); renderAll();
+    showAdminResult('✓ Data loaded from cloud', 'success');
+    setAdminStatus('ok', 'Loaded from cloud');
+  } catch (e) { showAdminResult('✗ Load failed: ' + e.message, 'error'); }
 }
 
-function setSyncUI(state, msg){
-  // state: 'ok' | 'error' | 'syncing' | 'idle'
-  const bar  = document.getElementById('sync-status-bar');
-  const dot  = document.getElementById('sync-dot');
-  const dot2 = document.getElementById('sync-dot2');
-  const msgEl= document.getElementById('sync-status-msg');
-  const sub  = document.getElementById('sync-subtitle');
-  bar.className = 'sync-status-bar ' + (state==='ok'?'ok':state==='error'?'err':'idle');
-  if(dot){  dot.className  = 'sync-dot ' + (state==='ok'?'synced':state==='error'?'error':state==='syncing'?'syncing':''); }
-  if(dot2){ dot2.className = 'sync-dot ' + (state==='ok'?'synced':state==='error'?'error':state==='syncing'?'syncing':''); }
-  if(msgEl) msgEl.textContent = msg;
-  if(sub) sub.textContent = state==='ok' ? '✓ Synced with Google Sheets' : state==='error' ? '⚠ Sync error — using local data' : 'Local data only';
+async function saveToSupabase() {
+  if (!supabaseClient) { showAdminResult('Connect to Supabase first', 'error'); return; }
+  try {
+    await supabaseClient.from('staff').upsert(state.staff);
+    await supabaseClient.from('inventory').upsert(state.inventory);
+    await supabaseClient.from('jobs').upsert(state.jobs);
+    showAdminResult('✓ Data saved to cloud', 'success');
+    setAdminStatus('ok', 'Saved to cloud');
+  } catch (e) { showAdminResult('✗ Save failed: ' + e.message, 'error'); }
 }
 
-function setResult(msg, color='var(--text-muted)'){
-  const el = document.getElementById('sync-result');
-  if(el) el.innerHTML = `<span style="color:${color}">${msg}</span>`;
-}
-
-// GET request — fetches data from sheet
-async function sheetsGET(action){
-  const url = sheetsUrl || localStorage.getItem('3rb_url');
-  if(!url) throw new Error('No URL configured');
-  // Add cache-busting timestamp
-  const res = await fetch(`${url}?action=${action}&t=${Date.now()}`, { cache:'no-store' });
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const data = await res.json();
-  if(data.status === 'error') throw new Error(data.message || 'Script error');
-  return data;
-}
-
-// POST request — writes data to sheet
-async function sheetsPOST(payload){
-  const url = sheetsUrl || localStorage.getItem('3rb_url');
-  if(!url) throw new Error('No URL configured');
-  // Apps Script requires Content-Type: text/plain to avoid CORS preflight
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  });
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const data = await res.json();
-  if(data.status === 'error') throw new Error(data.message || 'Script error');
-  return data;
-}
-
-async function connectSheets(){
-  const url = document.getElementById('sheets-url').value.trim();
-  if(!url){ setResult('⚠ Please paste your Web App URL first.','var(--amber)'); return; }
-  sheetsUrl = url;
-  localStorage.setItem('3rb_url', url);
-  setSyncUI('syncing','Connecting...');
-  setResult('🔄 Pinging server...','var(--text-muted)');
-  try{
-    const ping = await sheetsGET('ping');
-    if(ping.status !== 'ok') throw new Error('Unexpected ping response');
-    setResult('✓ Connected! Pulling latest data...','var(--green)');
-    await pullFromSheets(true);
-    startAutoSync();
-    setSyncUI('ok', '✓ Connected — auto-sync every 30s');
-    setResult('✓ Connected and synced. Auto-sync is active.','var(--green)');
-  } catch(e){
-    setSyncUI('error','Connection failed');
-    setResult('✗ Could not connect. Check that your Web App is deployed with "Anyone" access. Error: '+e.message,'var(--danger)');
+async function autoConnectSupabase() {
+  let url = localStorage.getItem('sb_url');
+  let key = localStorage.getItem('sb_key');
+  if (url && key) {
+    try {
+      supabaseClient = supabase.createClient(url, key);
+      let { error } = await supabaseClient.from('staff').select('id').limit(1);
+      if (!error) setAdminStatus('ok', 'Cloud ready');
+    } catch (e) { console.warn('Auto-connect failed'); }
   }
 }
 
-async function pullFromSheets(silent=false){
-  if(!silent){ setSyncUI('syncing','Pulling data...'); setResult('🔄 Pulling...','var(--text-muted)'); }
-  try{
-    const data = await sheetsGET('getData');
-    let changed = false;
-    if(Array.isArray(data.staff))     { state.staff     = data.staff;     changed=true; }
-    if(Array.isArray(data.inventory)) { state.inventory = data.inventory; changed=true; }
-    if(Array.isArray(data.jobs))      { state.jobs      = data.jobs;      changed=true; }
-    if(changed){
-      localSave();
-      renderAll();
-    }
-    syncActive = true;
-    setSyncUI('ok','✓ Synced with Google Sheets — '+(new Date().toLocaleTimeString()));
-    if(!silent) setResult('✓ Data pulled successfully.','var(--green)');
-  } catch(e){
-    setSyncUI('error','Pull failed: '+e.message);
-    if(!silent) setResult('✗ Pull failed: '+e.message,'var(--danger)');
-  }
+function setAdminStatus(state, msg) {
+  let bar = document.getElementById('admin-status-bar');
+  let dot = document.getElementById('admin-dot');
+  bar.className = 'admin-status-bar ' + (state === 'ok' ? 'ok' : state === 'error' ? 'err' : 'idle');
+  if (dot) dot.className = 'sync-dot ' + (state === 'ok' ? 'synced' : state === 'error' ? 'error' : '');
+  document.getElementById('admin-status-msg').textContent = msg;
 }
 
-async function pushToSheets(silent=false){
-  if(isSyncing) return;
-  isSyncing = true;
-  if(!silent){ setSyncUI('syncing','Pushing data...'); setResult('🔄 Pushing...','var(--text-muted)'); }
-  try{
-    await sheetsPOST({ action:'saveData', staff:state.staff, inventory:state.inventory, jobs:state.jobs });
-    syncActive = true;
-    setSyncUI('ok','✓ Synced — '+(new Date().toLocaleTimeString()));
-    if(!silent) setResult('✓ Data pushed to Google Sheets.','var(--green)');
-  } catch(e){
-    setSyncUI('error','Push failed: '+e.message);
-    if(!silent) setResult('✗ Push failed: '+e.message,'var(--danger)');
-  } finally{
-    isSyncing = false;
-  }
+function showAdminResult(msg, type) {
+  let el = document.getElementById('admin-result');
+  if (el) el.innerHTML = `<span style="color:${type === 'error' ? 'var(--danger)' : 'var(--green)'}">${msg}</span>`;
 }
 
-async function forceFullSync(){
-  setResult('🔄 Syncing...','var(--text-muted)');
-  await pushToSheets(false);
-  await pullFromSheets(false);
-}
-
-function startAutoSync(){
-  stopAutoSync();
-  syncTimer = setInterval(async()=>{
-    if(!syncActive || !sheetsUrl) return;
-    try{
-      const data = await sheetsGET('getData');
-      const remStr = JSON.stringify({s:data.staff, i:data.inventory, j:data.jobs});
-      const locStr = JSON.stringify({s:state.staff, i:state.inventory, j:state.jobs});
-      if(remStr !== locStr){
-        if(Array.isArray(data.staff))     state.staff     = data.staff;
-        if(Array.isArray(data.inventory)) state.inventory = data.inventory;
-        if(Array.isArray(data.jobs))      state.jobs      = data.jobs;
-        localSave();
-        renderAll();
-        setSyncUI('ok','✓ Auto-synced — '+(new Date().toLocaleTimeString()));
-      }
-    } catch(e){ /* silent fail */ }
-  }, 30000);
-}
-
-function stopAutoSync(){
-  if(syncTimer){ clearInterval(syncTimer); syncTimer=null; }
-}
-
-async function autoReconnect(){
-  // Try to silently reconnect on app load if URL was saved
-  try{
-    const ping = await sheetsGET('ping');
-    if(ping.status==='ok'){
-      await pullFromSheets(true);
-      startAutoSync();
-    }
-  } catch(e){ /* no connection, stay local */ }
-}
-
-// ================================================================
-// HELPERS
-// ================================================================
-function todayStr(){ return new Date().toISOString().split('T')[0]; }
-function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-function initials(name){ return (name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
-function pillClass(s){
-  if(s==='Scheduled'||s==='Off Shift') return 'pill-scheduled';
-  if(s==='In Progress'||s==='On Leave') return 'pill-inprogress';
-  if(s==='Done'||s==='On Shift') return 'pill-done';
-  return 'pill-scheduled';
-}
-function catEmoji(c){
-  return {Chemicals:'🧪',Equipment:'🔧',PPE:'🦺',Consumables:'🧹',Other:'📦'}[c]||'📦';
-}
-function detRow(k, v){
-  return `<div class="detail-row"><span class="dk">${k}</span><span class="dv">${v||'—'}</span></div>`;
-}
-function resetForm(ids){ ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); }
-function resetPhotoPreview(previewId, placeholderId){
-  const p=document.getElementById(previewId);
-  const h=document.getElementById(placeholderId);
-  if(p){ p.src=''; p.style.display='none'; }
-  if(h){ h.style.display='block'; }
-}
-function previewPhoto(event, previewId, placeholderId){
-  const file = event.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    const img = document.getElementById(previewId);
-    const ph  = document.getElementById(placeholderId);
-    img.src = ev.target.result; img.style.display='block';
-    if(ph) ph.style.display='none';
-  };
-  reader.readAsDataURL(file);
-}
+function saveState() { localSave(); if (supabaseClient) saveToSupabase().catch(console.warn); }
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 </script>
 </body>
 </html>
