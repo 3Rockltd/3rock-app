@@ -53,12 +53,8 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .u-role{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px}
 .logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s}
 .logout-btn:hover{border-color:var(--red-light);color:var(--red-light)}
-
-/* SYNC INDICATOR */
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s;flex-shrink:0}
-.sync-dot.synced{background:var(--green)}
-.sync-dot.error{background:var(--danger)}
-.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
+.sync-dot.synced{background:var(--green)}.sync-dot.error{background:var(--danger)}.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* BOTTOM NAV */
@@ -86,8 +82,10 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-success{background:var(--green);color:#fff}
+.btn-amber{background:var(--amber);color:#fff}
 .btn-sm{padding:5px 11px;font-size:11px}
 .btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;pointer-events:none}
 
 /* CARDS */
 .card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
@@ -97,9 +95,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
 .stat-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
-.stat-card.navy::before{background:var(--navy)}
-.stat-card.amber::before{background:var(--amber)}
-.stat-card.green::before{background:var(--green)}
+.stat-card.navy::before{background:var(--navy)}.stat-card.amber::before{background:var(--amber)}.stat-card.green::before{background:var(--green)}
 .stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--navy);line-height:1}
 .stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-top:3px;font-weight:700}
@@ -146,9 +142,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .pill-scheduled{background:#e8edf7;color:var(--navy)}
 .pill-inprogress{background:#fef3c7;color:#92400e}
 .pill-done{background:#dcfce7;color:#166534}
-.pill-onshift{background:#dcfce7;color:#166534}
-.pill-offshift{background:#f3f4f6;color:#374151}
-.pill-onleave{background:#fef3c7;color:#92400e}
+.pill-damaged{background:#fee2e2;color:#991b1b}
 
 /* SEARCH */
 .search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px}
@@ -180,6 +174,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 .inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .inv-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.inv-card.damaged-card{border-color:#fca5a5}
 .inv-img{width:100%;height:110px;object-fit:cover;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden}
 .inv-img img{width:100%;height:100%;object-fit:cover}
 .inv-body{padding:12px}
@@ -222,17 +217,19 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .form-control:focus{border-color:var(--navy)}
 textarea.form-control{resize:vertical;min-height:56px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light);flex-wrap:wrap}
 .section-sep{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--navy)}
 .section-sep.red{border-color:var(--red)}
 
 /* PHOTO UPLOAD */
+.photo-upload-wrap{position:relative}
 .photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s}
 .photo-upload-box:hover{border-color:var(--navy);background:var(--off-white)}
-.photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:1}
 .photo-preview-circle{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);margin:0 auto 6px;display:block}
 .photo-preview-rect{width:100%;height:90px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--border);display:block}
-.photo-preview-small{width:100%;height:auto;max-height:120px;object-fit:contain;border-radius:var(--r-md);border:1px solid var(--border);margin-top:5px}
+.photo-delete-btn{position:absolute;top:6px;right:6px;width:24px;height:24px;background:var(--danger);color:#fff;border:none;border-radius:50%;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;line-height:1;font-weight:700}
+.photo-delete-btn.visible{display:flex}
 
 /* VIEWER NOTICE */
 .viewer-notice{background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
@@ -256,15 +253,83 @@ textarea.form-control{resize:vertical;min-height:56px}
 .image-modal-content img{width:100%;height:auto;object-fit:contain}
 
 /* LOGS SECTION */
-.logs-section{margin-top:20px}
 .log-entry{background:#f8f9fc;border-left:3px solid var(--red);padding:10px;margin-bottom:8px;border-radius:var(--r-md);font-size:12px}
 .log-date{font-weight:700;color:var(--navy);margin-bottom:4px}
 .log-details{color:var(--text-secondary)}
 
+/* ===================== TASK TRACKING ===================== */
+.task-header-bar{background:var(--navy);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.task-location-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#fff}
+.task-date-lbl{font-size:11px;color:rgba(255,255,255,.5)}
+.task-progress-ring{width:56px;height:56px;flex-shrink:0}
+.shift-tabs{display:flex;gap:4px;margin-bottom:14px}
+.shift-tab{flex:1;padding:8px 4px;border-radius:var(--r-md);border:1.5px solid var(--border);background:#fff;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer;text-align:center;transition:all .2s}
+.shift-tab.active.morning{background:#fef3c7;border-color:#d97706;color:#92400e}
+.shift-tab.active.noon{background:#dbeafe;border-color:#2563eb;color:#1e40af}
+.shift-tab.active.night{background:#ede9fe;border-color:#7c3aed;color:#4c1d95}
+.task-zone-header{background:var(--surface);padding:8px 12px;border-radius:var(--r-sm);margin-bottom:6px;font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between}
+.task-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:5px;transition:all .2s;cursor:pointer}
+.task-item.done{background:#f0fdf4;border-color:#86efac}
+.task-item.done .task-name{text-decoration:line-through;color:var(--text-muted)}
+.task-checkbox{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s}
+.task-item.done .task-checkbox{background:var(--green);border-color:var(--green);color:#fff}
+.task-name{font-size:13px;font-weight:500;color:var(--text-primary);flex:1}
+.task-by{font-size:10px;color:var(--text-muted);margin-top:1px}
+.progress-summary{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:14px;margin-bottom:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.prog-item{text-align:center}
+.prog-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)}
+.prog-lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.prog-bar-wrap{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;margin:10px 0}
+.prog-bar{height:100%;background:var(--green);border-radius:4px;transition:width .5s}
+
+/* CLEANER TASK VIEW */
+.cleaner-welcome{background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:var(--r-lg);padding:20px;margin-bottom:16px;color:#fff}
+.cleaner-name-big{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800}
+.cleaner-shift-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:6px}
+.shift-morning{background:#fef3c7;color:#92400e}
+.shift-noon{background:#dbeafe;color:#1e40af}
+.shift-night{background:#ede9fe;color:#4c1d95}
+
+/* ATTENDANCE */
+.attend-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.attend-avatar{width:40px;height:40px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.attend-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.attend-name{font-size:13px;font-weight:600;color:var(--navy)}
+.attend-info{font-size:11px;color:var(--text-muted);margin-top:1px}
+.attend-actions{margin-left:auto;display:flex;gap:6px}
+.check-btn{padding:5px 10px;border-radius:var(--r-sm);font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Barlow',sans-serif}
+.check-in-btn{background:#dcfce7;color:#166534}
+.check-out-btn{background:#fee2e2;color:#991b1b}
+.checked-in-lbl{font-size:10px;color:var(--green);font-weight:700}
+.checked-out-lbl{font-size:10px;color:var(--text-muted);font-weight:700}
+
+/* DAMAGE REPORT */
+.damage-card{background:#fff;border:1px solid #fca5a5;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:8px}
+.damage-header{background:#fee2e2;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.damage-item-name{font-size:13px;font-weight:700;color:#991b1b}
+.damage-date{font-size:10px;color:#b91c1c}
+.damage-body{padding:12px 14px}
+.damage-desc{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.damage-img-thumb{width:64px;height:64px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--border);cursor:pointer}
+
+/* INCIDENT */
+.incident-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow-sm)}
+.incident-header{display:flex;justify-content:space-between;margin-bottom:6px}
+.incident-type{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.4px}
+.incident-date{font-size:10px;color:var(--text-muted)}
+.incident-desc{font-size:12px;color:var(--text-secondary)}
+.incident-reporter{font-size:10px;color:var(--text-muted);margin-top:4px}
+
+/* SUPPLY REQUEST */
+.supply-req-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.req-status{padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase}
+.req-pending{background:#fef3c7;color:#92400e}
+.req-approved{background:#dcfce7;color:#166534}
+.req-declined{background:#fee2e2;color:#991b1b}
+
 /* RESPONSIVE */
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
-
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
@@ -283,7 +348,12 @@ textarea.form-control{resize:vertical;min-height:56px}
       <option value="director">Director</option>
       <option value="manager">Manager</option>
       <option value="supervisor">Supervisor</option>
+      <option value="cleaner">Cleaner</option>
     </select>
+    <div id="cleaner-select-wrap" style="display:none">
+      <label class="auth-label">Select Your Name</label>
+      <select class="auth-input" id="auth-cleaner-name"></select>
+    </div>
     <label class="auth-label">Password</label>
     <input type="password" class="auth-input" id="auth-pass" placeholder="Enter password">
     <button class="auth-btn" onclick="handleLogin()">Sign In →</button>
@@ -346,7 +416,9 @@ textarea.form-control{resize:vertical;min-height:56px}
         </div>
       </div>
       <div id="director-metrics-section" style="display:none">
-        <div class="section-title">Overview</div>
+        <div class="section-title">Today's Task Progress</div>
+        <div id="dash-task-progress" class="card"></div>
+        <div class="section-title">Staff & Jobs Overview</div>
         <div class="card">
           <div class="card-title">Staff Status</div>
           <div id="staff-bars"></div>
@@ -392,6 +464,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         <button class="tab" onclick="filterInv('Equipment',this)">Equipment</button>
         <button class="tab" onclick="filterInv('PPE',this)">PPE</button>
         <button class="tab" onclick="filterInv('Consumables',this)">Consumables</button>
+        <button class="tab" onclick="filterInv('__damaged__',this)">⚠ Damaged</button>
       </div>
       <div id="inventory-grid" class="inv-grid"></div>
     </div>
@@ -413,13 +486,17 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div id="jobs-list"></div>
     </div>
 
+    <!-- TASKS SCREEN -->
+    <div class="screen" id="screen-tasks">
+      <div id="tasks-content"></div>
+    </div>
+
     <!-- REPORTS -->
     <div class="screen" id="screen-reports">
       <div class="page-header">
         <div class="page-title">Reports & Analytics</div>
-        <div class="page-sub">Job performance and inventory usage</div>
+        <div class="page-sub">Job performance, task completion and inventory</div>
       </div>
-
       <div class="section-title">Jobs Summary</div>
       <div class="card">
         <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
@@ -434,61 +511,63 @@ textarea.form-control{resize:vertical;min-height:56px}
         </div>
         <div id="report-summary"></div>
       </div>
+      <div class="section-title">Task Completion Report</div>
+      <div class="card" id="report-tasks"></div>
+      <div class="section-title">Incidents & Supply Requests</div>
+      <div class="card" id="report-incidents"></div>
       <div class="section-title">Inventory Usage</div>
       <div class="card" id="report-inv"></div>
     </div>
+
   </main>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-    <button class="nav-item" onclick="goToTab('staff')" id="nav-staff"><span class="nav-icon">👥</span><span class="nav-label">Staff</span></button>
-    <button class="nav-item" onclick="goToTab('inventory')" id="nav-inventory"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></button>
-    <button class="nav-item" onclick="goToTab('jobs')" id="nav-jobs"><span class="nav-icon">📋</span><span class="nav-label">Jobs</span></button>
-    <button class="nav-item" onclick="goToTab('reports')" id="nav-reports"><span class="nav-icon">📊</span><span class="nav-label">Reports</span></button>
-  </nav>
+  <!-- BOTTOM NAV - changes based on role -->
+  <nav class="bottom-nav" id="bottom-nav"></nav>
 </div>
 
-<!-- STAFF MODAL -->
+<!-- ========== MODALS ========== -->
+
+<!-- STAFF ADD MODAL -->
 <div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="overlayClick(event,'modal-add-staff')">
-  <div class="modal"><div class="modal-header"><span class="modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
+  <div class="modal"><div class="modal-header"><span class="modal-title" id="add-staff-modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
   <div class="modal-body">
     <div class="section-sep">Staff Photo</div>
-    <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div></div>
-    
+    <div class="form-group"><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder','del-staff-photo')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div><button type="button" class="photo-delete-btn" id="del-staff-photo" onclick="clearPhoto('staff-photo-preview','staff-photo-placeholder','del-staff-photo')" title="Remove photo">✕</button></div></div>
     <div class="section-sep">Personal Information</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"></div></div>
     <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card ID</label><input type="text" class="form-control" id="sf-ghana"></div><div class="form-group"><label class="form-label">SSNIT Number</label><input type="text" class="form-control" id="sf-ssnit"></div></div>
-    
-    <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card Front</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-front-preview','ghana-front-placeholder')"><img src="" id="ghana-front-preview" class="photo-preview-rect" style="display:none"><div id="ghana-front-placeholder">📷 Upload</div></div></div>
-    <div class="form-group"><label class="form-label">Ghana Card Back</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-back-preview','ghana-back-placeholder')"><img src="" id="ghana-back-preview" class="photo-preview-rect" style="display:none"><div id="ghana-back-placeholder">📷 Upload</div></div></div></div>
-    
+    <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card Front</label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-front-preview','ghana-front-placeholder','del-ghana-front')"><img src="" id="ghana-front-preview" class="photo-preview-rect" style="display:none"><div id="ghana-front-placeholder">📷 Upload</div></div><button type="button" class="photo-delete-btn" id="del-ghana-front" onclick="clearPhoto('ghana-front-preview','ghana-front-placeholder','del-ghana-front')" title="Remove">✕</button></div></div>
+    <div class="form-group"><label class="form-label">Ghana Card Back</label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-back-preview','ghana-back-placeholder','del-ghana-back')"><img src="" id="ghana-back-preview" class="photo-preview-rect" style="display:none"><div id="ghana-back-placeholder">📷 Upload</div></div><button type="button" class="photo-delete-btn" id="del-ghana-back" onclick="clearPhoto('ghana-back-preview','ghana-back-placeholder','del-ghana-back')" title="Remove">✕</button></div></div></div>
     <div class="section-sep">Employment Details</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option><option>Driver</option><option>Equipment Officer</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div><div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div></div>
-    
     <div class="section-sep red">Family & Marital Status</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Marital Status</label><select class="form-control" id="sf-marital" onchange="toggleFamilyFields()"><option value="Single">Single</option><option value="Married">Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option><option value="Other">Other</option></select></div>
-      <div class="form-group" id="other-marital-group" style="display:none"><label class="form-label">Specify (Other)</label><input type="text" class="form-control" id="sf-marital-other" placeholder="Enter marital status"></div>
+      <div class="form-group" id="other-marital-group" style="display:none"><label class="form-label">Specify (Other)</label><input type="text" class="form-control" id="sf-marital-other"></div>
     </div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name" placeholder="If applicable"></div></div>
-    <div class="form-group"><label class="form-label">Partner/Spouse Contact</label><input type="tel" class="form-control" id="sf-spouse-contact" placeholder="Phone number (if applicable)"></div>
-    
+    <div class="form-row"><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name"></div></div>
+    <div class="form-group"><label class="form-label">Partner/Spouse Contact</label><input type="tel" class="form-control" id="sf-spouse-contact"></div>
     <div class="section-sep">Emergency Contact</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Contact Name</label><input type="text" class="form-control" id="sf-emerg-name"></div><div class="form-group"><label class="form-label">Contact Phone</label><input type="tel" class="form-control" id="sf-emerg-phone"></div></div>
     <div class="form-group"><label class="form-label">Relationship</label><select class="form-control" id="sf-emerg-rel"><option>Spouse/Partner</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option><option>Friend</option></select></div>
-    
     <div class="section-sep">Bank Details</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div><div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div></div>
-    
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Enrol Staff Member</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="save-staff-btn" onclick="saveStaff()">Enrol Staff Member</button></div>
   </div></div>
 </div>
 
 <!-- STAFF PROFILE MODAL -->
 <div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
-  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
+  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div>
+  <div class="modal-body"><div id="prof-details"></div>
+  <div class="form-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button>
+    <button class="btn btn-outline btn-sm" onclick="printStaffPDF()" id="prof-pdf-btn">📄 PDF</button>
+    <button class="btn btn-amber btn-sm" onclick="openEditStaff()" id="prof-edit-btn">✏️ Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()" id="prof-delete-btn">Remove</button>
+  </div></div></div>
 </div>
 
 <!-- IMAGE VIEW MODAL -->
@@ -499,7 +578,7 @@ textarea.form-control{resize:vertical;min-height:56px}
 <!-- INVENTORY MODAL -->
 <div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="overlayClick(event,'modal-add-inv')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
-  <div class="modal-body"><div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div></div>
+  <div class="modal-body"><div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder','del-inv-img')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div><button type="button" class="photo-delete-btn" id="del-inv-img" onclick="clearPhoto('inv-img-preview','inv-img-placeholder','del-inv-img')" title="Remove image">✕</button></div></div>
   <div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option></select></div></div>
   <div class="form-row"><div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option></select></div></div>
   <div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div>
@@ -508,90 +587,154 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div></div>
 </div>
 
-<!-- INVENTORY DETAIL & DAILY LOGS MODAL -->
+<!-- INVENTORY DETAIL MODAL -->
 <div class="modal-overlay center-ov" id="modal-inv-detail" style="display:none" onclick="overlayClick(event,'modal-inv-detail')">
   <div class="modal center-m"><div class="modal-header"><span class="modal-title" id="inv-detail-title">Inventory Item</span><button class="modal-close" onclick="closeModal('modal-inv-detail')">✕</button></div>
   <div class="modal-body"><div id="inv-detail-info"></div><div id="inv-qty-ctrl" style="margin:15px 0"></div>
-  <div class="section-sep">Daily Usage Logs</div>
-  <div id="inv-usage-logs"></div>
-  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button><button class="btn btn-primary" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Daily Usage</button><button class="btn btn-danger btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button></div>
-  </div></div>
+  <div class="section-sep">Daily Usage Logs</div><div id="inv-usage-logs"></div>
+  <div class="section-sep" style="border-color:var(--danger)">Damage Reports</div><div id="inv-damage-logs"></div>
+  <div class="form-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button>
+    <button class="btn btn-primary" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Usage</button>
+    <button class="btn btn-danger btn-sm" id="report-damage-btn" onclick="openDamageModal()">⚠ Report Damage</button>
+    <button class="btn btn-outline btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button>
+  </div></div></div>
 </div>
 
 <!-- LOG USAGE MODAL -->
 <div class="modal-overlay center-ov" id="modal-log-usage" style="display:none" onclick="overlayClick(event,'modal-log-usage')">
   <div class="modal center-m"><div class="modal-header"><span class="modal-title">Log Daily Inventory Usage</span><button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button></div>
-  <div class="modal-body"><div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly style="background:#e8edf7"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1" placeholder="0"></div><div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly style="background:#e8edf7"></div></div>
-  <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="log-date"></div>
-  <div class="form-group"><label class="form-label">Job / Project Name</label><input type="text" class="form-control" id="log-job" placeholder="e.g., Accra Mall Deep Clean"></div>
-  <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-control" id="log-notes" rows="2" placeholder="Any additional info..."></textarea></div>
-  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" onclick="saveUsageLog()">✅ Log Usage & Update Stock</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly style="background:#e8edf7"></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1" placeholder="0"></div><div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly style="background:#e8edf7"></div></div>
+    <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="log-date"></div>
+    <div class="form-group"><label class="form-label">Job / Project Name</label><input type="text" class="form-control" id="log-job"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-control" id="log-notes" rows="2"></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" onclick="saveUsageLog()">✅ Log Usage & Update Stock</button></div>
+  </div></div>
+</div>
+
+<!-- DAMAGE REPORT MODAL -->
+<div class="modal-overlay center-ov" id="modal-damage-report" style="display:none" onclick="overlayClick(event,'modal-damage-report')">
+  <div class="modal center-m"><div class="modal-header" style="background:#991b1b"><span class="modal-title">⚠ Report Damaged Item</span><button class="modal-close" onclick="closeModal('modal-damage-report')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="dmg-item-name" readonly style="background:#fee2e2"></div>
+    <div class="form-group"><label class="form-label">Date of Damage *</label><input type="date" class="form-control" id="dmg-date"></div>
+    <div class="form-group"><label class="form-label">Description of Damage *</label><textarea class="form-control" id="dmg-desc" rows="3" placeholder="Describe what happened and extent of damage..."></textarea></div>
+    <div class="form-group"><label class="form-label">Quantity Damaged</label><input type="number" class="form-control" id="dmg-qty" min="0" placeholder="0 (if stock affected)"></div>
+    <div class="form-group"><label class="form-label">Damage Photo</label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'dmg-photo-preview','dmg-photo-placeholder','del-dmg-photo')"><img src="" class="photo-preview-rect" id="dmg-photo-preview" style="display:none"><div id="dmg-photo-placeholder">📷 Tap to upload damage photo</div></div><button type="button" class="photo-delete-btn" id="del-dmg-photo" onclick="clearPhoto('dmg-photo-preview','dmg-photo-placeholder','del-dmg-photo')" title="Remove photo">✕</button></div></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-damage-report')">Cancel</button><button class="btn btn-danger" onclick="saveDamageReport()">Submit Damage Report</button></div>
   </div></div>
 </div>
 
 <!-- JOB MODAL -->
 <div class="modal-overlay" id="modal-add-job" style="display:none" onclick="overlayClick(event,'modal-add-job')">
   <div class="modal"><div class="modal-header"><span class="modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
-  <div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location"></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option><option>Office Clean</option></select></div><div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control" id="jf-time"></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div></div>
-  <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes"></textarea></div>
-  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Schedule Job</button></div>
+  <div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option><option>Office Clean</option></select></div><div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control" id="jf-time"></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div></div>
+    <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes"></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Schedule Job</button></div>
   </div></div>
+</div>
+
+<!-- ADD TASK ZONE MODAL -->
+<div class="modal-overlay center-ov" id="modal-add-zone" style="display:none" onclick="overlayClick(event,'modal-add-zone')">
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Add Zone / Area</span><button class="modal-close" onclick="closeModal('modal-add-zone')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Zone Name *</label><input type="text" class="form-control" id="zone-name" placeholder="e.g. Ground Floor, Block A..."></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-zone')">Cancel</button><button class="btn btn-primary" onclick="saveZone()">Add Zone</button></div>
+  </div></div>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay center-ov" id="modal-add-task" style="display:none" onclick="overlayClick(event,'modal-add-task')">
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Add Task</span><button class="modal-close" onclick="closeModal('modal-add-task')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Task Name *</label><input type="text" class="form-control" id="task-name-input" placeholder="e.g. Office 301, Reception Area..."></div>
+    <div class="form-group"><label class="form-label">Zone</label><select class="form-control" id="task-zone-select"></select></div>
+    <div class="form-group"><label class="form-label">Assigned Shift</label><select class="form-control" id="task-shift-select"><option value="Morning">Morning</option><option value="Noon">Noon</option><option value="Night">Night</option><option value="All">All Shifts</option></select></div>
+    <div class="form-group"><label class="form-label">Frequency</label><select class="form-control" id="task-freq-select"><option value="Daily">Daily</option><option value="Weekly">Weekly</option><option value="Monthly">Monthly</option></select></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-task')">Cancel</button><button class="btn btn-primary" onclick="saveTask()">Add Task</button></div>
+  </div></div>
+</div>
+
+<!-- INCIDENT REPORT MODAL -->
+<div class="modal-overlay center-ov" id="modal-incident" style="display:none" onclick="overlayClick(event,'modal-incident')">
+  <div class="modal center-m"><div class="modal-header" style="background:#7c3aed"><span class="modal-title">Report Incident</span><button class="modal-close" onclick="closeModal('modal-incident')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Incident Type *</label><select class="form-control" id="inc-type"><option>Accident / Injury</option><option>Client Complaint</option><option>Equipment Damage</option><option>Spill / Hazard</option><option>Security Issue</option><option>Other</option></select></div>
+    <div class="form-group"><label class="form-label">Location / Area</label><input type="text" class="form-control" id="inc-location" placeholder="Where did this happen?"></div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea class="form-control" id="inc-desc" rows="4" placeholder="Describe what happened..."></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-incident')">Cancel</button><button class="btn btn-primary" style="background:#7c3aed" onclick="saveIncident()">Submit Report</button></div>
+  </div></div>
+</div>
+
+<!-- SUPPLY REQUEST MODAL -->
+<div class="modal-overlay center-ov" id="modal-supply-req" style="display:none" onclick="overlayClick(event,'modal-supply-req')">
+  <div class="modal center-m"><div class="modal-header" style="background:#0369a1"><span class="modal-title">Request Supplies</span><button class="modal-close" onclick="closeModal('modal-supply-req')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Item Needed *</label><input type="text" class="form-control" id="req-item" placeholder="e.g. Floor cleaner, Mop heads..."></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="req-qty" min="1" placeholder="1"></div><div class="form-group"><label class="form-label">Urgency</label><select class="form-control" id="req-urgency"><option>Normal</option><option>Urgent</option></select></div></div>
+    <div class="form-group"><label class="form-label">Reason / Notes</label><textarea class="form-control" id="req-notes" rows="2"></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-supply-req')">Cancel</button><button class="btn btn-primary" style="background:#0369a1" onclick="saveSupplyRequest()">Submit Request</button></div>
+  </div></div>
+</div>
+
+<!-- ATTENDANCE MODAL (supervisor) -->
+<div class="modal-overlay" id="modal-attendance" style="display:none" onclick="overlayClick(event,'modal-attendance')">
+  <div class="modal"><div class="modal-header"><span class="modal-title">Today's Attendance</span><button class="modal-close" onclick="closeModal('modal-attendance')">✕</button></div>
+  <div class="modal-body"><div id="attendance-list"></div></div></div>
 </div>
 
 <script>
 // ================================================================
-// SUPABASE CONFIGURATION
+// SUPABASE
 // ================================================================
 const SUPABASE_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
-
-// ================================================================
-// FIX 1: Initialize Supabase BEFORE any other code uses it
-// In the original code, supabaseClient was declared with `let` but
-// the createClient call was at the bottom of the declarations block.
-// This is safe in a script tag but we make it explicit here.
-// ================================================================
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
-let state = { staff: [], inventory: [], jobs: [] };
+let editingStaffId = null;
+let state = { staff: [], inventory: [], jobs: [], tasks: [], zones: [], taskLogs: [], incidents: [], supplyRequests: [], attendance: [], damageReports: [] };
 let currentStaffId = null;
 let currentInvId = null;
 let syncInProgress = false;
 let syncQueue = [];
-const PASSWORDS = { director: 'Director@3Rock', manager: 'Manager@3Rock', supervisor: 'Supervisor@3Rock' };
-const STORAGE_KEY = '3rock_v5';
+let activeShift = 'Morning';
+
+const PASSWORDS = {
+  director: 'Director@3Rock',
+  manager: 'Manager@3Rock',
+  supervisor: 'Supervisor@3Rock',
+  cleaner: 'Cleaner@3Rock'
+};
+const STORAGE_KEY = '3rock_v6';
 
 // ================================================================
 // LOCAL STORAGE
 // ================================================================
-function localSave() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function localSave() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
 function localLoad() {
   let d = localStorage.getItem(STORAGE_KEY);
-  if (d) { try { state = JSON.parse(d); } catch(e) { state = { staff: [], inventory: [], jobs: [] }; } }
-  else { state = { staff: [], inventory: [], jobs: [] }; localSave(); }
+  if (d) { try { let s = JSON.parse(d); state = { ...state, ...s }; } catch(e) {} }
 }
 localLoad();
 
 // ================================================================
-// FIX 2: Compress images before storing to prevent row-size
-// overflow that causes silent Supabase upsert failures.
-// Large base64 images (>1MB) would silently break the entire sync.
+// IMAGE COMPRESSION
 // ================================================================
 function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
   return new Promise((resolve) => {
-    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(dataUrl); return; }
+    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(''); return; }
     let img = new Image();
     img.onload = () => {
       let canvas = document.createElement('canvas');
       let scale = Math.min(1, maxWidth / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      let ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.width = img.width * scale; canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.onerror = () => resolve('');
@@ -600,47 +743,33 @@ function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
 }
 
 // ================================================================
-// FIX 3: Sync functions — added `onConflict: 'id'` so Supabase
-// knows to UPDATE existing rows instead of failing on duplicates.
-// Also added per-table error logging so failures are visible.
-// Also handle the case where arrays (usageLog) need to be stored
-// as jsonb — the upsert sends them correctly as JSON objects.
+// CLOUD SYNC
 // ================================================================
 async function syncToCloud() {
   if (syncInProgress) { syncQueue.push('sync'); return; }
-  syncInProgress = true;
-  setSyncDot('syncing');
-
+  syncInProgress = true; setSyncDot('syncing');
   try {
-    // Sync staff — upsert with explicit conflict column
-    if (state.staff.length > 0) {
-      const { error: sErr } = await supabaseClient
-        .from('staff')
-        .upsert(state.staff, { onConflict: 'id' });
-      if (sErr) console.error('Staff sync error:', sErr.message, sErr.details);
+    const tables = [
+      { name: 'staff', data: state.staff },
+      { name: 'inventory', data: state.inventory },
+      { name: 'jobs', data: state.jobs },
+      { name: 'tasks', data: state.tasks },
+      { name: 'zones', data: state.zones },
+      { name: 'tasklogs', data: state.taskLogs },
+      { name: 'incidents', data: state.incidents },
+      { name: 'supplyrequests', data: state.supplyRequests },
+      { name: 'attendance', data: state.attendance },
+      { name: 'damagereports', data: state.damageReports }
+    ];
+    for (let t of tables) {
+      if (t.data && t.data.length > 0) {
+        const { error } = await supabaseClient.from(t.name).upsert(t.data, { onConflict: 'id' });
+        if (error) console.error(t.name + ' sync error:', error.message);
+      }
     }
-
-    // Sync inventory — usageLog array is stored as jsonb
-    if (state.inventory.length > 0) {
-      const { error: iErr } = await supabaseClient
-        .from('inventory')
-        .upsert(state.inventory, { onConflict: 'id' });
-      if (iErr) console.error('Inventory sync error:', iErr.message, iErr.details);
-    }
-
-    // Sync jobs
-    if (state.jobs.length > 0) {
-      const { error: jErr } = await supabaseClient
-        .from('jobs')
-        .upsert(state.jobs, { onConflict: 'id' });
-      if (jErr) console.error('Jobs sync error:', jErr.message, jErr.details);
-    }
-
     setSyncDot('synced');
-  } catch (error) {
-    console.error('Sync failed:', error);
-    setSyncDot('error');
-  } finally {
+  } catch(e) { console.error('Sync failed:', e); setSyncDot('error'); }
+  finally {
     syncInProgress = false;
     if (syncQueue.length > 0) { syncQueue.shift(); syncToCloud(); }
   }
@@ -648,104 +777,91 @@ async function syncToCloud() {
 
 async function loadFromCloud() {
   try {
-    const [staffRes, invRes, jobsRes] = await Promise.all([
-      supabaseClient.from('staff').select('*'),
-      supabaseClient.from('inventory').select('*'),
-      supabaseClient.from('jobs').select('*')
-    ]);
-
-    // FIX 4: Check each table result individually and log errors
-    if (staffRes.error) {
-      console.error('Load staff error:', staffRes.error.message);
-    } else if (staffRes.data) {
-      state.staff = staffRes.data;
-    }
-
-    if (invRes.error) {
-      console.error('Load inventory error:', invRes.error.message);
-    } else if (invRes.data) {
-      // FIX 5: Ensure usageLog is always an array after loading from DB
-      state.inventory = invRes.data.map(item => ({
-        ...item,
-        usageLog: Array.isArray(item.usagelog || item.usageLog)
-          ? (item.usagelog || item.usageLog)
-          : []
-      }));
-    }
-
-    if (jobsRes.error) {
-      console.error('Load jobs error:', jobsRes.error.message);
-    } else if (jobsRes.data) {
-      state.jobs = jobsRes.data;
-    }
-
-    localSave();
-    renderAll();
-    setSyncDot('synced');
-  } catch (error) {
-    console.error('Load from cloud failed:', error);
-    setSyncDot('error');
-    // Fall back to local data silently
-    renderAll();
-  }
+    const loads = [
+      { key: 'staff', table: 'staff' },
+      { key: 'inventory', table: 'inventory' },
+      { key: 'jobs', table: 'jobs' },
+      { key: 'tasks', table: 'tasks' },
+      { key: 'zones', table: 'zones' },
+      { key: 'taskLogs', table: 'tasklogs' },
+      { key: 'incidents', table: 'incidents' },
+      { key: 'supplyRequests', table: 'supplyrequests' },
+      { key: 'attendance', table: 'attendance' },
+      { key: 'damageReports', table: 'damagereports' }
+    ];
+    const results = await Promise.all(loads.map(l => supabaseClient.from(l.table).select('*')));
+    results.forEach((r, i) => {
+      if (!r.error && r.data) {
+        let key = loads[i].key;
+        if (key === 'inventory') {
+          state[key] = r.data.map(item => ({ ...item, usageLog: Array.isArray(item.usagelog || item.usageLog) ? (item.usagelog || item.usageLog) : [], damageReports: Array.isArray(item.damagereports || item.damageReports) ? (item.damagereports || item.damageReports) : [] }));
+        } else {
+          state[key] = r.data;
+        }
+      }
+    });
+    localSave(); renderAll(); setSyncDot('synced');
+  } catch(e) { console.error('Load failed:', e); setSyncDot('error'); renderAll(); }
 }
 
-// FIX 6: Deleted records must also be deleted from Supabase,
-// not just removed from local state. Added deleteFromCloud helper.
 async function deleteFromCloud(table, id) {
-  try {
-    const { error } = await supabaseClient.from(table).delete().eq('id', id);
-    if (error) console.error(`Delete from ${table} error:`, error.message);
-  } catch (e) {
-    console.error('Delete error:', e);
-  }
+  try { await supabaseClient.from(table).delete().eq('id', id); } catch(e) {}
 }
 
-function setSyncDot(state) {
-  let dot = document.getElementById('sync-dot');
-  if (dot) dot.className = 'sync-dot ' + state;
-}
-
+function setSyncDot(s) { let d = document.getElementById('sync-dot'); if (d) d.className = 'sync-dot ' + s; }
 function saveState() { localSave(); syncToCloud(); }
 
-async function initCloudData() {
-  setSyncDot('syncing');
-  await loadFromCloud();
-}
-
 // ================================================================
-// HELPER FUNCTIONS
+// HELPERS
 // ================================================================
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function initials(n) { return (n || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
 function pillClass(s) { if (s === 'On Shift' || s === 'Done') return 'pill-done'; if (s === 'On Leave' || s === 'In Progress') return 'pill-inprogress'; return 'pill-scheduled'; }
 function detRow(k, v, clickable = false, onclick = '') { return `<div class="detail-row ${clickable ? 'clickable' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="dk">${k}</span><span class="dv">${v || '—'}</span></div>`; }
-
-function toggleFamilyFields() {
-  let marital = document.getElementById('sf-marital').value;
-  let otherGroup = document.getElementById('other-marital-group');
-  if (marital === 'Other') otherGroup.style.display = 'block';
-  else otherGroup.style.display = 'none';
-}
-
-function previewPhoto(event, previewId, placeholderId) {
+function toggleFamilyFields() { let m = document.getElementById('sf-marital').value; document.getElementById('other-marital-group').style.display = m === 'Other' ? 'block' : 'none'; }
+function previewPhoto(event, previewId, placeholderId, deleteBtnId) {
   let f = event.target.files[0]; if (!f) return;
   let r = new FileReader();
-  r.onload = ev => { let img = document.getElementById(previewId); let ph = document.getElementById(placeholderId); img.src = ev.target.result; img.style.display = 'block'; if (ph) ph.style.display = 'none'; };
+  r.onload = ev => {
+    let img = document.getElementById(previewId);
+    let ph = document.getElementById(placeholderId);
+    img.src = ev.target.result; img.style.display = 'block';
+    if (ph) ph.style.display = 'none';
+    if (deleteBtnId) { let db = document.getElementById(deleteBtnId); if (db) db.classList.add('visible'); }
+  };
   r.readAsDataURL(f);
 }
 
-function viewImage(imageSrc, title) {
-  if (!imageSrc || !imageSrc.startsWith('data:')) { alert('No image available'); return; }
-  document.getElementById('image-modal-title').textContent = title;
-  document.getElementById('image-view-img').src = imageSrc;
-  openModal('modal-image-view');
+function clearPhoto(previewId, placeholderId, deleteBtnId) {
+  let img = document.getElementById(previewId);
+  let ph = document.getElementById(placeholderId);
+  let db = document.getElementById(deleteBtnId);
+  if (img) { img.src = ''; img.style.display = 'none'; }
+  if (ph) ph.style.display = 'block';
+  if (db) db.classList.remove('visible');
+  // Also clear the file input inside the same upload box
+  let box = db ? db.previousElementSibling : null;
+  if (box) { let fileInput = box.querySelector('input[type=file]'); if (fileInput) fileInput.value = ''; }
 }
+function viewImage(imageSrc, title) { if (!imageSrc || !imageSrc.startsWith('data:')) { alert('No image available'); return; } document.getElementById('image-modal-title').textContent = title; document.getElementById('image-view-img').src = imageSrc; openModal('modal-image-view'); }
+function canEdit() { return currentUser && (currentUser.role === 'supervisor' || currentUser.role === 'manager'); }
+function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
+function isManagement() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
 // ================================================================
 // AUTHENTICATION
 // ================================================================
+document.getElementById('auth-role').addEventListener('change', function() {
+  let wrap = document.getElementById('cleaner-select-wrap');
+  if (this.value === 'cleaner') {
+    wrap.style.display = 'block';
+    let sel = document.getElementById('auth-cleaner-name');
+    let cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
+    sel.innerHTML = cleaners.length ? cleaners.map(c => `<option value="${c.id}">${c.name} (${c.shift || 'Morning'})</option>`).join('') : '<option value="">No cleaners enrolled yet</option>';
+  } else { wrap.style.display = 'none'; }
+});
+
 function handleLogin() {
   let role = document.getElementById('auth-role').value;
   let pass = document.getElementById('auth-pass').value;
@@ -753,18 +869,31 @@ function handleLogin() {
   if (!role) { err.style.display = 'block'; err.textContent = 'Select role'; return; }
   if (PASSWORDS[role] !== pass) { err.style.display = 'block'; err.textContent = 'Incorrect password'; return; }
   err.style.display = 'none';
-  currentUser = { role, name: role.charAt(0).toUpperCase() + role.slice(1) };
+  let name = role.charAt(0).toUpperCase() + role.slice(1);
+  let staffRef = null;
+  if (role === 'cleaner') {
+    let cleanerId = document.getElementById('auth-cleaner-name').value;
+    staffRef = state.staff.find(s => s.id === cleanerId);
+    if (!staffRef) { err.style.display = 'block'; err.textContent = 'No cleaner selected'; return; }
+    name = staffRef.name;
+  }
+  currentUser = { role, name, staffRef };
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-  document.getElementById('hdr-avatar').textContent = role[0].toUpperCase();
-  document.getElementById('hdr-name').textContent = currentUser.name;
+  document.getElementById('hdr-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('hdr-name').textContent = name;
   document.getElementById('hdr-role').textContent = role.toUpperCase();
   initApp();
 }
 
-function handleLogout() { currentUser = null; document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('auth-pass').value = ''; document.getElementById('auth-role').value = ''; }
-function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
-function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
+function handleLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-pass').value = '';
+  document.getElementById('auth-role').value = '';
+  document.getElementById('cleaner-select-wrap').style.display = 'none';
+}
 
 // ================================================================
 // APP INITIALIZATION
@@ -772,14 +901,35 @@ function canPrint() { return currentUser && ['director', 'manager', 'supervisor'
 async function initApp() {
   updateDateTime();
   setInterval(updateDateTime, 60000);
-  buildQuickActions();
-  buildActionBars();
-  if (['director', 'manager'].includes(currentUser.role)) {
-    document.getElementById('director-kpi').style.display = 'block';
-    document.getElementById('director-metrics-section').style.display = 'block';
+  buildBottomNav();
+  if (isManagement()) {
+    buildQuickActions();
+    buildActionBars();
+    if (['director', 'manager'].includes(currentUser.role)) {
+      document.getElementById('director-kpi').style.display = 'block';
+      document.getElementById('director-metrics-section').style.display = 'block';
+    }
   }
-  await initCloudData();
+  setSyncDot('syncing');
+  await loadFromCloud();
   renderAll();
+}
+
+function buildBottomNav() {
+  let nav = document.getElementById('bottom-nav');
+  if (currentUser.role === 'cleaner') {
+    nav.innerHTML = `
+      <button class="nav-item active" onclick="goToTab('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">My Tasks</span></button>
+      <button class="nav-item" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>`;
+  } else {
+    nav.innerHTML = `
+      <button class="nav-item active" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+      <button class="nav-item" onclick="goToTab('staff')" id="nav-staff"><span class="nav-icon">👥</span><span class="nav-label">Staff</span></button>
+      <button class="nav-item" onclick="goToTab('inventory')" id="nav-inventory"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></button>
+      <button class="nav-item" onclick="goToTab('jobs')" id="nav-jobs"><span class="nav-icon">📋</span><span class="nav-label">Jobs</span></button>
+      <button class="nav-item" onclick="goToTab('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>
+      <button class="nav-item" onclick="goToTab('reports')" id="nav-reports"><span class="nav-icon">📊</span><span class="nav-label">Reports</span></button>`;
+  }
 }
 
 function updateDateTime() {
@@ -787,66 +937,107 @@ function updateDateTime() {
   let now = new Date();
   let h = now.getHours();
   let g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dash-greeting').textContent = `${g}, ${currentUser.name} 👋`;
-  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  let el = document.getElementById('dash-greeting');
+  if (el) el.textContent = `${g}, ${currentUser.name} 👋`;
+  let de = document.getElementById('dash-date');
+  if (de) de.textContent = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function goToTab(tab) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('screen-' + tab).classList.add('active');
-  document.getElementById('nav-' + tab).classList.add('active');
+  let screenEl = document.getElementById('screen-' + tab);
+  let navEl = document.getElementById('nav-' + tab);
+  if (screenEl) screenEl.classList.add('active');
+  if (navEl) navEl.classList.add('active');
   if (tab === 'dashboard') renderDashboard();
   if (tab === 'staff') renderStaff();
   if (tab === 'inventory') renderInventory();
   if (tab === 'jobs') renderJobs();
+  if (tab === 'tasks') renderTasks();
   if (tab === 'reports') renderReports();
 }
 
-function renderAll() { renderDashboard(); renderStaff(); renderInventory(); renderJobs(); }
+function renderAll() {
+  renderDashboard();
+  if (isManagement()) { renderStaff(); renderInventory(); renderJobs(); }
+  renderTasks();
+}
 
 function buildQuickActions() {
-  let items = [{ icon: '👥', label: 'Enrol Staff', tab: 'staff', sup: true }, { icon: '📋', label: 'New Job', tab: 'jobs', sup: true }, { icon: '📦', label: 'Add Item', tab: 'inventory', sup: true }, { icon: '📊', label: 'Reports', tab: 'reports', sup: false }];
-  document.getElementById('qa-grid').innerHTML = items.map(a => `<div class="qa-btn ${!a.sup || canEdit() ? '' : 'locked'}" onclick="goToTab('${a.tab}')"><span class="qa-icon">${a.icon}</span><span class="qa-label">${a.label}</span></div>`).join('');
+  let items = [
+    { icon: '👥', label: 'Enrol Staff', action: "openModal('modal-add-staff')", sup: true },
+    { icon: '📋', label: 'New Job', action: "openModal('modal-add-job')", sup: true },
+    { icon: '📦', label: 'Add Item', action: "openModal('modal-add-inv')", sup: true },
+    { icon: '🗓', label: 'Attendance', action: 'openAttendance()', sup: true },
+    { icon: '🚨', label: 'Incident', action: "openModal('modal-incident')", sup: false },
+    { icon: '📊', label: 'Reports', action: "goToTab('reports')", sup: false }
+  ];
+  let g = document.getElementById('qa-grid');
+  if (g) g.innerHTML = items.map(a => `<div class="qa-btn ${!a.sup || canEdit() ? '' : 'locked'}" onclick="${a.action}"><span class="qa-icon">${a.icon}</span><span class="qa-label">${a.label}</span></div>`).join('');
 }
 
 function buildActionBars() {
-  let notice = `<div class="viewer-notice">👁 View only — supervisor can make changes</div>`;
-  document.getElementById('staff-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-staff')">+ Enrol Staff</button>` : notice;
-  document.getElementById('inv-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-inv')">+ Add Item</button>` : notice;
-  document.getElementById('jobs-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
+  let notice = `<div class="viewer-notice">👁 View only — supervisor/manager can make changes</div>`;
+  let sa = document.getElementById('staff-actions');
+  let ia = document.getElementById('inv-actions');
+  let ja = document.getElementById('jobs-actions');
+  if (sa) sa.innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-staff')">+ Enrol Staff</button>` : notice;
+  if (ia) ia.innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-inv')">+ Add Item</button>` : notice;
+  if (ja) ja.innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
 }
 
 // ================================================================
 // DASHBOARD
 // ================================================================
 function renderDashboard() {
+  if (currentUser && currentUser.role === 'cleaner') { renderCleanerDashboard(); return; }
   let onShift = state.staff.filter(s => s.status === 'On Shift').length;
   let todayJobs = state.jobs.filter(j => j.date === todayStr());
   let lowStock = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder));
-  document.getElementById('stat-onshift').textContent = onShift;
-  document.getElementById('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
-  document.getElementById('stat-jobs-today').textContent = todayJobs.length;
-  document.getElementById('stat-jobs-sub').textContent = `${todayJobs.filter(j => j.status === 'In Progress').length} in progress`;
-  document.getElementById('stat-lowstock').textContent = lowStock.length;
-  document.getElementById('kpi-staff').textContent = state.staff.length;
-  document.getElementById('kpi-onshift').textContent = onShift;
-  document.getElementById('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0, 7))).length;
-  document.getElementById('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
-  let banner = document.getElementById('low-stock-banner');
-  if (lowStock.length) { banner.style.display = 'flex'; document.getElementById('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', '); }
-  else banner.style.display = 'none';
+  let se = id => document.getElementById(id);
+  if (se('stat-onshift')) se('stat-onshift').textContent = onShift;
+  if (se('stat-staff-sub')) se('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
+  if (se('stat-jobs-today')) se('stat-jobs-today').textContent = todayJobs.length;
+  if (se('stat-jobs-sub')) se('stat-jobs-sub').textContent = `${todayJobs.filter(j => j.status === 'In Progress').length} in progress`;
+  if (se('stat-lowstock')) se('stat-lowstock').textContent = lowStock.length;
+  if (se('kpi-staff')) se('kpi-staff').textContent = state.staff.length;
+  if (se('kpi-onshift')) se('kpi-onshift').textContent = onShift;
+  if (se('kpi-month')) se('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0, 7))).length;
+  if (se('kpi-done')) se('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
+  let banner = se('low-stock-banner');
+  if (banner) { if (lowStock.length) { banner.style.display = 'flex'; se('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', '); } else banner.style.display = 'none'; }
 
-  if (document.getElementById('director-metrics-section').style.display !== 'none') {
-    let off = state.staff.filter(s => s.status === 'Off Shift').length, leave = state.staff.filter(s => s.status === 'On Leave').length, t = state.staff.length || 1;
-    document.getElementById('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
+  // Director metrics
+  if (se('director-metrics-section') && se('director-metrics-section').style.display !== 'none') {
+    let off = state.staff.filter(s => s.status === 'Off Shift').length;
+    let leave = state.staff.filter(s => s.status === 'On Leave').length;
+    let t = state.staff.length || 1;
+    if (se('staff-bars')) se('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
     let sTot = todayJobs.length || 1;
-    document.getElementById('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
+    if (se('job-bars')) se('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
+    // Task progress summary
+    let todayLogs = state.taskLogs.filter(l => l.date === todayStr());
+    let totalTasks = state.tasks.length;
+    let doneTasks = todayLogs.length;
+    let pct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+    let shiftBreakdown = ['Morning', 'Noon', 'Night'].map(sh => {
+      let shTasks = state.tasks.filter(t => t.shift === sh || t.shift === 'All');
+      let shDone = todayLogs.filter(l => l.shift === sh).length;
+      return `<div class="prog-item"><div class="prog-val">${shDone}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
+    }).join('');
+    if (se('dash-task-progress')) se('dash-task-progress').innerHTML = `<div class="card-title">Tasks Today — ${pct}% Complete</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%"></div></div><div class="progress-summary" style="margin:0">${shiftBreakdown}</div>`;
   }
 
-  let listEl = document.getElementById('today-jobs-list');
-  if (todayJobs.length === 0) listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
-  else listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
+  let listEl = se('today-jobs-list');
+  if (listEl) {
+    if (todayJobs.length === 0) listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
+    else listEl.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
+  }
+}
+
+function renderCleanerDashboard() {
+  // Cleaner sees their own task summary on the dashboard tab
 }
 
 function actBar(l, v, t, c) { let p = Math.round(v / t * 100); return `<div class="act-item"><span class="act-label">${l}</span><div class="act-bar-wrap"><div class="act-bar" style="width:${p}%;background:${c}"></div></div><span class="act-val">${v}</span></div>`; }
@@ -856,90 +1047,141 @@ function actBar(l, v, t, c) { let p = Math.round(v / t * 100); return `<div clas
 // ================================================================
 let staffFilter = 'all';
 function renderStaff() {
-  let q = document.getElementById('staff-search').value.toLowerCase();
+  let q = (document.getElementById('staff-search') || {value:''}).value.toLowerCase();
   let list = state.staff.filter(s => (s.name.toLowerCase().includes(q) || (s.role || '').toLowerCase().includes(q)) && (staffFilter === 'all' || s.status === staffFilter));
-  document.getElementById('staff-count-lbl').textContent = `${state.staff.length} staff`;
-  document.getElementById('onshift-count-lbl').textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
+  let countEl = document.getElementById('staff-count-lbl');
+  let onshiftEl = document.getElementById('onshift-count-lbl');
+  if (countEl) countEl.textContent = `${state.staff.length} staff`;
+  if (onshiftEl) onshiftEl.textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
   let grid = document.getElementById('staff-grid');
+  if (!grid) return;
   if (!list.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-text">No staff</div></div>`; return; }
-  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
+  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div style="flex:1"><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffId || s.staffid)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
 }
 
 function filterStaff(f, btn) { staffFilter = f; document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderStaff(); }
 
-// FIX 7: saveStaff now compresses images before saving to prevent
-// oversized rows that cause silent Supabase upsert failures
 async function saveStaff() {
   if (!canEdit()) return;
   let name = document.getElementById('sf-name').value.trim();
   let role = document.getElementById('sf-role').value;
   if (!name || !role) { alert('Name and role required'); return; }
-
   let rawPhoto = document.getElementById('staff-photo-preview').src || '';
   let rawFront = document.getElementById('ghana-front-preview').src || '';
   let rawBack = document.getElementById('ghana-back-preview').src || '';
-
-  // Compress all images to keep row size small
   let [photo, ghanaFront, ghanaBack] = await Promise.all([
-    compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6),
-    compressImage(rawFront.startsWith('data:') ? rawFront : '', 600, 0.7),
-    compressImage(rawBack.startsWith('data:') ? rawBack : '', 600, 0.7)
+    compressImage(rawPhoto, 300, 0.6),
+    compressImage(rawFront, 600, 0.7),
+    compressImage(rawBack, 600, 0.7)
   ]);
-
   let maritalStatus = document.getElementById('sf-marital').value;
   if (maritalStatus === 'Other') maritalStatus = document.getElementById('sf-marital-other').value.trim() || 'Other';
 
+  let isEditing = !!editingStaffId;
+  let existingStaff = isEditing ? state.staff.find(s => s.id === editingStaffId) : null;
+
   let s = {
-    id: uid(), name, role,
+    id: isEditing ? editingStaffId : uid(),
+    name, role,
     staffid: document.getElementById('sf-id').value,
     phone: document.getElementById('sf-phone').value,
     shift: document.getElementById('sf-shift').value,
     startdate: document.getElementById('sf-startdate').value,
     address: document.getElementById('sf-address').value,
     ghanacard: document.getElementById('sf-ghana').value,
-    ghanafront: ghanaFront, ghanaback: ghanaBack,
+    ghanafront: ghanaFront || (existingStaff ? existingStaff.ghanafront : ''),
+    ghanaback: ghanaBack || (existingStaff ? existingStaff.ghanaback : ''),
     ssnit: document.getElementById('sf-ssnit').value,
     emergname: document.getElementById('sf-emerg-name').value,
     emergphone: document.getElementById('sf-emerg-phone').value,
     emergrel: document.getElementById('sf-emerg-rel').value,
     bankname: document.getElementById('sf-bank-name').value,
     bankacct: document.getElementById('sf-bank-acct').value,
-    status: 'Off Shift',
-    photo: photo,
+    status: existingStaff ? existingStaff.status : 'Off Shift',
+    photo: photo || (existingStaff ? existingStaff.photo : ''),
     maritalstatus: maritalStatus,
     spousename: document.getElementById('sf-spouse-name').value,
     spousecontact: document.getElementById('sf-spouse-contact').value,
     numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
   };
-
-  // Also keep camelCase aliases for in-memory rendering compatibility
+  // camelCase aliases
   s.staffId = s.staffid; s.startDate = s.startdate; s.ghanaCard = s.ghanacard;
   s.ghanaFrontImg = s.ghanafront; s.ghanaBackImg = s.ghanaback;
   s.emergName = s.emergname; s.emergPhone = s.emergphone; s.emergRel = s.emergrel;
   s.bankName = s.bankname; s.bankAcct = s.bankacct; s.maritalStatus = s.maritalstatus;
   s.spouseName = s.spousename; s.spouseContact = s.spousecontact; s.numberOfKids = s.numberofkids;
 
-  state.staff.push(s);
-  saveState();
-  closeModal('modal-add-staff');
-  renderStaff(); renderDashboard();
+  if (isEditing) {
+    let idx = state.staff.findIndex(x => x.id === editingStaffId);
+    if (idx >= 0) state.staff[idx] = s;
+  } else {
+    state.staff.push(s);
+  }
+  editingStaffId = null;
+  saveState(); closeModal('modal-add-staff'); renderStaff(); renderDashboard();
+}
+
+function openEditStaff() {
+  if (!canEdit()) return;
+  let s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  editingStaffId = s.id;
+  closeModal('modal-staff-profile');
+  // Fill form
+  document.getElementById('add-staff-modal-title').textContent = 'Edit Staff Member';
+  document.getElementById('save-staff-btn').textContent = 'Save Changes';
+  let f = (id, val) => { let el = document.getElementById(id); if (el) el.value = val || ''; };
+  f('sf-name', s.name); f('sf-id', s.staffId || s.staffid);
+  f('sf-phone', s.phone); f('sf-shift', s.shift);
+  f('sf-startdate', s.startDate || s.startdate);
+  f('sf-address', s.address); f('sf-ghana', s.ghanaCard || s.ghanacard);
+  f('sf-ssnit', s.ssnit); f('sf-role', s.role);
+  f('sf-emerg-name', s.emergName || s.emergname);
+  f('sf-emerg-phone', s.emergPhone || s.emergphone);
+  f('sf-emerg-rel', s.emergRel || s.emergrel);
+  f('sf-bank-name', s.bankName || s.bankname);
+  f('sf-bank-acct', s.bankAcct || s.bankacct);
+  f('sf-marital', s.maritalStatus || s.maritalstatus || 'Single');
+  f('sf-spouse-name', s.spouseName || s.spousename);
+  f('sf-spouse-contact', s.spouseContact || s.spousecontact);
+  f('sf-kids', s.numberOfKids || s.numberofkids || 0);
+  // Reset photo previews
+  ['staff-photo-preview','ghana-front-preview','ghana-back-preview'].forEach(id => { let el = document.getElementById(id); if (el) { el.style.display='none'; el.src=''; }});
+  ['staff-photo-placeholder','ghana-front-placeholder','ghana-back-placeholder'].forEach(id => { let el = document.getElementById(id); if (el) el.style.display='block'; });
+  if (s.photo) {
+    let img = document.getElementById('staff-photo-preview'); img.src = s.photo; img.style.display = 'block';
+    document.getElementById('staff-photo-placeholder').style.display = 'none';
+    let db = document.getElementById('del-staff-photo'); if (db) db.classList.add('visible');
+  }
+  if (s.ghanafront || s.ghanaFrontImg) {
+    let src = s.ghanaFrontImg || s.ghanafront;
+    let img = document.getElementById('ghana-front-preview'); img.src = src; img.style.display = 'block';
+    document.getElementById('ghana-front-placeholder').style.display = 'none';
+    let db = document.getElementById('del-ghana-front'); if (db) db.classList.add('visible');
+  }
+  if (s.ghanaback || s.ghanaBackImg) {
+    let src = s.ghanaBackImg || s.ghanaback;
+    let img = document.getElementById('ghana-back-preview'); img.src = src; img.style.display = 'block';
+    document.getElementById('ghana-back-placeholder').style.display = 'none';
+    let db = document.getElementById('del-ghana-back'); if (db) db.classList.add('visible');
+  }
+  // Also hide all delete buttons that don't have a photo loaded
+  ['del-staff-photo','del-ghana-front','del-ghana-back'].forEach(id => {
+    let btn = document.getElementById(id);
+    if (btn && !btn.classList.contains('visible')) btn.classList.remove('visible');
+  });
+  openModal('modal-add-staff');
 }
 
 function openStaffProfile(id) {
   let s = state.staff.find(x => x.id === id);
   if (!s) return;
   currentStaffId = id;
-
-  // Normalise field names (DB returns lowercase, local may have camelCase)
-  let photo = s.photo || '';
-  let name = s.name || '';
-  let role = s.role || '';
+  let photo = s.photo || '', name = s.name || '', role = s.role || '';
   let staffId = s.staffId || s.staffid || '';
-  let phone = s.phone || '';
-  let shift = s.shift || '';
+  let phone = s.phone || '', shift = s.shift || '';
   let startDate = s.startDate || s.startdate || '';
-  let address = s.address || '';
-  let ghanaCard = s.ghanaCard || s.ghanacard || '';
+  let address = s.address || '', ghanaCard = s.ghanaCard || s.ghanacard || '';
   let ghanaFront = s.ghanaFrontImg || s.ghanafront || '';
   let ghanaBack = s.ghanaBackImg || s.ghanaback || '';
   let maritalStatus = s.maritalStatus || s.maritalstatus || 'Single';
@@ -951,45 +1193,56 @@ function openStaffProfile(id) {
   let emergRel = s.emergRel || s.emergrel || '';
   let bankName = s.bankName || s.bankname || '';
   let bankAcct = s.bankAcct || s.bankacct || '';
-
   let photoDiv = document.getElementById('prof-photo');
   if (photo) { photoDiv.innerHTML = `<img src="${photo}">`; photoDiv.style.background = 'rgba(255,255,255,.1)'; }
   else { photoDiv.textContent = initials(name); photoDiv.style.background = 'var(--red)'; }
   document.getElementById('prof-name').textContent = name;
   document.getElementById('prof-role').textContent = role;
 
-  let ghanaImagesHtml = '';
-  if (ghanaFront && ghanaFront.startsWith('data:')) {
-    ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaFront}', 'Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
-  }
-  if (ghanaBack && ghanaBack.startsWith('data:')) {
-    ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaBack}', 'Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
-  }
+  // Status changer
+  let statusHtml = canEdit() ? `<div style="margin:12px 0"><label class="form-label">Update Status</label><select class="form-control" id="prof-status-sel" onchange="updateStaffStatus(this.value)"><option ${s.status==='On Shift'?'selected':''}>On Shift</option><option ${s.status==='Off Shift'?'selected':''}>Off Shift</option><option ${s.status==='On Leave'?'selected':''}>On Leave</option></select></div>` : '';
 
-  let detailsHtml = `
+  let ghanaImagesHtml = '';
+  if (ghanaFront && ghanaFront.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaFront}', 'Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
+  if (ghanaBack && ghanaBack.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaBack}', 'Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
+
+  document.getElementById('prof-details').innerHTML = `
+    ${statusHtml}
     <div class="section-sep">Personal</div>
     ${detRow('Staff ID', staffId)}${detRow('Phone', phone)}${detRow('Shift', shift)}
     ${detRow('Start Date', startDate)}
     ${address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${address}</span></div>` : ''}
-    ${detRow('Ghana Card Number', ghanaCard)}${ghanaImagesHtml}
-    <div class="section-sep">Family & Marital</div>
-    ${detRow('Marital Status', maritalStatus)}${detRow('Spouse/Partner', spouseName)}
-    ${detRow('Spouse Contact', spouseContact)}${detRow('Number of Children', numberOfKids)}
+    ${detRow('Ghana Card', ghanaCard)}${ghanaImagesHtml}
+    <div class="section-sep">Family</div>
+    ${detRow('Marital Status', maritalStatus)}${detRow('Spouse', spouseName)}${detRow('Spouse Contact', spouseContact)}${detRow('Children', numberOfKids)}
     <div class="section-sep">Emergency</div>
     ${detRow('Contact', emergName)}${detRow('Phone', emergPhone)}${detRow('Relation', emergRel)}
     <div class="section-sep">Bank</div>
     ${detRow('Bank', bankName)}${detRow('Account', bankAcct)}`;
-  document.getElementById('prof-details').innerHTML = detailsHtml;
+
+  // Show/hide edit+delete for non-directors viewing
+  let editBtn = document.getElementById('prof-edit-btn');
+  let delBtn = document.getElementById('prof-delete-btn');
+  let pdfBtn = document.getElementById('prof-pdf-btn');
+  if (editBtn) editBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (pdfBtn) pdfBtn.style.display = canPrint() ? 'inline-flex' : 'none';
   openModal('modal-staff-profile');
+}
+
+function updateStaffStatus(newStatus) {
+  let s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  s.status = newStatus;
+  saveState(); renderDashboard(); renderStaff();
 }
 
 async function deleteCurrentStaff() {
   if (!canEdit()) return;
-  if (!confirm('Remove staff?')) return;
+  if (!confirm('Remove this staff member?')) return;
   if (currentStaffId) {
     state.staff = state.staff.filter(x => x.id !== currentStaffId);
     localSave();
-    // FIX 6 applied: delete from cloud too
     await deleteFromCloud('staff', currentStaffId);
   }
   closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
@@ -999,39 +1252,29 @@ function printStaffPDF() {
   if (!canPrint()) return;
   let s = state.staff.find(x => x.id === currentStaffId);
   if (!s) return;
-  // Normalise fields
   let name = s.name || ''; let role = s.role || '';
   let staffId = s.staffId || s.staffid || '';
   let phone = s.phone || ''; let shift = s.shift || '';
-  let startDate = s.startDate || s.startdate || '';
-  let photo = s.photo || '';
-  let ghanaCard = s.ghanaCard || s.ghanacard || '';
-  let address = s.address || '';
-  let maritalStatus = s.maritalStatus || s.maritalstatus || 'Single';
-  let spouseName = s.spouseName || s.spousename || '';
-  let spouseContact = s.spouseContact || s.spousecontact || '';
+  let photo = s.photo || ''; let ghanaCard = s.ghanaCard || s.ghanacard || '';
+  let address = s.address || ''; let maritalStatus = s.maritalStatus || s.maritalstatus || 'Single';
+  let spouseName = s.spouseName || s.spousename || ''; let spouseContact = s.spouseContact || s.spousecontact || '';
   let numberOfKids = s.numberOfKids || s.numberofkids || 0;
-  let emergName = s.emergName || s.emergname || '';
-  let emergPhone = s.emergPhone || s.emergphone || '';
-  let emergRel = s.emergRel || s.emergrel || '';
-  let bankName = s.bankName || s.bankname || '';
-  let bankAcct = s.bankAcct || s.bankacct || '';
-
+  let emergName = s.emergName || s.emergname || ''; let emergPhone = s.emergPhone || s.emergphone || ''; let emergRel = s.emergRel || s.emergrel || '';
+  let bankName = s.bankName || s.bankname || ''; let bankAcct = s.bankAcct || s.bankacct || '';
   const { jsPDF } = window.jspdf;
   let doc = new jsPDF({ unit: 'mm', format: 'a4' });
   doc.setFillColor(10, 22, 40); doc.rect(0, 0, 210, 44, 'F');
   doc.setFillColor(204, 31, 46); doc.rect(0, 42, 210, 3, 'F');
   doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('3-Rock Builders', 14, 18);
-  doc.setFontSize(10); doc.text('Staff Profile Document', 14, 27);
-  doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
+  doc.setFontSize(10); doc.text('Staff Profile Document', 14, 27); doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
   let px = 14, py = 52, pw = 50, ph = 65;
   doc.setFillColor(230, 234, 244); doc.rect(px, py, pw, ph, 'F');
-  if (photo && photo.startsWith('data:')) { try { doc.addImage(photo, 'JPEG', px, py, pw, ph); } catch (e) { } }
+  if (photo && photo.startsWith('data:')) { try { doc.addImage(photo, 'JPEG', px, py, pw, ph); } catch(e) {} }
   doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(name, px + pw + 10, 62);
   doc.setFillColor(10, 22, 40); doc.roundedRect(px + pw + 10, 65, 70, 9, 2, 2, 'F');
   doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text(role.toUpperCase(), px + pw + 14, 70.5);
-  doc.setFontSize(9); doc.setTextColor(70, 88, 128); doc.text(`Staff ID: ${staffId || '—'}`, px + pw + 10, 82);
-  doc.text(`Phone: ${phone || '—'}`, px + pw + 10, 90); doc.text(`Shift: ${shift || '—'}`, px + pw + 10, 98);
+  doc.setFontSize(9); doc.setTextColor(70, 88, 128);
+  doc.text(`Staff ID: ${staffId||'—'}`, px+pw+10, 82); doc.text(`Phone: ${phone||'—'}`, px+pw+10, 90); doc.text(`Shift: ${shift||'—'}`, px+pw+10, 98);
   let y = py + ph + 14;
   y = addSection(doc, 'PERSONAL DETAILS', y);
   y = addRow(doc, 'Ghana Card', ghanaCard, y, true);
@@ -1041,34 +1284,49 @@ function printStaffPDF() {
   if (spouseContact) y = addRow(doc, 'Spouse Contact', spouseContact, y, true);
   y = addRow(doc, 'Children', numberOfKids, y, false);
   y = addSection(doc, 'EMERGENCY CONTACT', y + 4);
-  y = addRow(doc, 'Contact', emergName, y, true);
-  y = addRow(doc, 'Phone', emergPhone, y, false);
-  y = addRow(doc, 'Relation', emergRel, y, true);
+  y = addRow(doc, 'Contact', emergName, y, true); y = addRow(doc, 'Phone', emergPhone, y, false); y = addRow(doc, 'Relation', emergRel, y, true);
   y = addSection(doc, 'BANK DETAILS', y + 4);
-  y = addRow(doc, 'Bank Name', bankName, y, true);
-  y = addRow(doc, 'Account Number', bankAcct, y, false);
-  doc.save(`3Rock_Staff_${name.replace(/\s+/g, '_')}.pdf`);
+  y = addRow(doc, 'Bank Name', bankName, y, true); y = addRow(doc, 'Account Number', bankAcct, y, false);
+  doc.save(`3Rock_Staff_${name.replace(/\s+/g,'_')}.pdf`);
 }
-
-function addSection(doc, lbl, y) { doc.setFillColor(10, 22, 40); doc.rect(14, y, 182, 7, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255); doc.text(lbl, 17, y + 5); return y + 7; }
-function addRow(doc, k, v, y, shade) { doc.setFillColor(shade ? 247 : 255, shade ? 249 : 255, shade ? 253 : 255); doc.rect(14, y, 182, 8, 'F'); doc.setDrawColor(220, 225, 235); doc.line(14, y + 8, 196, y + 8); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 115, 145); doc.text(k, 17, y + 5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(10, 22, 40); doc.text(String(v || '—'), 90, y + 5.5); return y + 8; }
+function addSection(doc,lbl,y){doc.setFillColor(10,22,40);doc.rect(14,y,182,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(lbl,17,y+5);return y+7;}
+function addRow(doc,k,v,y,shade){doc.setFillColor(shade?247:255,shade?249:255,shade?253:255);doc.rect(14,y,182,8,'F');doc.setDrawColor(220,225,235);doc.line(14,y+8,196,y+8);doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(100,115,145);doc.text(k,17,y+5.5);doc.setFont('helvetica','normal');doc.setTextColor(10,22,40);doc.text(String(v||'—'),90,y+5.5);return y+8;}
 
 // ================================================================
 // INVENTORY MANAGEMENT
 // ================================================================
 let invFilter = 'all';
 function renderInventory() {
-  let q = document.getElementById('inv-search').value.toLowerCase();
-  let list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter));
+  let q = (document.getElementById('inv-search') || {value:''}).value.toLowerCase();
+  let isDamaged = invFilter === '__damaged__';
+  let list;
+  if (isDamaged) {
+    list = state.damageReports || [];
+  } else {
+    list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter));
+  }
   let lowCount = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder)).length;
-  document.getElementById('inv-count-lbl').textContent = `${state.inventory.length} items`;
-  document.getElementById('inv-low-lbl').textContent = `${lowCount} low stock`;
+  let cntEl = document.getElementById('inv-count-lbl');
+  let lowEl = document.getElementById('inv-low-lbl');
+  if (cntEl) cntEl.textContent = `${state.inventory.length} items`;
+  if (lowEl) lowEl.textContent = `${lowCount} low stock`;
   let grid = document.getElementById('inventory-grid');
+  if (!grid) return;
+  if (isDamaged) {
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No damage reports</div></div>'; return; }
+    grid.className = 'inv-grid';
+    grid.innerHTML = list.map(r => {
+      let invItem = state.inventory.find(i => i.id === r.invid) || {};
+      return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${invItem.name || r.itemname || 'Unknown Item'}</div><div class="damage-date">📅 ${r.date}</div></div><div class="damage-body"><div class="damage-desc">${r.description}</div>${r.photo && r.photo.startsWith('data:') ? `<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')">` : ''}<div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${r.reportedby || '—'}</div></div></div>`;
+    }).join('');
+    return;
+  }
   if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; }
   grid.innerHTML = list.map(item => {
     let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
     let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
-    return `<div class="inv-card" onclick="openInvDetail('${item.id}')"><div class="inv-img">${item.img ? `<img src="${item.img}">` : '📦'}</div><div class="inv-body"><div class="inv-name">${item.name}</div><div class="inv-cat">${item.category}</div><div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${item.uom || ''}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty) <= Number(item.reorder) ? '<div class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW</div>' : ''}</div></div>`;
+    let dmgCount = (state.damageReports || []).filter(r => r.invid === item.id).length;
+    return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${item.id}')"><div class="inv-img">${item.img ? `<img src="${item.img}">` : '📦'}</div><div class="inv-body"><div class="inv-name">${item.name}</div><div class="inv-cat">${item.category}</div>${dmgCount ? `<div class="pill pill-damaged" style="margin:4px 0">⚠ ${dmgCount} damage report${dmgCount>1?'s':''}</div>` : ''}<div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${item.uom||''}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty)<=Number(item.reorder)?'<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW</div>':''}</div></div>`;
   }).join('');
 }
 
@@ -1080,19 +1338,8 @@ async function saveInventory() {
   let cat = document.getElementById('inv-cat').value;
   if (!name || !cat) { alert('Name/category required'); return; }
   let rawImg = document.getElementById('inv-img-preview').src || '';
-  let img = await compressImage(rawImg.startsWith('data:') ? rawImg : '', 400, 0.65);
-  let item = {
-    id: uid(), name, category: cat,
-    qty: parseInt(document.getElementById('inv-qty').value) || 0,
-    uom: document.getElementById('inv-uom').value,
-    reorder: parseInt(document.getElementById('inv-reorder').value) || 0,
-    supplier: document.getElementById('inv-supplier').value.trim(),
-    suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
-    img: img,
-    // FIX 8: Store usageLog as array — Supabase jsonb column handles this
-    usageLog: []
-  };
-  // alias for DB lowercase column
+  let img = await compressImage(rawImg, 400, 0.65);
+  let item = { id: uid(), name, category: cat, qty: parseInt(document.getElementById('inv-qty').value)||0, uom: document.getElementById('inv-uom').value, reorder: parseInt(document.getElementById('inv-reorder').value)||0, supplier: document.getElementById('inv-supplier').value.trim(), suppliercontact: document.getElementById('inv-supplier-contact').value.trim(), img, usageLog: [] };
   item.supplierContact = item.suppliercontact;
   state.inventory.push(item);
   saveState(); closeModal('modal-add-inv'); renderInventory(); renderDashboard();
@@ -1102,40 +1349,31 @@ function openInvDetail(id) {
   let item = state.inventory.find(x => x.id === id);
   if (!item) return;
   currentInvId = id;
-
-  // Ensure usageLog is always array
   if (!Array.isArray(item.usageLog)) item.usageLog = item.usagelog || [];
-
   document.getElementById('inv-detail-title').textContent = item.name;
-  let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
+  let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder)*2||1) * 100));
   let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
   document.getElementById('inv-detail-info').innerHTML = `
     <div class="detail-row"><span class="dk">Category</span><span class="dv">${item.category}</span></div>
-    <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom || 'units'}</strong></span></div>
-    <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom || 'units'}</span></div>
-    <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.supplierContact || item.suppliercontact || '—'}</span></div>
+    <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom||'units'}</strong></span></div>
+    <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom||'units'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier||'—'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.supplierContact||item.suppliercontact||'—'}</span></div>
     <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
-
   let qtyCtrl = document.getElementById('inv-qty-ctrl');
-  if (canEdit()) {
-    qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
-  } else {
-    qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${item.uom || 'units'}</span>`;
-  }
-
-  let logsHtml = '';
-  if (item.usageLog && item.usageLog.length > 0) {
-    logsHtml = item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy || log.loggedby} at ${(log.loggedAt || log.loggedat || '').slice(0, 16)}</span></div></div>`).join('');
-  } else {
-    logsHtml = '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div><div class="empty-sub">Tap "Log Daily Usage" to record inventory consumption</div></div>';
-  }
+  if (canEdit()) qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
+  else qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${item.uom||'units'}</span>`;
+  // Usage logs
+  let logsHtml = item.usageLog && item.usageLog.length > 0 ? item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom||'units'}</strong>${log.job?`<br>📍 ${log.job}`:''}${log.notes?`<br>📝 ${log.notes}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy||log.loggedby} at ${(log.loggedAt||log.loggedat||'').slice(0,16)}</span></div></div>`).join('') : '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div></div>';
   document.getElementById('inv-usage-logs').innerHTML = logsHtml;
-
-  let logBtn = document.getElementById('log-usage-btn');
-  let delBtn = document.getElementById('delete-inv-btn');
-  if (logBtn) logBtn.style.display = canEdit() ? 'inline-flex' : 'none';
-  if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  // Damage reports for this item
+  let dmgs = (state.damageReports||[]).filter(r => r.invid === id);
+  let dmgHtml = dmgs.length > 0 ? dmgs.map(r => `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">📅 ${r.date}</div></div><div class="damage-body"><div class="damage-desc">${r.description}</div>${r.qty?`<div style="font-size:11px;color:#991b1b">Qty damaged: ${r.qty}</div>`:''} ${r.photo&&r.photo.startsWith('data:') ? `<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Reported by ${r.reportedby||'—'}</div></div></div>`).join('') : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No damage reports for this item</div></div>';
+  document.getElementById('inv-damage-logs').innerHTML = dmgHtml;
+  let lb = document.getElementById('log-usage-btn'); let rb = document.getElementById('report-damage-btn'); let db = document.getElementById('delete-inv-btn');
+  if (lb) lb.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (rb) rb.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (db) db.style.display = canEdit() ? 'inline-flex' : 'none';
   openModal('modal-inv-detail');
 }
 
@@ -1143,25 +1381,23 @@ function adjustQty(delta) {
   if (!canEdit()) return;
   let item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
-  let newQty = item.qty + delta;
-  if (newQty < 0) { alert('Cannot go below zero'); return; }
-  item.qty = newQty;
-  saveState();
-  openInvDetail(currentInvId);
-  renderInventory(); renderDashboard();
+  let n = item.qty + delta;
+  if (n < 0) { alert('Cannot go below zero'); return; }
+  item.qty = n; saveState(); openInvDetail(currentInvId); renderInventory(); renderDashboard();
 }
 
 function openLogUsageModal() {
   let item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
+  closeModal('modal-inv-detail');
+  openModal('modal-log-usage');
+  // Set item-specific fields after modal opens
   document.getElementById('log-item-name').value = item.name;
   document.getElementById('log-unit').value = item.uom || 'units';
   document.getElementById('log-qty').value = '';
   document.getElementById('log-date').value = todayStr();
   document.getElementById('log-job').value = '';
   document.getElementById('log-notes').value = '';
-  closeModal('modal-inv-detail');
-  openModal('modal-log-usage');
 }
 
 function saveUsageLog() {
@@ -1174,29 +1410,42 @@ function saveUsageLog() {
   if (!item) return;
   if (item.qty < qty) { alert(`Insufficient stock! Only ${item.qty} ${item.uom} available.`); return; }
   if (!Array.isArray(item.usageLog)) item.usageLog = [];
-  item.usageLog.push({
-    id: uid(), date, qty,
-    job: document.getElementById('log-job').value,
-    notes: document.getElementById('log-notes').value,
-    loggedBy: currentUser.name,
-    loggedAt: new Date().toISOString()
-  });
+  item.usageLog.push({ id: uid(), date, qty, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() });
   item.qty -= qty;
-  saveState();
-  closeModal('modal-log-usage');
-  openInvDetail(currentInvId);
-  renderInventory(); renderDashboard();
+  saveState(); closeModal('modal-log-usage'); openInvDetail(currentInvId); renderInventory(); renderDashboard();
+}
+
+function openDamageModal() {
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  closeModal('modal-inv-detail');
+  openModal('modal-damage-report'); // this clears the form via clearDamageForm
+  document.getElementById('dmg-item-name').value = item.name; // set after clear
+}
+
+async function saveDamageReport() {
+  if (!canEdit()) return;
+  let desc = document.getElementById('dmg-desc').value.trim();
+  let date = document.getElementById('dmg-date').value;
+  if (!desc || !date) { alert('Date and description required'); return; }
+  let rawPhoto = document.getElementById('dmg-photo-preview').src || '';
+  let photo = await compressImage(rawPhoto, 600, 0.7);
+  let item = state.inventory.find(x => x.id === currentInvId);
+  let dmgQty = parseInt(document.getElementById('dmg-qty').value) || 0;
+  let report = { id: uid(), invid: currentInvId, itemname: item ? item.name : '', date, description: desc, qty: dmgQty, photo, reportedby: currentUser.name, createdat: new Date().toISOString() };
+  if (!state.damageReports) state.damageReports = [];
+  state.damageReports.push(report);
+  if (item && dmgQty > 0) { item.qty = Math.max(0, item.qty - dmgQty); }
+  saveState(); closeModal('modal-damage-report'); renderInventory(); renderDashboard();
+  alert('Damage report submitted.');
 }
 
 async function deleteCurrentInv() {
   if (!canEdit()) return;
-  if (!confirm('Delete this inventory item? This will remove all usage history.')) return;
+  if (!confirm('Delete this inventory item?')) return;
   state.inventory = state.inventory.filter(x => x.id !== currentInvId);
-  localSave();
-  // FIX 6 applied: delete from cloud too
-  await deleteFromCloud('inventory', currentInvId);
-  closeModal('modal-inv-detail');
-  renderInventory(); renderDashboard();
+  localSave(); await deleteFromCloud('inventory', currentInvId);
+  closeModal('modal-inv-detail'); renderInventory(); renderDashboard();
 }
 
 // ================================================================
@@ -1204,12 +1453,14 @@ async function deleteCurrentInv() {
 // ================================================================
 let jobFilter = 'all';
 function renderJobs() {
-  let q = document.getElementById('jobs-search').value.toLowerCase();
-  let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-  document.getElementById('jobs-sub-lbl').textContent = `${state.jobs.length} total · ${state.jobs.filter(j => j.status === 'In Progress').length} in progress`;
+  let q = (document.getElementById('jobs-search')||{value:''}).value.toLowerCase();
+  let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location||'').toLowerCase().includes(q)) && (jobFilter==='all'||j.status===jobFilter)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  let subEl = document.getElementById('jobs-sub-lbl');
+  if (subEl) subEl.textContent = `${state.jobs.length} total · ${state.jobs.filter(j=>j.status==='In Progress').length} in progress`;
   let listEl = document.getElementById('jobs-list');
+  if (!listEl) return;
   if (!list.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs</div></div>'; return; }
-  listEl.innerHTML = list.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span> ${j.time ? `🕐 ${j.time}` : ''}</div></div>`).join('');
+  listEl.innerHTML = list.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div style="flex:1"><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location||'—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span style="font-size:12px">📅 ${j.date||'—'}</span> ${j.time?`🕐 ${j.time}`:''}</div></div>`).join('');
 }
 
 function filterJobs(f, btn) { jobFilter = f; document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderJobs(); }
@@ -1219,23 +1470,253 @@ function saveJob() {
   let client = document.getElementById('jf-client').value.trim();
   let type = document.getElementById('jf-type').value;
   if (!client || !type) { alert('Client and type required'); return; }
-  let job = {
-    id: uid(), client, type,
-    location: document.getElementById('jf-location').value,
-    date: document.getElementById('jf-date').value,
-    time: document.getElementById('jf-time').value,
-    assignedstaff: document.getElementById('jf-staff').value,
-    notes: document.getElementById('jf-notes').value,
-    status: 'Scheduled'
-  };
+  let job = { id: uid(), client, type, location: document.getElementById('jf-location').value, date: document.getElementById('jf-date').value, time: document.getElementById('jf-time').value, assignedstaff: document.getElementById('jf-staff').value, notes: document.getElementById('jf-notes').value, status: 'Scheduled' };
   job.assignedStaff = job.assignedstaff;
-  state.jobs.push(job);
-  saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard();
+  state.jobs.push(job); saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard();
 }
 
 function openJobDetail(id) {
   let j = state.jobs.find(x => x.id === id);
-  if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}`);
+  if (!j) return;
+  if (!canEdit()) { alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location||'—'}\nDate: ${j.date||'—'}`); return; }
+  let statuses = ['Scheduled','In Progress','Done'];
+  let opts = statuses.map(s => `<option ${j.status===s?'selected':''}>${s}</option>`).join('');
+  let html = `<b>${j.client}</b><br>Location: ${j.location||'—'}<br>Date: ${j.date||'—'} ${j.time||''}<br>Type: ${j.type}<br>Assigned: ${j.assignedStaff||j.assignedstaff||'—'}<br>Notes: ${j.notes||'—'}`;
+  let newStatus = prompt(`${j.client} — ${j.type}\nCurrent status: ${j.status}\n\nUpdate status to (Scheduled/In Progress/Done):`);
+  if (newStatus && statuses.includes(newStatus.trim())) { j.status = newStatus.trim(); saveState(); renderJobs(); renderDashboard(); }
+}
+
+// ================================================================
+// TASK TRACKING
+// ================================================================
+function renderTasks() {
+  let el = document.getElementById('tasks-content');
+  if (!el) return;
+  if (currentUser.role === 'cleaner') { renderCleanerTasks(el); }
+  else { renderManagementTasks(el); }
+}
+
+function renderManagementTasks(el) {
+  let todayLogs = state.taskLogs.filter(l => l.date === todayStr());
+  let totalTasks = state.tasks.length;
+  let doneTasks = todayLogs.length;
+  let pct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+
+  let addButtons = canEdit() ? `
+    <button class="btn btn-outline btn-sm" onclick="openModal('modal-add-zone')">+ Add Zone</button>
+    <button class="btn btn-primary btn-sm" onclick="openAddTaskModal()">+ Add Task</button>` : '';
+
+  let headerHtml = `
+    <div class="task-header-bar">
+      <div>
+        <div class="task-location-name">📍 Main Location</div>
+        <div class="task-date-lbl">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>
+      </div>
+      <svg class="task-progress-ring" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="5"/>
+        <circle cx="28" cy="28" r="22" fill="none" stroke="${pct>=80?'#4ade80':pct>=50?'#fbbf24':'#f87171'}" stroke-width="5" stroke-dasharray="${Math.round(2*Math.PI*22)}" stroke-dashoffset="${Math.round(2*Math.PI*22*(1-pct/100))}" stroke-linecap="round" transform="rotate(-90 28 28)"/>
+        <text x="28" y="33" text-anchor="middle" fill="white" font-size="12" font-weight="bold">${pct}%</text>
+      </svg>
+    </div>
+    <div class="progress-summary">
+      ${['Morning','Noon','Night'].map(sh=>{
+        let shTasks = state.tasks.filter(t=>t.shift===sh||t.shift==='All');
+        let shDone = todayLogs.filter(l=>l.shift===sh).length;
+        let bg = sh==='Morning'?'#fef3c7':sh==='Noon'?'#dbeafe':'#ede9fe';
+        let col = sh==='Morning'?'#92400e':sh==='Noon'?'#1e40af':'#4c1d95';
+        return `<div class="prog-item" style="background:${bg};border-radius:8px;padding:8px"><div class="prog-val" style="color:${col}">${shDone}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--text-muted)">${doneTasks}/${totalTasks} tasks completed today</span>
+      <div style="display:flex;gap:6px">${addButtons}</div>
+    </div>`;
+
+  let shiftHtml = `
+    <div class="shift-tabs">
+      ${['Morning','Noon','Night','All'].map(sh=>`<button class="shift-tab ${activeShift===sh?`active ${sh.toLowerCase()}`:''}}" onclick="setShift('${sh}',this)">${sh}</button>`).join('')}
+    </div>`;
+
+  let zones = state.zones.length ? state.zones : [{ id: 'default', name: 'General' }];
+  let shiftFilter = activeShift === 'All' ? null : activeShift;
+  let filteredTasks = shiftFilter ? state.tasks.filter(t => t.shift === shiftFilter || t.shift === 'All') : state.tasks;
+
+  let tasksHtml = '';
+  zones.forEach(zone => {
+    let zoneTasks = filteredTasks.filter(t => (t.zoneid || t.zoneId || 'default') === zone.id);
+    if (!zoneTasks.length) return;
+    let zoneDone = zoneTasks.filter(t => todayLogs.some(l => l.taskid === t.id && l.shift === (shiftFilter || l.shift))).length;
+    tasksHtml += `<div class="task-zone-header"><span>${zone.name}</span><span>${zoneDone}/${zoneTasks.length}</span></div>`;
+    zoneTasks.forEach(task => {
+      let log = todayLogs.find(l => l.taskid === task.id && (!shiftFilter || l.shift === shiftFilter));
+      let isDone = !!log;
+      tasksHtml += `<div class="task-item ${isDone?'done':''}" onclick="${canEdit()?`toggleTask('${task.id}','${task.shift||shiftFilter||'Morning'}')`:''}" style="${!canEdit()?'cursor:default':''}">
+        <div class="task-checkbox">${isDone?'✓':''}</div>
+        <div style="flex:1"><div class="task-name">${task.name}</div>${isDone&&log?`<div class="task-by">Completed by ${log.completedby} · ${log.time||''}</div>`:`<div class="task-by">${task.frequency||'Daily'} · ${task.shift||'All shifts'}</div>`}</div>
+        ${canEdit()?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();deleteTask('${task.id}')">✕</button>`:''}
+      </div>`;
+    });
+  });
+
+  if (!state.tasks.length) tasksHtml = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No tasks yet</div><div class="empty-sub">Add zones and tasks using the buttons above</div></div>`;
+
+  el.innerHTML = `<div class="page-header"><div class="page-title">Task Tracker</div><div class="page-sub">Daily, weekly & monthly tasks</div></div>${headerHtml}${shiftHtml}${tasksHtml}`;
+}
+
+function renderCleanerTasks(el) {
+  let staffRef = currentUser.staffRef;
+  let myShift = staffRef ? (staffRef.shift || 'Morning') : 'Morning';
+  let myTasks = state.tasks.filter(t => t.shift === myShift || t.shift === 'All');
+  let todayLogs = state.taskLogs.filter(l => l.date === todayStr() && l.shift === myShift);
+  let doneTasks = myTasks.filter(t => todayLogs.some(l => l.taskid === t.id)).length;
+  let pct = myTasks.length ? Math.round(doneTasks / myTasks.length * 100) : 0;
+
+  let shiftBadgeClass = myShift === 'Morning' ? 'shift-morning' : myShift === 'Noon' ? 'shift-noon' : 'shift-night';
+
+  let headerHtml = `
+    <div class="cleaner-welcome">
+      <div class="cleaner-name-big">${currentUser.name}</div>
+      <div><span class="cleaner-shift-badge ${shiftBadgeClass}">${myShift} Shift</span></div>
+      <div style="margin-top:12px;font-size:13px;color:rgba(255,255,255,.7)">${doneTasks} of ${myTasks.length} tasks done today</div>
+      <div class="prog-bar-wrap" style="margin-top:8px"><div class="prog-bar" style="width:${pct}%;background:${pct>=80?'#4ade80':'#fbbf24'}"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="openModal('modal-incident')">🚨 Report Incident</button>
+      <button class="btn btn-outline btn-sm" style="border-color:#0369a1;color:#0369a1" onclick="openModal('modal-supply-req')">📦 Request Supplies</button>
+    </div>`;
+
+  let zones = state.zones.length ? state.zones : [{ id: 'default', name: 'General' }];
+  let tasksHtml = '';
+  zones.forEach(zone => {
+    let zoneTasks = myTasks.filter(t => (t.zoneid || t.zoneId || 'default') === zone.id);
+    if (!zoneTasks.length) return;
+    tasksHtml += `<div class="task-zone-header">${zone.name}</div>`;
+    zoneTasks.forEach(task => {
+      let log = todayLogs.find(l => l.taskid === task.id);
+      let isDone = !!log;
+      tasksHtml += `<div class="task-item ${isDone?'done':''}" onclick="cleanerToggleTask('${task.id}','${myShift}')">
+        <div class="task-checkbox">${isDone?'✓':''}</div>
+        <div style="flex:1"><div class="task-name">${task.name}</div>${isDone&&log?`<div class="task-by">✅ Done at ${log.time||'—'}</div>`:`<div class="task-by">${task.frequency||'Daily'}</div>`}</div>
+      </div>`;
+    });
+  });
+  if (!myTasks.length) tasksHtml = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No tasks assigned</div><div class="empty-sub">Your supervisor hasn't added tasks yet</div></div>`;
+
+  el.innerHTML = `<div class="page-header"><div class="page-title">My Tasks</div><div class="page-sub">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div></div>${headerHtml}${tasksHtml}`;
+}
+
+function cleanerToggleTask(taskId, shift) {
+  let existing = state.taskLogs.findIndex(l => l.taskid === taskId && l.date === todayStr() && l.shift === shift);
+  if (existing >= 0) {
+    state.taskLogs.splice(existing, 1);
+  } else {
+    let now = new Date();
+    state.taskLogs.push({ id: uid(), taskid: taskId, date: todayStr(), shift, completedby: currentUser.name, time: now.toTimeString().slice(0,5), createdat: now.toISOString() });
+  }
+  saveState(); renderTasks();
+}
+
+function toggleTask(taskId, shift) {
+  if (!canEdit()) return;
+  let existing = state.taskLogs.findIndex(l => l.taskid === taskId && l.date === todayStr() && l.shift === shift);
+  if (existing >= 0) state.taskLogs.splice(existing, 1);
+  else {
+    let now = new Date();
+    state.taskLogs.push({ id: uid(), taskid: taskId, date: todayStr(), shift, completedby: currentUser.name, time: now.toTimeString().slice(0,5), createdat: now.toISOString() });
+  }
+  saveState(); renderTasks(); renderDashboard();
+}
+
+function setShift(sh, btn) {
+  activeShift = sh;
+  renderTasks();
+}
+
+function openAddTaskModal() {
+  let sel = document.getElementById('task-zone-select');
+  let zones = state.zones.length ? state.zones : [{ id: 'default', name: 'General' }];
+  sel.innerHTML = zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('');
+  document.getElementById('task-name-input').value = '';
+  openModal('modal-add-task');
+}
+
+function saveZone() {
+  let name = document.getElementById('zone-name').value.trim();
+  if (!name) return;
+  state.zones.push({ id: uid(), name });
+  saveState(); closeModal('modal-add-zone'); renderTasks();
+}
+
+function saveTask() {
+  let name = document.getElementById('task-name-input').value.trim();
+  if (!name) { alert('Task name required'); return; }
+  let zoneId = document.getElementById('task-zone-select').value || 'default';
+  state.tasks.push({ id: uid(), name, zoneid: zoneId, zoneId, shift: document.getElementById('task-shift-select').value, frequency: document.getElementById('task-freq-select').value });
+  saveState(); closeModal('modal-add-task'); renderTasks();
+}
+
+function deleteTask(id) {
+  if (!canEdit()) return;
+  if (!confirm('Remove task?')) return;
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  saveState(); renderTasks();
+}
+
+// ================================================================
+// ATTENDANCE
+// ================================================================
+function openAttendance() {
+  let today = todayStr();
+  let todayAttendance = state.attendance.filter(a => a.date === today);
+  let html = state.staff.map(s => {
+    let rec = todayAttendance.find(a => a.staffid === s.id);
+    let photo = s.photo ? `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : initials(s.name);
+    let actions = '';
+    if (!rec) actions = `<button class="check-btn check-in-btn" onclick="checkIn('${s.id}')">Check In</button>`;
+    else if (rec.checkin && !rec.checkout) actions = `<span class="checked-in-lbl">In ${rec.checkin}</span><button class="check-btn check-out-btn" onclick="checkOut('${s.id}')">Check Out</button>`;
+    else if (rec.checkout) actions = `<span class="checked-out-lbl">Out ${rec.checkout}</span>`;
+    return `<div class="attend-card"><div class="attend-avatar">${photo}</div><div><div class="attend-name">${s.name}</div><div class="attend-info">${s.role} · ${s.shift||'—'}</div></div><div class="attend-actions">${actions}</div></div>`;
+  }).join('');
+  document.getElementById('attendance-list').innerHTML = html || '<div class="empty-state"><div class="empty-text">No staff enrolled</div></div>';
+  openModal('modal-attendance');
+}
+
+function checkIn(staffId) {
+  let now = new Date().toTimeString().slice(0,5);
+  let today = todayStr();
+  let existing = state.attendance.find(a => a.staffid === staffId && a.date === today);
+  if (existing) return;
+  state.attendance.push({ id: uid(), staffid: staffId, date: today, checkin: now, checkout: null, recordedby: currentUser.name });
+  let staff = state.staff.find(s => s.id === staffId);
+  if (staff) { staff.status = 'On Shift'; }
+  saveState(); openAttendance(); renderDashboard();
+}
+
+function checkOut(staffId) {
+  let now = new Date().toTimeString().slice(0,5);
+  let today = todayStr();
+  let rec = state.attendance.find(a => a.staffid === staffId && a.date === today);
+  if (rec) { rec.checkout = now; }
+  let staff = state.staff.find(s => s.id === staffId);
+  if (staff) { staff.status = 'Off Shift'; }
+  saveState(); openAttendance(); renderDashboard();
+}
+
+// ================================================================
+// INCIDENTS & SUPPLY REQUESTS
+// ================================================================
+function saveIncident() {
+  let desc = document.getElementById('inc-desc').value.trim();
+  if (!desc) { alert('Description required'); return; }
+  state.incidents.push({ id: uid(), type: document.getElementById('inc-type').value, location: document.getElementById('inc-location').value, description: desc, reportedby: currentUser.name, date: todayStr(), createdat: new Date().toISOString() });
+  saveState(); closeModal('modal-incident'); alert('Incident reported successfully.');
+}
+
+function saveSupplyRequest() {
+  let item = document.getElementById('req-item').value.trim();
+  if (!item) { alert('Item name required'); return; }
+  state.supplyRequests.push({ id: uid(), item, qty: parseInt(document.getElementById('req-qty').value)||1, urgency: document.getElementById('req-urgency').value, notes: document.getElementById('req-notes').value, requestedby: currentUser.name, status: 'Pending', date: todayStr(), createdat: new Date().toISOString() });
+  saveState(); closeModal('modal-supply-req'); alert('Supply request submitted.');
 }
 
 // ================================================================
@@ -1247,22 +1728,110 @@ function renderReports() {
   let done = fJobs.filter(j => j.status === 'Done').length;
   let inPr = fJobs.filter(j => j.status === 'In Progress').length;
   document.getElementById('report-summary').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div><div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div><div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl">In Progress</div></div></div>`;
+
+  // Task completion report
+  let todayLogs = state.taskLogs.filter(l => l.date === todayStr());
+  let taskReport = document.getElementById('report-tasks');
+  if (taskReport) {
+    let rows = ['Morning','Noon','Night'].map(sh => {
+      let shTasks = state.tasks.filter(t => t.shift === sh || t.shift === 'All');
+      let shDone = todayLogs.filter(l => l.shift === sh).length;
+      let pct = shTasks.length ? Math.round(shDone/shTasks.length*100) : 0;
+      return `<div class="act-item"><span class="act-label">${sh} Shift</span><div class="act-bar-wrap"><div class="act-bar" style="width:${pct}%;background:${sh==='Morning'?'#d97706':sh==='Noon'?'#2563eb':'#7c3aed'}"></div></div><span class="act-val">${shDone}/${shTasks.length}</span></div>`;
+    }).join('');
+    taskReport.innerHTML = `<div class="card-title">Today's Task Completion by Shift</div>${rows}<div class="divider"></div><div style="font-size:12px;color:var(--text-muted)">Total tasks: ${state.tasks.length} · Completed today: ${todayLogs.length}</div>`;
+  }
+
+  // Incidents & supply requests
+  let incEl = document.getElementById('report-incidents');
+  if (incEl) {
+    let recentInc = state.incidents.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+    let recentReq = state.supplyRequests.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+    let incHtml = recentInc.length ? recentInc.map(i => `<div class="incident-card"><div class="incident-header"><span class="incident-type">🚨 ${i.type}</span><span class="incident-date">${i.date}</span></div><div class="incident-desc">${i.description}</div><div class="incident-reporter">📍 ${i.location||'—'} · Reported by ${i.reportedby}</div></div>`).join('') : '<div style="font-size:12px;color:var(--text-muted);padding:8px">No incidents reported</div>';
+    let reqHtml = recentReq.length ? recentReq.map(r => `<div class="supply-req-card"><div><div style="font-size:13px;font-weight:600">${r.item}</div><div style="font-size:11px;color:var(--text-muted)">Qty: ${r.qty} · by ${r.requestedby} · ${r.date}</div></div><span class="req-status ${r.status==='Pending'?'req-pending':r.status==='Approved'?'req-approved':'req-declined'}">${r.status}</span></div>`).join('') : '<div style="font-size:12px;color:var(--text-muted);padding:8px">No supply requests</div>';
+    incEl.innerHTML = `<div class="card-title">Recent Incidents</div>${incHtml}<div class="card-title" style="margin-top:14px">Supply Requests</div>${reqHtml}`;
+  }
+
+  // Inventory usage
+  let invEl = document.getElementById('report-inv');
+  if (invEl) {
+    let usageSummary = state.inventory.filter(i => i.usageLog && i.usageLog.length > 0).slice(0,8).map(i => {
+      let total = i.usageLog.reduce((s,l) => s + (l.qty||0), 0);
+      return `<div class="act-item"><span class="act-label" style="min-width:120px">${i.name}</span><span style="font-size:11px;color:var(--text-muted);flex:1">${total} ${i.uom||'units'} used</span><span class="act-val">${i.qty} left</span></div>`;
+    }).join('');
+    invEl.innerHTML = usageSummary || '<div style="font-size:12px;color:var(--text-muted);padding:8px">No usage logged yet</div>';
+  }
 }
 
 function setReportRange(r) {
   let now = new Date(); let fmt = d => d.toISOString().split('T')[0];
   if (r === 'today') { document.getElementById('report-from').value = fmt(now); document.getElementById('report-to').value = fmt(now); }
-  else if (r === 'week') { let w = new Date(now); w.setDate(w.getDate() - 7); document.getElementById('report-from').value = fmt(w); document.getElementById('report-to').value = fmt(now); }
-  else if (r === 'month') { document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01'; document.getElementById('report-to').value = fmt(now); }
-  else { document.getElementById('report-from').value = ''; document.getElementById('report-to').value = ''; }
+  else if (r === 'week') { let w = new Date(now); w.setDate(w.getDate()-7); document.getElementById('report-from').value = fmt(w); document.getElementById('report-to').value = fmt(now); }
+  else if (r === 'month') { document.getElementById('report-from').value = fmt(now).slice(0,7)+'-01'; document.getElementById('report-to').value = fmt(now); }
+  else { document.getElementById('report-from').value=''; document.getElementById('report-to').value=''; }
   renderReports();
 }
 
 // ================================================================
 // MODAL CONTROLS
 // ================================================================
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function clearStaffForm() {
+  // Reset title and button
+  let t = document.getElementById('add-staff-modal-title');
+  let b = document.getElementById('save-staff-btn');
+  if (t) t.textContent = 'Enrol New Staff Member';
+  if (b) b.textContent = 'Enrol Staff Member';
+  editingStaffId = null;
+  // Clear all text/select/date inputs
+  ['sf-name','sf-id','sf-phone','sf-address','sf-ghana','sf-ssnit',
+   'sf-startdate','sf-emerg-name','sf-emerg-phone','sf-bank-name',
+   'sf-bank-acct','sf-spouse-name','sf-spouse-contact','sf-marital-other'].forEach(id => {
+    let el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('sf-kids').value = '0';
+  document.getElementById('sf-role').selectedIndex = 0;
+  document.getElementById('sf-shift').selectedIndex = 0;
+  document.getElementById('sf-marital').selectedIndex = 0;
+  document.getElementById('sf-emerg-rel').selectedIndex = 0;
+  document.getElementById('other-marital-group').style.display = 'none';
+  // Clear all photos
+  clearPhoto('staff-photo-preview','staff-photo-placeholder','del-staff-photo');
+  clearPhoto('ghana-front-preview','ghana-front-placeholder','del-ghana-front');
+  clearPhoto('ghana-back-preview','ghana-back-placeholder','del-ghana-back');
+}
+
+function clearInvForm() {
+  ['inv-name','inv-qty','inv-reorder','inv-supplier','inv-supplier-contact'].forEach(id => {
+    let el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('inv-cat').selectedIndex = 0;
+  document.getElementById('inv-uom').selectedIndex = 0;
+  clearPhoto('inv-img-preview','inv-img-placeholder','del-inv-img');
+}
+
+function clearJobForm() {
+  ['jf-client','jf-location','jf-date','jf-time','jf-staff','jf-notes'].forEach(id => {
+    let el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('jf-type').selectedIndex = 0;
+}
+
+function clearDamageForm() {
+  document.getElementById('dmg-date').value = todayStr();
+  document.getElementById('dmg-desc').value = '';
+  document.getElementById('dmg-qty').value = '';
+  clearPhoto('dmg-photo-preview','dmg-photo-placeholder','del-dmg-photo');
+}
+
+function openModal(id) {
+  // Auto-clear forms when opening add modals
+  if (id === 'modal-add-staff' && !editingStaffId) clearStaffForm();
+  if (id === 'modal-add-inv') clearInvForm();
+  if (id === 'modal-add-job') clearJobForm();
+  if (id === 'modal-damage-report') clearDamageForm();
+  let el = document.getElementById(id); if (el) el.style.display = 'flex';
+}
+function closeModal(id) { let el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 </script>
 </body>
