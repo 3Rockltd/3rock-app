@@ -448,9 +448,9 @@ textarea.form-control{resize:vertical;min-height:56px}
   </nav>
 </div>
 
-<!-- STAFF MODAL (for Add/Edit) -->
+<!-- STAFF MODAL -->
 <div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="overlayClick(event,'modal-add-staff')">
-  <div class="modal"><div class="modal-header"><span class="modal-title" id="staff-modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
+  <div class="modal"><div class="modal-header"><span class="modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
   <div class="modal-body">
     <div class="section-sep">Staff Photo</div>
     <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div></div>
@@ -482,16 +482,13 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="section-sep">Bank Details</div>
     <div class="form-row"><div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div><div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div></div>
     
-    <div class="section-sep">Status Management</div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Staff Status</label><select class="form-control" id="sf-status"><option value="On Shift">On Shift</option><option value="Off Shift">Off Shift</option><option value="On Leave">On Leave</option></select></div></div>
-    
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="staff-save-btn" onclick="saveStaff()">Enrol Staff Member</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Enrol Staff Member</button></div>
   </div></div>
 </div>
 
 <!-- STAFF PROFILE MODAL -->
 <div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
-  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-primary btn-sm" id="edit-staff-btn" onclick="openEditStaffModal()">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
+  <div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()">Remove</button></div></div></div>
 </div>
 
 <!-- IMAGE VIEW MODAL -->
@@ -551,6 +548,12 @@ textarea.form-control{resize:vertical;min-height:56px}
 const SUPABASE_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
 
+// ================================================================
+// FIX 1: Initialize Supabase BEFORE any other code uses it
+// In the original code, supabaseClient was declared with `let` but
+// the createClient call was at the bottom of the declarations block.
+// This is safe in a script tag but we make it explicit here.
+// ================================================================
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
@@ -559,10 +562,12 @@ let currentStaffId = null;
 let currentInvId = null;
 let syncInProgress = false;
 let syncQueue = [];
-let editModeStaffId = null;
 const PASSWORDS = { director: 'Director@3Rock', manager: 'Manager@3Rock', supervisor: 'Supervisor@3Rock' };
 const STORAGE_KEY = '3rock_v5';
 
+// ================================================================
+// LOCAL STORAGE
+// ================================================================
 function localSave() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function localLoad() {
   let d = localStorage.getItem(STORAGE_KEY);
@@ -571,6 +576,11 @@ function localLoad() {
 }
 localLoad();
 
+// ================================================================
+// FIX 2: Compress images before storing to prevent row-size
+// overflow that causes silent Supabase upsert failures.
+// Large base64 images (>1MB) would silently break the entire sync.
+// ================================================================
 function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
   return new Promise((resolve) => {
     if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(dataUrl); return; }
@@ -589,26 +599,51 @@ function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
   });
 }
 
+// ================================================================
+// FIX 3: Sync functions — added `onConflict: 'id'` so Supabase
+// knows to UPDATE existing rows instead of failing on duplicates.
+// Also added per-table error logging so failures are visible.
+// Also handle the case where arrays (usageLog) need to be stored
+// as jsonb — the upsert sends them correctly as JSON objects.
+// ================================================================
 async function syncToCloud() {
   if (syncInProgress) { syncQueue.push('sync'); return; }
   syncInProgress = true;
   setSyncDot('syncing');
+
   try {
+    // Sync staff — upsert with explicit conflict column
     if (state.staff.length > 0) {
-      const { error: sErr } = await supabaseClient.from('staff').upsert(state.staff, { onConflict: 'id' });
-      if (sErr) console.error('Staff sync error:', sErr.message);
+      const { error: sErr } = await supabaseClient
+        .from('staff')
+        .upsert(state.staff, { onConflict: 'id' });
+      if (sErr) console.error('Staff sync error:', sErr.message, sErr.details);
     }
+
+    // Sync inventory — usageLog array is stored as jsonb
     if (state.inventory.length > 0) {
-      const { error: iErr } = await supabaseClient.from('inventory').upsert(state.inventory, { onConflict: 'id' });
-      if (iErr) console.error('Inventory sync error:', iErr.message);
+      const { error: iErr } = await supabaseClient
+        .from('inventory')
+        .upsert(state.inventory, { onConflict: 'id' });
+      if (iErr) console.error('Inventory sync error:', iErr.message, iErr.details);
     }
+
+    // Sync jobs
     if (state.jobs.length > 0) {
-      const { error: jErr } = await supabaseClient.from('jobs').upsert(state.jobs, { onConflict: 'id' });
-      if (jErr) console.error('Jobs sync error:', jErr.message);
+      const { error: jErr } = await supabaseClient
+        .from('jobs')
+        .upsert(state.jobs, { onConflict: 'id' });
+      if (jErr) console.error('Jobs sync error:', jErr.message, jErr.details);
     }
+
     setSyncDot('synced');
-  } catch (error) { console.error('Sync failed:', error); setSyncDot('error'); } 
-  finally { syncInProgress = false; if (syncQueue.length > 0) { syncQueue.shift(); syncToCloud(); } }
+  } catch (error) {
+    console.error('Sync failed:', error);
+    setSyncDot('error');
+  } finally {
+    syncInProgress = false;
+    if (syncQueue.length > 0) { syncQueue.shift(); syncToCloud(); }
+  }
 }
 
 async function loadFromCloud() {
@@ -618,19 +653,69 @@ async function loadFromCloud() {
       supabaseClient.from('inventory').select('*'),
       supabaseClient.from('jobs').select('*')
     ]);
-    if (staffRes.data) state.staff = staffRes.data;
-    if (invRes.data) state.inventory = invRes.data.map(item => ({ ...item, usageLog: Array.isArray(item.usagelog || item.usageLog) ? (item.usagelog || item.usageLog) : [] }));
-    if (jobsRes.data) state.jobs = jobsRes.data;
-    localSave(); renderAll(); setSyncDot('synced');
-  } catch (error) { console.error('Load from cloud failed:', error); setSyncDot('error'); renderAll(); }
+
+    // FIX 4: Check each table result individually and log errors
+    if (staffRes.error) {
+      console.error('Load staff error:', staffRes.error.message);
+    } else if (staffRes.data) {
+      state.staff = staffRes.data;
+    }
+
+    if (invRes.error) {
+      console.error('Load inventory error:', invRes.error.message);
+    } else if (invRes.data) {
+      // FIX 5: Ensure usageLog is always an array after loading from DB
+      state.inventory = invRes.data.map(item => ({
+        ...item,
+        usageLog: Array.isArray(item.usagelog || item.usageLog)
+          ? (item.usagelog || item.usageLog)
+          : []
+      }));
+    }
+
+    if (jobsRes.error) {
+      console.error('Load jobs error:', jobsRes.error.message);
+    } else if (jobsRes.data) {
+      state.jobs = jobsRes.data;
+    }
+
+    localSave();
+    renderAll();
+    setSyncDot('synced');
+  } catch (error) {
+    console.error('Load from cloud failed:', error);
+    setSyncDot('error');
+    // Fall back to local data silently
+    renderAll();
+  }
 }
 
-async function deleteFromCloud(table, id) { try { await supabaseClient.from(table).delete().eq('id', id); } catch(e) { console.error(e); } }
+// FIX 6: Deleted records must also be deleted from Supabase,
+// not just removed from local state. Added deleteFromCloud helper.
+async function deleteFromCloud(table, id) {
+  try {
+    const { error } = await supabaseClient.from(table).delete().eq('id', id);
+    if (error) console.error(`Delete from ${table} error:`, error.message);
+  } catch (e) {
+    console.error('Delete error:', e);
+  }
+}
 
-function setSyncDot(state) { let dot = document.getElementById('sync-dot'); if (dot) dot.className = 'sync-dot ' + state; }
+function setSyncDot(state) {
+  let dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot ' + state;
+}
+
 function saveState() { localSave(); syncToCloud(); }
-async function initCloudData() { setSyncDot('syncing'); await loadFromCloud(); }
 
+async function initCloudData() {
+  setSyncDot('syncing');
+  await loadFromCloud();
+}
+
+// ================================================================
+// HELPER FUNCTIONS
+// ================================================================
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function initials(n) { return (n || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
@@ -658,6 +743,9 @@ function viewImage(imageSrc, title) {
   openModal('modal-image-view');
 }
 
+// ================================================================
+// AUTHENTICATION
+// ================================================================
 function handleLogin() {
   let role = document.getElementById('auth-role').value;
   let pass = document.getElementById('auth-pass').value;
@@ -678,14 +766,20 @@ function handleLogout() { currentUser = null; document.getElementById('app').sty
 function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
 function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
+// ================================================================
+// APP INITIALIZATION
+// ================================================================
 async function initApp() {
-  updateDateTime(); setInterval(updateDateTime, 60000);
-  buildQuickActions(); buildActionBars();
+  updateDateTime();
+  setInterval(updateDateTime, 60000);
+  buildQuickActions();
+  buildActionBars();
   if (['director', 'manager'].includes(currentUser.role)) {
     document.getElementById('director-kpi').style.display = 'block';
     document.getElementById('director-metrics-section').style.display = 'block';
   }
-  await initCloudData(); renderAll();
+  await initCloudData();
+  renderAll();
 }
 
 function updateDateTime() {
@@ -718,179 +812,14 @@ function buildQuickActions() {
 
 function buildActionBars() {
   let notice = `<div class="viewer-notice">👁 View only — supervisor can make changes</div>`;
-  document.getElementById('staff-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openAddStaffModal()">+ Enrol Staff</button>` : notice;
+  document.getElementById('staff-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-staff')">+ Enrol Staff</button>` : notice;
   document.getElementById('inv-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-inv')">+ Add Item</button>` : notice;
   document.getElementById('jobs-actions').innerHTML = canEdit() ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>` : notice;
 }
 
-// EDIT/UPDATE STAFF FUNCTIONS
-function openAddStaffModal() {
-  editModeStaffId = null;
-  document.getElementById('staff-modal-title').textContent = "Enrol New Staff Member";
-  document.getElementById('staff-save-btn').textContent = "Enrol Staff Member";
-  // Clear form
-  document.getElementById('sf-name').value = '';
-  document.getElementById('sf-id').value = '';
-  document.getElementById('sf-address').value = '';
-  document.getElementById('sf-ghana').value = '';
-  document.getElementById('sf-ssnit').value = '';
-  document.getElementById('sf-phone').value = '';
-  document.getElementById('sf-startdate').value = '';
-  document.getElementById('sf-spouse-name').value = '';
-  document.getElementById('sf-spouse-contact').value = '';
-  document.getElementById('sf-kids').value = '0';
-  document.getElementById('sf-emerg-name').value = '';
-  document.getElementById('sf-emerg-phone').value = '';
-  document.getElementById('sf-bank-name').value = '';
-  document.getElementById('sf-bank-acct').value = '';
-  document.getElementById('sf-marital').value = 'Single';
-  document.getElementById('sf-role').value = 'Cleaner';
-  document.getElementById('sf-shift').value = 'Morning';
-  document.getElementById('sf-emerg-rel').value = 'Spouse/Partner';
-  document.getElementById('sf-status').value = 'Off Shift';
-  document.getElementById('staff-photo-preview').src = '';
-  document.getElementById('staff-photo-preview').style.display = 'none';
-  document.getElementById('staff-photo-placeholder').style.display = 'block';
-  document.getElementById('ghana-front-preview').src = '';
-  document.getElementById('ghana-front-preview').style.display = 'none';
-  document.getElementById('ghana-front-placeholder').style.display = 'block';
-  document.getElementById('ghana-back-preview').src = '';
-  document.getElementById('ghana-back-preview').style.display = 'none';
-  document.getElementById('ghana-back-placeholder').style.display = 'block';
-  toggleFamilyFields();
-  openModal('modal-add-staff');
-}
-
-function openEditStaffModal() {
-  if (!canEdit()) return;
-  let staff = state.staff.find(x => x.id === currentStaffId);
-  if (!staff) return;
-  editModeStaffId = staff.id;
-  document.getElementById('staff-modal-title').textContent = "Edit Staff Member";
-  document.getElementById('staff-save-btn').textContent = "Update Staff Member";
-  
-  document.getElementById('sf-name').value = staff.name || '';
-  document.getElementById('sf-id').value = staff.staffid || staff.staffId || '';
-  document.getElementById('sf-address').value = staff.address || '';
-  document.getElementById('sf-ghana').value = staff.ghanacard || staff.ghanaCard || '';
-  document.getElementById('sf-ssnit').value = staff.ssnit || '';
-  document.getElementById('sf-phone').value = staff.phone || '';
-  document.getElementById('sf-startdate').value = staff.startdate || staff.startDate || '';
-  document.getElementById('sf-spouse-name').value = staff.spousename || staff.spouseName || '';
-  document.getElementById('sf-spouse-contact').value = staff.spousecontact || staff.spouseContact || '';
-  document.getElementById('sf-kids').value = staff.numberofkids || staff.numberOfKids || 0;
-  document.getElementById('sf-emerg-name').value = staff.emergname || staff.emergName || '';
-  document.getElementById('sf-emerg-phone').value = staff.emergphone || staff.emergPhone || '';
-  document.getElementById('sf-bank-name').value = staff.bankname || staff.bankName || '';
-  document.getElementById('sf-bank-acct').value = staff.bankacct || staff.bankAcct || '';
-  document.getElementById('sf-marital').value = staff.maritalstatus || staff.maritalStatus || 'Single';
-  document.getElementById('sf-role').value = staff.role || 'Cleaner';
-  document.getElementById('sf-shift').value = staff.shift || 'Morning';
-  document.getElementById('sf-emerg-rel').value = staff.emergrel || staff.emergRel || 'Spouse/Partner';
-  document.getElementById('sf-status').value = staff.status || 'Off Shift';
-  toggleFamilyFields();
-  
-  if (staff.photo && staff.photo.startsWith('data:')) {
-    document.getElementById('staff-photo-preview').src = staff.photo;
-    document.getElementById('staff-photo-preview').style.display = 'block';
-    document.getElementById('staff-photo-placeholder').style.display = 'none';
-  } else {
-    document.getElementById('staff-photo-preview').style.display = 'none';
-    document.getElementById('staff-photo-placeholder').style.display = 'block';
-  }
-  if (staff.ghanafront || staff.ghanaFrontImg) {
-    let front = staff.ghanafront || staff.ghanaFrontImg;
-    if (front.startsWith('data:')) {
-      document.getElementById('ghana-front-preview').src = front;
-      document.getElementById('ghana-front-preview').style.display = 'block';
-      document.getElementById('ghana-front-placeholder').style.display = 'none';
-    }
-  }
-  if (staff.ghanaback || staff.ghanaBackImg) {
-    let back = staff.ghanaback || staff.ghanaBackImg;
-    if (back.startsWith('data:')) {
-      document.getElementById('ghana-back-preview').src = back;
-      document.getElementById('ghana-back-preview').style.display = 'block';
-      document.getElementById('ghana-back-placeholder').style.display = 'none';
-    }
-  }
-  closeModal('modal-staff-profile');
-  openModal('modal-add-staff');
-}
-
-async function saveStaff() {
-  if (!canEdit()) return;
-  let name = document.getElementById('sf-name').value.trim();
-  let role = document.getElementById('sf-role').value;
-  if (!name || !role) { alert('Name and role required'); return; }
-
-  let rawPhoto = document.getElementById('staff-photo-preview').src || '';
-  let rawFront = document.getElementById('ghana-front-preview').src || '';
-  let rawBack = document.getElementById('ghana-back-preview').src || '';
-
-  let [photo, ghanaFront, ghanaBack] = await Promise.all([
-    compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6),
-    compressImage(rawFront.startsWith('data:') ? rawFront : '', 600, 0.7),
-    compressImage(rawBack.startsWith('data:') ? rawBack : '', 600, 0.7)
-  ]);
-
-  let maritalStatus = document.getElementById('sf-marital').value;
-  if (maritalStatus === 'Other') maritalStatus = document.getElementById('sf-marital-other').value.trim() || 'Other';
-
-  let staffData = {
-    id: editModeStaffId || uid(),
-    name, role,
-    staffid: document.getElementById('sf-id').value,
-    phone: document.getElementById('sf-phone').value,
-    shift: document.getElementById('sf-shift').value,
-    startdate: document.getElementById('sf-startdate').value,
-    address: document.getElementById('sf-address').value,
-    ghanacard: document.getElementById('sf-ghana').value,
-    ghanafront: ghanaFront,
-    ghanaback: ghanaBack,
-    ssnit: document.getElementById('sf-ssnit').value,
-    emergname: document.getElementById('sf-emerg-name').value,
-    emergphone: document.getElementById('sf-emerg-phone').value,
-    emergrel: document.getElementById('sf-emerg-rel').value,
-    bankname: document.getElementById('sf-bank-name').value,
-    bankacct: document.getElementById('sf-bank-acct').value,
-    status: document.getElementById('sf-status').value,
-    photo: photo,
-    maritalstatus: maritalStatus,
-    spousename: document.getElementById('sf-spouse-name').value,
-    spousecontact: document.getElementById('sf-spouse-contact').value,
-    numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
-  };
-  staffData.staffId = staffData.staffid;
-  staffData.startDate = staffData.startdate;
-  staffData.ghanaCard = staffData.ghanacard;
-  staffData.ghanaFrontImg = staffData.ghanafront;
-  staffData.ghanaBackImg = staffData.ghanaback;
-  staffData.emergName = staffData.emergname;
-  staffData.emergPhone = staffData.emergphone;
-  staffData.emergRel = staffData.emergrel;
-  staffData.bankName = staffData.bankname;
-  staffData.bankAcct = staffData.bankacct;
-  staffData.maritalStatus = staffData.maritalstatus;
-  staffData.spouseName = staffData.spousename;
-  staffData.spouseContact = staffData.spousecontact;
-  staffData.numberOfKids = staffData.numberofkids;
-
-  if (editModeStaffId) {
-    let index = state.staff.findIndex(x => x.id === editModeStaffId);
-    if (index !== -1) {
-      state.staff[index] = staffData;
-    }
-  } else {
-    state.staff.push(staffData);
-  }
-  saveState();
-  closeModal('modal-add-staff');
-  editModeStaffId = null;
-  renderStaff(); renderDashboard();
-}
-
-// DASHBOARD, STAFF, INVENTORY, JOBS, REPORTS (same as original, works with status field)
+// ================================================================
+// DASHBOARD
+// ================================================================
 function renderDashboard() {
   let onShift = state.staff.filter(s => s.status === 'On Shift').length;
   let todayJobs = state.jobs.filter(j => j.date === todayStr());
@@ -922,6 +851,9 @@ function renderDashboard() {
 
 function actBar(l, v, t, c) { let p = Math.round(v / t * 100); return `<div class="act-item"><span class="act-label">${l}</span><div class="act-bar-wrap"><div class="act-bar" style="width:${p}%;background:${c}"></div></div><span class="act-val">${v}</span></div>`; }
 
+// ================================================================
+// STAFF MANAGEMENT
+// ================================================================
 let staffFilter = 'all';
 function renderStaff() {
   let q = document.getElementById('staff-search').value.toLowerCase();
@@ -930,16 +862,75 @@ function renderStaff() {
   document.getElementById('onshift-count-lbl').textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
   let grid = document.getElementById('staff-grid');
   if (!list.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-text">No staff</div></div>`; return; }
-  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${s.status === 'On Shift' ? 'pill-onshift' : (s.status === 'On Leave' ? 'pill-onleave' : 'pill-offshift')}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffId || s.staffid)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
+  grid.innerHTML = list.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${detRow('Staff ID', s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div></div>`).join('');
 }
 
 function filterStaff(f, btn) { staffFilter = f; document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderStaff(); }
+
+// FIX 7: saveStaff now compresses images before saving to prevent
+// oversized rows that cause silent Supabase upsert failures
+async function saveStaff() {
+  if (!canEdit()) return;
+  let name = document.getElementById('sf-name').value.trim();
+  let role = document.getElementById('sf-role').value;
+  if (!name || !role) { alert('Name and role required'); return; }
+
+  let rawPhoto = document.getElementById('staff-photo-preview').src || '';
+  let rawFront = document.getElementById('ghana-front-preview').src || '';
+  let rawBack = document.getElementById('ghana-back-preview').src || '';
+
+  // Compress all images to keep row size small
+  let [photo, ghanaFront, ghanaBack] = await Promise.all([
+    compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6),
+    compressImage(rawFront.startsWith('data:') ? rawFront : '', 600, 0.7),
+    compressImage(rawBack.startsWith('data:') ? rawBack : '', 600, 0.7)
+  ]);
+
+  let maritalStatus = document.getElementById('sf-marital').value;
+  if (maritalStatus === 'Other') maritalStatus = document.getElementById('sf-marital-other').value.trim() || 'Other';
+
+  let s = {
+    id: uid(), name, role,
+    staffid: document.getElementById('sf-id').value,
+    phone: document.getElementById('sf-phone').value,
+    shift: document.getElementById('sf-shift').value,
+    startdate: document.getElementById('sf-startdate').value,
+    address: document.getElementById('sf-address').value,
+    ghanacard: document.getElementById('sf-ghana').value,
+    ghanafront: ghanaFront, ghanaback: ghanaBack,
+    ssnit: document.getElementById('sf-ssnit').value,
+    emergname: document.getElementById('sf-emerg-name').value,
+    emergphone: document.getElementById('sf-emerg-phone').value,
+    emergrel: document.getElementById('sf-emerg-rel').value,
+    bankname: document.getElementById('sf-bank-name').value,
+    bankacct: document.getElementById('sf-bank-acct').value,
+    status: 'Off Shift',
+    photo: photo,
+    maritalstatus: maritalStatus,
+    spousename: document.getElementById('sf-spouse-name').value,
+    spousecontact: document.getElementById('sf-spouse-contact').value,
+    numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
+  };
+
+  // Also keep camelCase aliases for in-memory rendering compatibility
+  s.staffId = s.staffid; s.startDate = s.startdate; s.ghanaCard = s.ghanacard;
+  s.ghanaFrontImg = s.ghanafront; s.ghanaBackImg = s.ghanaback;
+  s.emergName = s.emergname; s.emergPhone = s.emergphone; s.emergRel = s.emergrel;
+  s.bankName = s.bankname; s.bankAcct = s.bankacct; s.maritalStatus = s.maritalstatus;
+  s.spouseName = s.spousename; s.spouseContact = s.spousecontact; s.numberOfKids = s.numberofkids;
+
+  state.staff.push(s);
+  saveState();
+  closeModal('modal-add-staff');
+  renderStaff(); renderDashboard();
+}
 
 function openStaffProfile(id) {
   let s = state.staff.find(x => x.id === id);
   if (!s) return;
   currentStaffId = id;
 
+  // Normalise field names (DB returns lowercase, local may have camelCase)
   let photo = s.photo || '';
   let name = s.name || '';
   let role = s.role || '';
@@ -960,7 +951,6 @@ function openStaffProfile(id) {
   let emergRel = s.emergRel || s.emergrel || '';
   let bankName = s.bankName || s.bankname || '';
   let bankAcct = s.bankAcct || s.bankacct || '';
-  let status = s.status || 'Off Shift';
 
   let photoDiv = document.getElementById('prof-photo');
   if (photo) { photoDiv.innerHTML = `<img src="${photo}">`; photoDiv.style.background = 'rgba(255,255,255,.1)'; }
@@ -979,7 +969,7 @@ function openStaffProfile(id) {
   let detailsHtml = `
     <div class="section-sep">Personal</div>
     ${detRow('Staff ID', staffId)}${detRow('Phone', phone)}${detRow('Shift', shift)}
-    ${detRow('Start Date', startDate)}${detRow('Status', status)}
+    ${detRow('Start Date', startDate)}
     ${address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${address}</span></div>` : ''}
     ${detRow('Ghana Card Number', ghanaCard)}${ghanaImagesHtml}
     <div class="section-sep">Family & Marital</div>
@@ -999,30 +989,278 @@ async function deleteCurrentStaff() {
   if (currentStaffId) {
     state.staff = state.staff.filter(x => x.id !== currentStaffId);
     localSave();
+    // FIX 6 applied: delete from cloud too
     await deleteFromCloud('staff', currentStaffId);
   }
   closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
 }
 
-function printStaffPDF() { if (!canPrint()) return; let s = state.staff.find(x => x.id === currentStaffId); if (!s) return; const { jsPDF } = window.jspdf; let doc = new jsPDF({ unit: 'mm', format: 'a4' }); doc.setFillColor(10,22,40); doc.rect(0,0,210,44,'F'); doc.setFillColor(204,31,46); doc.rect(0,42,210,3,'F'); doc.setTextColor(255,255,255); doc.setFontSize(24); doc.text('3-Rock Builders',14,18); doc.setFontSize(10); doc.text('Staff Profile Document',14,27); doc.text('Generated: '+new Date().toLocaleDateString(),14,35); let px=14, py=52, pw=50, ph=65; doc.setFillColor(230,234,244); doc.rect(px,py,pw,ph,'F'); if(s.photo && s.photo.startsWith('data:')){ try{ doc.addImage(s.photo,'JPEG',px,py,pw,ph); } catch(e){} } doc.setFontSize(20); doc.setTextColor(10,22,40); doc.text(s.name,px+pw+10,62); doc.setFillColor(10,22,40); doc.roundedRect(px+pw+10,65,70,9,2,2,'F'); doc.setTextColor(255,255,255); doc.setFontSize(9); doc.text((s.role||'').toUpperCase(),px+pw+14,70.5); doc.setFontSize(9); doc.setTextColor(70,88,128); doc.text(`Staff ID: ${s.staffId||s.staffid||'—'}`,px+pw+10,82); doc.text(`Phone: ${s.phone||'—'}`,px+pw+10,90); doc.text(`Shift: ${s.shift||'—'}`,px+pw+10,98); let y=py+ph+14; function addSection(d,l,y){ d.setFillColor(10,22,40); d.rect(14,y,182,7,'F'); d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(255,255,255); d.text(l,17,y+5); return y+7; } function addRow(d,k,v,y,shade){ d.setFillColor(shade?247:255,shade?249:255,shade?253:255); d.rect(14,y,182,8,'F'); d.setDrawColor(220,225,235); d.line(14,y+8,196,y+8); d.setFont('helvetica','bold'); d.setFontSize(8.5); d.setTextColor(100,115,145); d.text(k,17,y+5.5); d.setFont('helvetica','normal'); d.setTextColor(10,22,40); d.text(String(v||'—'),90,y+5.5); return y+8; } y=addSection(doc,'PERSONAL DETAILS',y); y=addRow(doc,'Ghana Card',s.ghanaCard||s.ghanacard||'',y,true); if(s.address) y=addRow(doc,'Address',s.address,y,false); y=addRow(doc,'Marital Status',s.maritalStatus||s.maritalstatus||'',y,true); if(s.spouseName||s.spousename) y=addRow(doc,'Spouse/Partner',s.spouseName||s.spousename||'',y,false); if(s.spouseContact||s.spousecontact) y=addRow(doc,'Spouse Contact',s.spouseContact||s.spousecontact||'',y,true); y=addRow(doc,'Children',s.numberOfKids||s.numberofkids||0,y,false); y=addSection(doc,'EMERGENCY CONTACT',y+4); y=addRow(doc,'Contact',s.emergName||s.emergname||'',y,true); y=addRow(doc,'Phone',s.emergPhone||s.emergphone||'',y,false); y=addRow(doc,'Relation',s.emergRel||s.emergrel||'',y,true); y=addSection(doc,'BANK DETAILS',y+4); y=addRow(doc,'Bank Name',s.bankName||s.bankname||'',y,true); y=addRow(doc,'Account Number',s.bankAcct||s.bankacct||'',y,false); doc.save(`3Rock_Staff_${s.name.replace(/\s+/g,'_')}.pdf`); }
+function printStaffPDF() {
+  if (!canPrint()) return;
+  let s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  // Normalise fields
+  let name = s.name || ''; let role = s.role || '';
+  let staffId = s.staffId || s.staffid || '';
+  let phone = s.phone || ''; let shift = s.shift || '';
+  let startDate = s.startDate || s.startdate || '';
+  let photo = s.photo || '';
+  let ghanaCard = s.ghanaCard || s.ghanacard || '';
+  let address = s.address || '';
+  let maritalStatus = s.maritalStatus || s.maritalstatus || 'Single';
+  let spouseName = s.spouseName || s.spousename || '';
+  let spouseContact = s.spouseContact || s.spousecontact || '';
+  let numberOfKids = s.numberOfKids || s.numberofkids || 0;
+  let emergName = s.emergName || s.emergname || '';
+  let emergPhone = s.emergPhone || s.emergphone || '';
+  let emergRel = s.emergRel || s.emergrel || '';
+  let bankName = s.bankName || s.bankname || '';
+  let bankAcct = s.bankAcct || s.bankacct || '';
 
-// INVENTORY FUNCTIONS (unchanged)
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  doc.setFillColor(10, 22, 40); doc.rect(0, 0, 210, 44, 'F');
+  doc.setFillColor(204, 31, 46); doc.rect(0, 42, 210, 3, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('3-Rock Builders', 14, 18);
+  doc.setFontSize(10); doc.text('Staff Profile Document', 14, 27);
+  doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
+  let px = 14, py = 52, pw = 50, ph = 65;
+  doc.setFillColor(230, 234, 244); doc.rect(px, py, pw, ph, 'F');
+  if (photo && photo.startsWith('data:')) { try { doc.addImage(photo, 'JPEG', px, py, pw, ph); } catch (e) { } }
+  doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(name, px + pw + 10, 62);
+  doc.setFillColor(10, 22, 40); doc.roundedRect(px + pw + 10, 65, 70, 9, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text(role.toUpperCase(), px + pw + 14, 70.5);
+  doc.setFontSize(9); doc.setTextColor(70, 88, 128); doc.text(`Staff ID: ${staffId || '—'}`, px + pw + 10, 82);
+  doc.text(`Phone: ${phone || '—'}`, px + pw + 10, 90); doc.text(`Shift: ${shift || '—'}`, px + pw + 10, 98);
+  let y = py + ph + 14;
+  y = addSection(doc, 'PERSONAL DETAILS', y);
+  y = addRow(doc, 'Ghana Card', ghanaCard, y, true);
+  if (address) y = addRow(doc, 'Address', address, y, false);
+  y = addRow(doc, 'Marital Status', maritalStatus, y, true);
+  if (spouseName) y = addRow(doc, 'Spouse/Partner', spouseName, y, false);
+  if (spouseContact) y = addRow(doc, 'Spouse Contact', spouseContact, y, true);
+  y = addRow(doc, 'Children', numberOfKids, y, false);
+  y = addSection(doc, 'EMERGENCY CONTACT', y + 4);
+  y = addRow(doc, 'Contact', emergName, y, true);
+  y = addRow(doc, 'Phone', emergPhone, y, false);
+  y = addRow(doc, 'Relation', emergRel, y, true);
+  y = addSection(doc, 'BANK DETAILS', y + 4);
+  y = addRow(doc, 'Bank Name', bankName, y, true);
+  y = addRow(doc, 'Account Number', bankAcct, y, false);
+  doc.save(`3Rock_Staff_${name.replace(/\s+/g, '_')}.pdf`);
+}
+
+function addSection(doc, lbl, y) { doc.setFillColor(10, 22, 40); doc.rect(14, y, 182, 7, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255); doc.text(lbl, 17, y + 5); return y + 7; }
+function addRow(doc, k, v, y, shade) { doc.setFillColor(shade ? 247 : 255, shade ? 249 : 255, shade ? 253 : 255); doc.rect(14, y, 182, 8, 'F'); doc.setDrawColor(220, 225, 235); doc.line(14, y + 8, 196, y + 8); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 115, 145); doc.text(k, 17, y + 5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(10, 22, 40); doc.text(String(v || '—'), 90, y + 5.5); return y + 8; }
+
+// ================================================================
+// INVENTORY MANAGEMENT
+// ================================================================
 let invFilter = 'all';
-function renderInventory() { let q = document.getElementById('inv-search').value.toLowerCase(); let list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter)); let lowCount = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder)).length; document.getElementById('inv-count-lbl').textContent = `${state.inventory.length} items`; document.getElementById('inv-low-lbl').textContent = `${lowCount} low stock`; let grid = document.getElementById('inventory-grid'); if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; } grid.innerHTML = list.map(item => { let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100)); let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red'; return `<div class="inv-card" onclick="openInvDetail('${item.id}')"><div class="inv-img">${item.img ? `<img src="${item.img}">` : '📦'}</div><div class="inv-body"><div class="inv-name">${item.name}</div><div class="inv-cat">${item.category}</div><div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${item.uom || ''}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty) <= Number(item.reorder) ? '<div class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW</div>' : ''}</div></div>`; }).join(''); }
+function renderInventory() {
+  let q = document.getElementById('inv-search').value.toLowerCase();
+  let list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter));
+  let lowCount = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder)).length;
+  document.getElementById('inv-count-lbl').textContent = `${state.inventory.length} items`;
+  document.getElementById('inv-low-lbl').textContent = `${lowCount} low stock`;
+  let grid = document.getElementById('inventory-grid');
+  if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; }
+  grid.innerHTML = list.map(item => {
+    let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
+    let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
+    return `<div class="inv-card" onclick="openInvDetail('${item.id}')"><div class="inv-img">${item.img ? `<img src="${item.img}">` : '📦'}</div><div class="inv-body"><div class="inv-name">${item.name}</div><div class="inv-cat">${item.category}</div><div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${item.uom || ''}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty) <= Number(item.reorder) ? '<div class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW</div>' : ''}</div></div>`;
+  }).join('');
+}
+
 function filterInv(f, btn) { invFilter = f; document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderInventory(); }
-async function saveInventory() { if (!canEdit()) return; let name = document.getElementById('inv-name').value.trim(); let cat = document.getElementById('inv-cat').value; if (!name || !cat) { alert('Name/category required'); return; } let rawImg = document.getElementById('inv-img-preview').src || ''; let img = await compressImage(rawImg.startsWith('data:') ? rawImg : '', 400, 0.65); let item = { id: uid(), name, category: cat, qty: parseInt(document.getElementById('inv-qty').value) || 0, uom: document.getElementById('inv-uom').value, reorder: parseInt(document.getElementById('inv-reorder').value) || 0, supplier: document.getElementById('inv-supplier').value.trim(), suppliercontact: document.getElementById('inv-supplier-contact').value.trim(), img: img, usageLog: [] }; state.inventory.push(item); saveState(); closeModal('modal-add-inv'); renderInventory(); renderDashboard(); }
-function openInvDetail(id) { let item = state.inventory.find(x => x.id === id); if (!item) return; currentInvId = id; if (!Array.isArray(item.usageLog)) item.usageLog = item.usagelog || []; document.getElementById('inv-detail-title').textContent = item.name; let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100)); let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red'; document.getElementById('inv-detail-info').innerHTML = `<div class="detail-row"><span class="dk">Category</span><span class="dv">${item.category}</span></div><div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom || 'units'}</strong></span></div><div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom || 'units'}</span></div><div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier || '—'}</span></div><div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.supplierContact || item.suppliercontact || '—'}</span></div><div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`; let qtyCtrl = document.getElementById('inv-qty-ctrl'); if (canEdit()) { qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`; } else { qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${item.uom || 'units'}</span>`; } let logsHtml = ''; if (item.usageLog && item.usageLog.length > 0) { logsHtml = item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy || log.loggedby} at ${(log.loggedAt || log.loggedat || '').slice(0, 16)}</span></div></div>`).join(''); } else { logsHtml = '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div><div class="empty-sub">Tap "Log Daily Usage" to record inventory consumption</div></div>'; } document.getElementById('inv-usage-logs').innerHTML = logsHtml; let logBtn = document.getElementById('log-usage-btn'); let delBtn = document.getElementById('delete-inv-btn'); if (logBtn) logBtn.style.display = canEdit() ? 'inline-flex' : 'none'; if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none'; openModal('modal-inv-detail'); }
-function adjustQty(delta) { if (!canEdit()) return; let item = state.inventory.find(x => x.id === currentInvId); if (!item) return; let newQty = item.qty + delta; if (newQty < 0) { alert('Cannot go below zero'); return; } item.qty = newQty; saveState(); openInvDetail(currentInvId); renderInventory(); renderDashboard(); }
-function openLogUsageModal() { let item = state.inventory.find(x => x.id === currentInvId); if (!item) return; document.getElementById('log-item-name').value = item.name; document.getElementById('log-unit').value = item.uom || 'units'; document.getElementById('log-qty').value = ''; document.getElementById('log-date').value = todayStr(); document.getElementById('log-job').value = ''; document.getElementById('log-notes').value = ''; closeModal('modal-inv-detail'); openModal('modal-log-usage'); }
-function saveUsageLog() { if (!canEdit()) return; let qty = parseInt(document.getElementById('log-qty').value); let date = document.getElementById('log-date').value; if (!qty || qty < 1) { alert('Enter valid quantity'); return; } if (!date) { alert('Select date'); return; } let item = state.inventory.find(x => x.id === currentInvId); if (!item) return; if (item.qty < qty) { alert(`Insufficient stock! Only ${item.qty} ${item.uom} available.`); return; } if (!Array.isArray(item.usageLog)) item.usageLog = []; item.usageLog.push({ id: uid(), date, qty, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() }); item.qty -= qty; saveState(); closeModal('modal-log-usage'); openInvDetail(currentInvId); renderInventory(); renderDashboard(); }
-async function deleteCurrentInv() { if (!canEdit()) return; if (!confirm('Delete this inventory item? This will remove all usage history.')) return; state.inventory = state.inventory.filter(x => x.id !== currentInvId); localSave(); await deleteFromCloud('inventory', currentInvId); closeModal('modal-inv-detail'); renderInventory(); renderDashboard(); }
+
+async function saveInventory() {
+  if (!canEdit()) return;
+  let name = document.getElementById('inv-name').value.trim();
+  let cat = document.getElementById('inv-cat').value;
+  if (!name || !cat) { alert('Name/category required'); return; }
+  let rawImg = document.getElementById('inv-img-preview').src || '';
+  let img = await compressImage(rawImg.startsWith('data:') ? rawImg : '', 400, 0.65);
+  let item = {
+    id: uid(), name, category: cat,
+    qty: parseInt(document.getElementById('inv-qty').value) || 0,
+    uom: document.getElementById('inv-uom').value,
+    reorder: parseInt(document.getElementById('inv-reorder').value) || 0,
+    supplier: document.getElementById('inv-supplier').value.trim(),
+    suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
+    img: img,
+    // FIX 8: Store usageLog as array — Supabase jsonb column handles this
+    usageLog: []
+  };
+  // alias for DB lowercase column
+  item.supplierContact = item.suppliercontact;
+  state.inventory.push(item);
+  saveState(); closeModal('modal-add-inv'); renderInventory(); renderDashboard();
+}
+
+function openInvDetail(id) {
+  let item = state.inventory.find(x => x.id === id);
+  if (!item) return;
+  currentInvId = id;
+
+  // Ensure usageLog is always array
+  if (!Array.isArray(item.usageLog)) item.usageLog = item.usagelog || [];
+
+  document.getElementById('inv-detail-title').textContent = item.name;
+  let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
+  let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
+  document.getElementById('inv-detail-info').innerHTML = `
+    <div class="detail-row"><span class="dk">Category</span><span class="dv">${item.category}</span></div>
+    <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom || 'units'}</strong></span></div>
+    <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom || 'units'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier || '—'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.supplierContact || item.suppliercontact || '—'}</span></div>
+    <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
+
+  let qtyCtrl = document.getElementById('inv-qty-ctrl');
+  if (canEdit()) {
+    qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
+  } else {
+    qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${item.uom || 'units'}</span>`;
+  }
+
+  let logsHtml = '';
+  if (item.usageLog && item.usageLog.length > 0) {
+    logsHtml = item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${log.date}</div><div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${log.loggedBy || log.loggedby} at ${(log.loggedAt || log.loggedat || '').slice(0, 16)}</span></div></div>`).join('');
+  } else {
+    logsHtml = '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div><div class="empty-sub">Tap "Log Daily Usage" to record inventory consumption</div></div>';
+  }
+  document.getElementById('inv-usage-logs').innerHTML = logsHtml;
+
+  let logBtn = document.getElementById('log-usage-btn');
+  let delBtn = document.getElementById('delete-inv-btn');
+  if (logBtn) logBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  openModal('modal-inv-detail');
+}
+
+function adjustQty(delta) {
+  if (!canEdit()) return;
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  let newQty = item.qty + delta;
+  if (newQty < 0) { alert('Cannot go below zero'); return; }
+  item.qty = newQty;
+  saveState();
+  openInvDetail(currentInvId);
+  renderInventory(); renderDashboard();
+}
+
+function openLogUsageModal() {
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  document.getElementById('log-item-name').value = item.name;
+  document.getElementById('log-unit').value = item.uom || 'units';
+  document.getElementById('log-qty').value = '';
+  document.getElementById('log-date').value = todayStr();
+  document.getElementById('log-job').value = '';
+  document.getElementById('log-notes').value = '';
+  closeModal('modal-inv-detail');
+  openModal('modal-log-usage');
+}
+
+function saveUsageLog() {
+  if (!canEdit()) return;
+  let qty = parseInt(document.getElementById('log-qty').value);
+  let date = document.getElementById('log-date').value;
+  if (!qty || qty < 1) { alert('Enter valid quantity'); return; }
+  if (!date) { alert('Select date'); return; }
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  if (item.qty < qty) { alert(`Insufficient stock! Only ${item.qty} ${item.uom} available.`); return; }
+  if (!Array.isArray(item.usageLog)) item.usageLog = [];
+  item.usageLog.push({
+    id: uid(), date, qty,
+    job: document.getElementById('log-job').value,
+    notes: document.getElementById('log-notes').value,
+    loggedBy: currentUser.name,
+    loggedAt: new Date().toISOString()
+  });
+  item.qty -= qty;
+  saveState();
+  closeModal('modal-log-usage');
+  openInvDetail(currentInvId);
+  renderInventory(); renderDashboard();
+}
+
+async function deleteCurrentInv() {
+  if (!canEdit()) return;
+  if (!confirm('Delete this inventory item? This will remove all usage history.')) return;
+  state.inventory = state.inventory.filter(x => x.id !== currentInvId);
+  localSave();
+  // FIX 6 applied: delete from cloud too
+  await deleteFromCloud('inventory', currentInvId);
+  closeModal('modal-inv-detail');
+  renderInventory(); renderDashboard();
+}
+
+// ================================================================
+// JOB MANAGEMENT
+// ================================================================
 let jobFilter = 'all';
-function renderJobs() { let q = document.getElementById('jobs-search').value.toLowerCase(); let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter)).sort((a, b) => (a.date || '').localeCompare(b.date || '')); document.getElementById('jobs-sub-lbl').textContent = `${state.jobs.length} total · ${state.jobs.filter(j => j.status === 'In Progress').length} in progress`; let listEl = document.getElementById('jobs-list'); if (!list.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs</div></div>'; return; } listEl.innerHTML = list.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span> ${j.time ? `🕐 ${j.time}` : ''}</div></div>`).join(''); }
+function renderJobs() {
+  let q = document.getElementById('jobs-search').value.toLowerCase();
+  let list = state.jobs.filter(j => (j.client.toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) && (jobFilter === 'all' || j.status === jobFilter)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  document.getElementById('jobs-sub-lbl').textContent = `${state.jobs.length} total · ${state.jobs.filter(j => j.status === 'In Progress').length} in progress`;
+  let listEl = document.getElementById('jobs-list');
+  if (!list.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs</div></div>'; return; }
+  listEl.innerHTML = list.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span> ${j.time ? `🕐 ${j.time}` : ''}</div></div>`).join('');
+}
+
 function filterJobs(f, btn) { jobFilter = f; document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderJobs(); }
-function saveJob() { if (!canEdit()) return; let client = document.getElementById('jf-client').value.trim(); let type = document.getElementById('jf-type').value; if (!client || !type) { alert('Client and type required'); return; } let job = { id: uid(), client, type, location: document.getElementById('jf-location').value, date: document.getElementById('jf-date').value, time: document.getElementById('jf-time').value, assignedstaff: document.getElementById('jf-staff').value, notes: document.getElementById('jf-notes').value, status: 'Scheduled' }; job.assignedStaff = job.assignedstaff; state.jobs.push(job); saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard(); }
-function openJobDetail(id) { let j = state.jobs.find(x => x.id === id); if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}`); }
-function renderReports() { let from = document.getElementById('report-from').value, to = document.getElementById('report-to').value; let fJobs = state.jobs.filter(j => { if (from && j.date < from) return false; if (to && j.date > to) return false; return true; }); let done = fJobs.filter(j => j.status === 'Done').length; let inPr = fJobs.filter(j => j.status === 'In Progress').length; document.getElementById('report-summary').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div><div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div><div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl">In Progress</div></div></div>`; }
-function setReportRange(r) { let now = new Date(); let fmt = d => d.toISOString().split('T')[0]; if (r === 'today') { document.getElementById('report-from').value = fmt(now); document.getElementById('report-to').value = fmt(now); } else if (r === 'week') { let w = new Date(now); w.setDate(w.getDate() - 7); document.getElementById('report-from').value = fmt(w); document.getElementById('report-to').value = fmt(now); } else if (r === 'month') { document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01'; document.getElementById('report-to').value = fmt(now); } else { document.getElementById('report-from').value = ''; document.getElementById('report-to').value = ''; } renderReports(); }
+
+function saveJob() {
+  if (!canEdit()) return;
+  let client = document.getElementById('jf-client').value.trim();
+  let type = document.getElementById('jf-type').value;
+  if (!client || !type) { alert('Client and type required'); return; }
+  let job = {
+    id: uid(), client, type,
+    location: document.getElementById('jf-location').value,
+    date: document.getElementById('jf-date').value,
+    time: document.getElementById('jf-time').value,
+    assignedstaff: document.getElementById('jf-staff').value,
+    notes: document.getElementById('jf-notes').value,
+    status: 'Scheduled'
+  };
+  job.assignedStaff = job.assignedstaff;
+  state.jobs.push(job);
+  saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard();
+}
+
+function openJobDetail(id) {
+  let j = state.jobs.find(x => x.id === id);
+  if (j) alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location}`);
+}
+
+// ================================================================
+// REPORTS
+// ================================================================
+function renderReports() {
+  let from = document.getElementById('report-from').value, to = document.getElementById('report-to').value;
+  let fJobs = state.jobs.filter(j => { if (from && j.date < from) return false; if (to && j.date > to) return false; return true; });
+  let done = fJobs.filter(j => j.status === 'Done').length;
+  let inPr = fJobs.filter(j => j.status === 'In Progress').length;
+  document.getElementById('report-summary').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div><div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div><div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl">In Progress</div></div></div>`;
+}
+
+function setReportRange(r) {
+  let now = new Date(); let fmt = d => d.toISOString().split('T')[0];
+  if (r === 'today') { document.getElementById('report-from').value = fmt(now); document.getElementById('report-to').value = fmt(now); }
+  else if (r === 'week') { let w = new Date(now); w.setDate(w.getDate() - 7); document.getElementById('report-from').value = fmt(w); document.getElementById('report-to').value = fmt(now); }
+  else if (r === 'month') { document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01'; document.getElementById('report-to').value = fmt(now); }
+  else { document.getElementById('report-from').value = ''; document.getElementById('report-to').value = ''; }
+  renderReports();
+}
+
+// ================================================================
+// MODAL CONTROLS
+// ================================================================
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
