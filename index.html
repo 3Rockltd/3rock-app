@@ -3,14 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>3-Rock Builders - With Data Migration</title>
+<title>3-Rock Builders</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-/* [All your existing CSS styles remain the same - keeping compact] */
-:root{--navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;--red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;--gold:#f5c842;--white:#fff;--off-white:#f0f3fa;--surface:#e8edf7;--text-primary:#0a1628;--text-secondary:#4a5880;--text-muted:#8a96b0;--border:#c8d0e8;--border-light:#dde3f0;--green:#16a34a;--amber:#d97706;--danger:#dc2626;--shadow-sm:0 1px 4px rgba(10,22,40,.1);--shadow-md:0 4px 16px rgba(10,22,40,.15);--shadow-lg:0 8px 32px rgba(10,22,40,.2);--r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:20px}
+:root{
+  --navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;
+  --red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;
+  --gold:#f5c842;--white:#fff;--off-white:#f0f3fa;
+  --surface:#e8edf7;--text-primary:#0a1628;--text-secondary:#4a5880;
+  --text-muted:#8a96b0;--border:#c8d0e8;--border-light:#dde3f0;
+  --green:#16a34a;--amber:#d97706;--danger:#dc2626;
+  --shadow-sm:0 1px 4px rgba(10,22,40,.1);
+  --shadow-md:0 4px 16px rgba(10,22,40,.15);
+  --shadow-lg:0 8px 32px rgba(10,22,40,.2);
+  --r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:20px;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+
+/* AUTH */
 #auth-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;background-image:radial-gradient(ellipse at 20% 50%,rgba(30,48,96,.8) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(204,31,46,.2) 0%,transparent 50%)}
 .auth-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-xl);padding:44px 36px;width:100%;max-width:400px;backdrop-filter:blur(20px)}
 .auth-logo{text-align:center;margin-bottom:32px}
@@ -18,13 +31,18 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .auth-logo .l2{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:var(--red-light);letter-spacing:-1px}
 .auth-logo .tag{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
 .auth-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;display:block}
-.auth-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-md);color:#fff;font-size:15px;font-family:'Barlow',sans-serif;margin-bottom:18px;outline:none}
+.auth-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-md);color:#fff;font-size:15px;font-family:'Barlow',sans-serif;margin-bottom:18px;outline:none;transition:border-color .2s}
 .auth-input:focus{border-color:var(--red-light)}
 .auth-input option{background:var(--navy);color:#fff}
-.auth-btn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:var(--r-md);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.auth-btn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:var(--r-md);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s,transform .1s}
 .auth-btn:hover{background:var(--red-light)}
+.auth-btn:active{transform:scale(.98)}
 .auth-error{color:var(--red-light);font-size:13px;text-align:center;margin-top:10px;display:none}
+
+/* APP SHELL */
 #app{display:none;flex-direction:column;min-height:100vh}
+
+/* HEADER */
 .app-header{background:var(--navy);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:2px solid var(--red);box-shadow:var(--shadow-md)}
 .hdr-logo .s{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
 .hdr-logo .c{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--red-light);letter-spacing:-.5px}
@@ -33,35 +51,56 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .u-avatar{width:26px;height:26px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 .u-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85)}
 .u-role{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px}
-.logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer}
+.logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s}
 .logout-btn:hover{border-color:var(--red-light);color:var(--red-light)}
-.sync-btn{background:var(--green);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer;margin-left:5px}
-.sync-btn:hover{background:var(--green);opacity:0.8}
+
+/* SYNC INDICATOR */
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s;flex-shrink:0}
 .sync-dot.synced{background:var(--green)}
 .sync-dot.error{background:var(--danger)}
 .sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200;box-shadow:0 -4px 20px rgba(10,22,40,.4)}
-.nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif}
+.nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif;transition:background .2s}
 .nav-item.active{background:rgba(204,31,46,.18)}
 .nav-icon{font-size:19px;line-height:1}
 .nav-label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.38)}
 .nav-item.active .nav-label{color:var(--red-light)}
+
+/* MAIN */
 .main-content{flex:1;padding:18px 14px 86px;max-width:800px;margin:0 auto;width:100%}
 .screen{display:none}.screen.active{display:block}
+
+/* PAGE HEADER */
 .page-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
 .page-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
-.page-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.page-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
 .page-header{margin-bottom:20px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;background:rgba(10,22,40,.6);z-index:5000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading-spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--red-light);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:#fff;font-size:13px;font-weight:600;letter-spacing:.5px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;letter-spacing:.1px}
 .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
 .btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-light)}
 .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
-.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:var(--red-light)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--green);color:#fff}
 .btn-sm{padding:5px 11px;font-size:11px}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* CARDS */
 .card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
 .card-title{font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+
+/* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
 .stat-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
@@ -72,29 +111,44 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--navy);line-height:1}
 .stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-top:3px;font-weight:700}
 .stat-sub{font-size:11px;color:var(--text-secondary);margin-top:6px}
+
+/* KPI ROW */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
 .kpi-item{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);padding:11px;text-align:center}
 .kpi-num{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .kpi-lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;font-weight:700}
+
+/* SECTION TITLE */
 .section-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border-light)}
+
+/* ALERT */
 .alert-banner{background:linear-gradient(135deg,#fff5f5,#ffe8e8);border:1px solid rgba(220,38,38,.3);border-left:4px solid var(--red);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
 .alert-title{font-size:12px;font-weight:700;color:var(--red-dark)}
 .alert-items{font-size:11px;color:var(--text-secondary);margin-top:3px}
+
+/* ACTIVITY BARS */
 .act-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .act-label{font-size:12px;color:var(--text-secondary);min-width:100px;font-weight:500}
 .act-bar-wrap{flex:1;height:7px;background:var(--surface);border-radius:4px;overflow:hidden}
 .act-bar{height:100%;border-radius:4px;background:var(--navy);transition:width .5s}
 .act-val{font-size:11px;font-weight:700;color:var(--navy);min-width:24px;text-align:right}
+
+/* QUICK ACTIONS */
 .qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:18px}
-.qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .2s}
+.qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .2s;font-family:'Barlow',sans-serif}
 .qa-btn:hover{border-color:var(--red);box-shadow:var(--shadow-sm)}
 .qa-icon{font-size:20px}
 .qa-label{font-size:12px;font-weight:700;color:var(--navy)}
+.qa-btn.locked{opacity:.45;pointer-events:none}
+
+/* JOB ROW */
 .job-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px;box-shadow:var(--shadow-sm)}
 .job-time{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--navy);min-width:46px}
 .job-client-name{font-size:13px;font-weight:600;color:var(--navy)}
 .job-type-info{font-size:11px;color:var(--text-muted)}
+
+/* STATUS PILLS */
 .pill{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 8px;border-radius:20px}
 .pill-scheduled{background:#e8edf7;color:var(--navy)}
 .pill-inprogress{background:#fef3c7;color:#92400e}
@@ -102,16 +156,22 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .pill-onshift{background:#dcfce7;color:#166534}
 .pill-offshift{background:#f3f4f6;color:#374151}
 .pill-onleave{background:#fef3c7;color:#92400e}
+
+/* SEARCH */
 .search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px}
-.search-bar input{border:none;outline:none;flex:1;background:transparent}
+.search-bar input{border:none;outline:none;font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);flex:1;background:transparent}
+
+/* TABS */
 .tabs{display:flex;gap:3px;background:var(--surface);border-radius:var(--r-md);padding:3px;margin-bottom:16px}
-.tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;text-transform:uppercase}
+.tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.4px}
 .tab.active{background:var(--navy);color:#fff}
+
+/* STAFF CARDS */
 .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .2s}
+.staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .staff-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .sc-header{background:var(--navy);padding:14px;display:flex;align-items:center;gap:10px}
-.sc-avatar{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.sc-avatar{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
 .sc-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .sc-name{font-size:14px;font-weight:700;color:#fff}
 .sc-role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
@@ -120,8 +180,12 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .detail-row:last-child{border-bottom:none}
 .dk{color:var(--text-muted);font-weight:600}
 .dv{color:var(--text-primary);font-weight:500}
+.detail-row.clickable{cursor:pointer;background:var(--off-white);margin:2px 0;padding:6px 8px;border-radius:var(--r-sm);transition:background .2s}
+.detail-row.clickable:hover{background:var(--surface)}
+
+/* INVENTORY */
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-.inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .2s}
+.inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .inv-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .inv-img{width:100%;height:110px;object-fit:cover;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden}
 .inv-img img{width:100%;height:100%;object-fit:cover}
@@ -132,625 +196,593 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stock-fill{height:100%;border-radius:3px;transition:width .4s}
 .fill-green{background:var(--green)}.fill-amber{background:var(--amber)}.fill-red{background:var(--danger)}
 .stock-info{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted)}
-.job-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;cursor:pointer}
+
+/* JOB CARDS */
+.job-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:10px;cursor:pointer;transition:all .2s}
 .job-card:hover{box-shadow:var(--shadow-md)}
 .jc-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light)}
 .jc-body{padding:10px 14px}
 .job-type-tag{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface);color:var(--navy)}
-.modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px);display:none}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
 .modal-overlay.center-ov{align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-height:92vh;overflow-y:auto;max-width:620px}
 .modal.center-m{border-radius:var(--r-xl);max-width:520px;width:calc(100% - 28px);margin:0 auto}
 .modal-header{background:var(--navy);padding:18px 20px;border-radius:var(--r-xl) var(--r-xl) 0 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff}
-.modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:.3px}
+.modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(255,255,255,.22)}
 .modal-body{padding:20px}
+
+/* PROFILE MODAL HEADER */
 .profile-hdr{background:var(--navy);padding:24px 20px;text-align:center}
-.profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
+.profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
 .profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .profile-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff}
 .profile-role-badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;margin-top:7px}
+
+/* FORMS */
 .form-group{margin-bottom:16px}
 .form-label{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
-.form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
+.form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .2s}
 .form-control:focus{border-color:var(--navy)}
+textarea.form-control{resize:vertical;min-height:56px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
 .section-sep{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--navy)}
 .section-sep.red{border-color:var(--red)}
-.photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
+
+/* PHOTO UPLOAD */
+.photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s}
 .photo-upload-box:hover{border-color:var(--navy);background:var(--off-white)}
 .photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-preview-circle{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);margin:0 auto 6px;display:block}
 .photo-preview-rect{width:100%;height:90px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--border);display:block}
+
+/* VIEWER NOTICE */
 .viewer-notice{background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border-light);margin:14px 0}
+
+/* EMPTY STATE */
 .empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
 .empty-icon{font-size:42px;margin-bottom:10px}
 .empty-text{font-size:14px;font-weight:500;color:var(--text-secondary)}
-.log-entry{background:#f8f9fc;border-left:3px solid var(--red);padding:10px;margin-bottom:8px;border-radius:var(--r-md);font-size:12px}
-.log-date{font-weight:700;color:var(--navy);margin-bottom:4px}
-.log-details{color:var(--text-secondary)}
+.empty-sub{font-size:12px;margin-top:4px}
+
+/* REPORTS */
 .report-stat{text-align:center;padding:10px;background:var(--off-white);border-radius:var(--r-md)}
 .report-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .report-stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+
+/* IMAGE MODAL */
+.image-modal-content{max-width:90vw;max-height:90vh;overflow:auto}
+.image-modal-content img{width:100%;height:auto;object-fit:contain}
+
+/* LOGS SECTION */
+.log-entry{background:#f8f9fc;border-left:3px solid var(--red);padding:10px;margin-bottom:8px;border-radius:var(--r-md);font-size:12px}
+.log-date{font-weight:700;color:var(--navy);margin-bottom:4px}
+.log-details{color:var(--text-secondary)}
+
+/* STAFF STATUS UPDATE BUTTONS */
+.status-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+/* RESPONSIVE */
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
 
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo"><div><span class="l1">3-Rock</span><span class="l2"> Builders</span></div><div class="tag">Management System</div></div>
-    <select class="auth-input" id="auth-role"><option value="">Select role...</option><option value="director">Director</option><option value="manager">Manager</option><option value="supervisor">Supervisor</option></select>
-    <input type="password" class="auth-input" id="auth-pass" placeholder="Password">
-    <button class="auth-btn" id="loginBtn">Sign In →</button>
-    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-logo">
+      <div><span class="l1">3-Rock</span><span class="l2"> Builders</span></div>
+      <div class="tag">Management System</div>
+    </div>
+    <label class="auth-label">Sign In As</label>
+    <select class="auth-input" id="auth-role">
+      <option value="">Select your role...</option>
+      <option value="director">Director</option>
+      <option value="manager">Manager</option>
+      <option value="supervisor">Supervisor</option>
+    </select>
+    <label class="auth-label">Password</label>
+    <input type="password" class="auth-input" id="auth-pass" placeholder="Enter password">
+    <button class="auth-btn" onclick="handleLogin()">Sign In →</button>
+    <div class="auth-error" id="auth-error">Incorrect password. Please try again.</div>
   </div>
 </div>
 
+<!-- APP -->
 <div id="app">
   <header class="app-header">
     <div class="hdr-logo"><span class="s">3-Rock</span><span class="c"> Builders</span></div>
     <div class="hdr-right">
-      <div class="sync-dot" id="sync-dot"></div>
-      <button class="sync-btn" id="manualSyncBtn" style="display:none">⟳ Sync Now</button>
-      <div class="user-badge"><div class="u-avatar" id="hdr-avatar">D</div><div><div class="u-name" id="hdr-name">Director</div><div class="u-role" id="hdr-role">Director</div></div></div>
-      <button class="logout-btn" id="logoutBtn">Out</button>
+      <div class="sync-dot" id="sync-dot" title="Cloud sync status"></div>
+      <div class="user-badge">
+        <div class="u-avatar" id="hdr-avatar">D</div>
+        <div>
+          <div class="u-name" id="hdr-name">Director</div>
+          <div class="u-role" id="hdr-role">Director</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">Out</button>
     </div>
   </header>
 
   <main class="main-content">
-    <!-- Same content as before -->
+
+    <!-- DASHBOARD -->
     <div class="screen active" id="screen-dashboard">
-      <div class="page-header"><div class="page-title" id="dash-greeting">Welcome 👋</div><div class="page-sub" id="dash-date"></div></div>
-      <div id="director-kpi" style="display:none"><div class="kpi-row"><div class="kpi-item"><div class="kpi-num" id="kpi-staff">0</div><div class="kpi-lbl">Total Staff</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-onshift">0</div><div class="kpi-lbl">On Shift</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-month">0</div><div class="kpi-lbl">Jobs/Month</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-done">0</div><div class="kpi-lbl">Completed</div></div></div></div>
-      <div class="alert-banner" id="low-stock-banner" style="display:none"><span>⚠️</span><div><div class="alert-title">Low Stock Alert</div><div class="alert-items" id="low-stock-list"></div></div></div>
-      <div class="stats-grid"><div class="stat-card" id="statOnShiftCard"><div class="stat-val" id="stat-onshift">0</div><div class="stat-lbl">On Shift</div><div class="stat-sub" id="stat-staff-sub">of 0 staff</div></div><div class="stat-card navy" id="statJobsCard"><div class="stat-val" id="stat-jobs-today">0</div><div class="stat-lbl">Today's Jobs</div><div class="stat-sub" id="stat-jobs-sub">0 in progress</div></div><div class="stat-card amber" id="statInvCard"><div class="stat-val" id="stat-lowstock">0</div><div class="stat-lbl">Low Stock</div><div class="stat-sub">items critical</div></div></div>
-      <div id="director-metrics-section" style="display:none"><div class="section-title">Overview</div><div class="card"><div class="card-title">Staff Status</div><div id="staff-bars"></div><div class="divider"></div><div class="card-title">Today's Jobs</div><div id="job-bars"></div></div></div>
-      <div class="section-title">Quick Actions</div><div class="qa-grid" id="qa-grid"></div>
-      <div class="section-title">Today's Schedule</div><div id="today-jobs-list"></div>
+      <div class="page-header">
+        <div class="page-title" id="dash-greeting">Welcome 👋</div>
+        <div class="page-sub" id="dash-date"></div>
+      </div>
+      <div id="director-kpi" style="display:none">
+        <div class="kpi-row">
+          <div class="kpi-item"><div class="kpi-num" id="kpi-staff">0</div><div class="kpi-lbl">Total Staff</div></div>
+          <div class="kpi-item"><div class="kpi-num" id="kpi-onshift">0</div><div class="kpi-lbl">On Shift</div></div>
+          <div class="kpi-item"><div class="kpi-num" id="kpi-month">0</div><div class="kpi-lbl">Jobs/Month</div></div>
+          <div class="kpi-item"><div class="kpi-num" id="kpi-done">0</div><div class="kpi-lbl">Completed</div></div>
+        </div>
+      </div>
+      <div class="alert-banner" id="low-stock-banner" style="display:none">
+        <span>⚠️</span>
+        <div><div class="alert-title">Low Stock Alert</div><div class="alert-items" id="low-stock-list"></div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card" onclick="goToTab('staff')">
+          <div class="stat-val" id="stat-onshift">0</div>
+          <div class="stat-lbl">On Shift</div>
+          <div class="stat-sub" id="stat-staff-sub">of 0 staff</div>
+        </div>
+        <div class="stat-card navy" onclick="goToTab('jobs')">
+          <div class="stat-val" id="stat-jobs-today">0</div>
+          <div class="stat-lbl">Today's Jobs</div>
+          <div class="stat-sub" id="stat-jobs-sub">0 in progress</div>
+        </div>
+        <div class="stat-card amber" onclick="goToTab('inventory')">
+          <div class="stat-val" id="stat-lowstock">0</div>
+          <div class="stat-lbl">Low Stock</div>
+          <div class="stat-sub">items critical</div>
+        </div>
+      </div>
+      <div id="director-metrics-section" style="display:none">
+        <div class="section-title">Overview</div>
+        <div class="card">
+          <div class="card-title">Staff Status</div>
+          <div id="staff-bars"></div>
+          <div class="divider"></div>
+          <div class="card-title">Today's Jobs</div>
+          <div id="job-bars"></div>
+        </div>
+      </div>
+      <div class="section-title">Quick Actions</div>
+      <div class="qa-grid" id="qa-grid"></div>
+      <div class="section-title">Today's Schedule</div>
+      <div id="today-jobs-list"></div>
     </div>
-    <div class="screen" id="screen-staff"><div class="page-header"><div class="page-title">Staff Management</div><div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div><div class="page-actions" id="staff-actions"></div></div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="staff-search" oninput="renderStaff()"></div><div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="On Shift">On Shift</button><button class="tab" data-filter="Off Shift">Off</button><button class="tab" data-filter="On Leave">Leave</button></div><div id="staff-grid" class="staff-grid"></div></div>
-    <div class="screen" id="screen-inventory"><div class="page-header"><div class="page-title">Inventory</div><div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div><div class="page-actions" id="inv-actions"></div></div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="inv-search" oninput="renderInventory()"></div><div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Chemicals">Chemicals</button><button class="tab" data-filter="Equipment">Equipment</button><button class="tab" data-filter="PPE">PPE</button><button class="tab" data-filter="Consumables">Consumables</button></div><div id="inventory-grid" class="inv-grid"></div></div>
-    <div class="screen" id="screen-jobs"><div class="page-header"><div class="page-title">Jobs</div><div class="page-sub" id="jobs-sub-lbl">Loading...</div><div class="page-actions" id="jobs-actions"></div></div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="jobs-search" oninput="renderJobs()"></div><div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Scheduled">Scheduled</button><button class="tab" data-filter="In Progress">In Progress</button><button class="tab" data-filter="Done">Done</button></div><div id="jobs-list"></div></div>
-    <div class="screen" id="screen-reports"><div class="page-header"><div class="page-title">Reports</div><div class="page-sub">Performance analytics</div></div><div class="section-title">Jobs Summary</div><div class="card"><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" id="reportTodayBtn">Today</button><button class="btn btn-outline btn-sm" id="reportWeekBtn">This Week</button><button class="btn btn-outline btn-sm" id="reportMonthBtn">This Month</button><button class="btn btn-outline btn-sm" id="reportAllBtn">All Time</button></div><div class="form-row" style="margin-bottom:12px"><div class="form-group"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div><div class="form-group"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div></div><div id="report-summary"></div></div></div>
+
+    <!-- STAFF -->
+    <div class="screen" id="screen-staff">
+      <div class="page-header">
+        <div class="page-title">Staff Management</div>
+        <div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div>
+        <div class="page-actions" id="staff-actions"></div>
+      </div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search name or role..." id="staff-search" oninput="renderStaff()"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="filterStaff('all',this)">All</button>
+        <button class="tab" onclick="filterStaff('On Shift',this)">On Shift</button>
+        <button class="tab" onclick="filterStaff('Off Shift',this)">Off</button>
+        <button class="tab" onclick="filterStaff('On Leave',this)">Leave</button>
+      </div>
+      <div id="staff-grid" class="staff-grid"></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="screen" id="screen-inventory">
+      <div class="page-header">
+        <div class="page-title">Inventory Management</div>
+        <div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div>
+        <div class="page-actions" id="inv-actions"></div>
+      </div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search name or category..." id="inv-search" oninput="renderInventory()"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="filterInv('all',this)">All</button>
+        <button class="tab" onclick="filterInv('Chemicals',this)">Chemicals</button>
+        <button class="tab" onclick="filterInv('Equipment',this)">Equipment</button>
+        <button class="tab" onclick="filterInv('PPE',this)">PPE</button>
+        <button class="tab" onclick="filterInv('Consumables',this)">Consumables</button>
+      </div>
+      <div id="inventory-grid" class="inv-grid"></div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="screen" id="screen-jobs">
+      <div class="page-header">
+        <div class="page-title">Jobs & Scheduling</div>
+        <div class="page-sub" id="jobs-sub-lbl">Loading...</div>
+        <div class="page-actions" id="jobs-actions"></div>
+      </div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search client or location..." id="jobs-search" oninput="renderJobs()"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="filterJobs('all',this)">All</button>
+        <button class="tab" onclick="filterJobs('Scheduled',this)">Scheduled</button>
+        <button class="tab" onclick="filterJobs('In Progress',this)">In Progress</button>
+        <button class="tab" onclick="filterJobs('Done',this)">Done</button>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="screen" id="screen-reports">
+      <div class="page-header">
+        <div class="page-title">Reports & Analytics</div>
+        <div class="page-sub">Job performance and inventory usage</div>
+      </div>
+      <div class="section-title">Jobs Summary</div>
+      <div class="card">
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('today')">Today</button>
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('week')">This Week</button>
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('month')">This Month</button>
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('all')">All Time</button>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div>
+        </div>
+        <div id="report-summary"></div>
+      </div>
+      <div class="section-title">Inventory Usage</div>
+      <div class="card" id="report-inv"></div>
+    </div>
   </main>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" data-tab="dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-    <button class="nav-item" data-tab="staff"><span class="nav-icon">👥</span><span class="nav-label">Staff</span></button>
-    <button class="nav-item" data-tab="inventory"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></button>
-    <button class="nav-item" data-tab="jobs"><span class="nav-icon">📋</span><span class="nav-label">Jobs</span></button>
-    <button class="nav-item" data-tab="reports"><span class="nav-icon">📊</span><span class="nav-label">Reports</span></button>
+    <button class="nav-item active" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" onclick="goToTab('staff')" id="nav-staff"><span class="nav-icon">👥</span><span class="nav-label">Staff</span></button>
+    <button class="nav-item" onclick="goToTab('inventory')" id="nav-inventory"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></button>
+    <button class="nav-item" onclick="goToTab('jobs')" id="nav-jobs"><span class="nav-icon">📋</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item" onclick="goToTab('reports')" id="nav-reports"><span class="nav-icon">📊</span><span class="nav-label">Reports</span></button>
   </nav>
 </div>
 
-<!-- MODALS (simplified) -->
-<div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="if(event.target===this)closeModal('modal-add-staff')"><div class="modal"><div class="modal-header"><span class="modal-title">Enrol Staff</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID</label><input type="text" class="form-control" id="sf-id"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option></select></div><div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-control" id="sf-phone"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Shift</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div><div class="form-group"><label class="form-label">Address</label><textarea class="form-control" id="sf-address" rows="2"></textarea></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="saveStaffBtn">Save Staff</button></div></div></div></div>
-<div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="if(event.target===this)closeModal('modal-staff-profile')"><div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-danger btn-sm" id="deleteStaffBtn" style="display:none">Remove</button></div></div></div></div>
-<div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="if(event.target===this)closeModal('modal-add-inv')"><div class="modal"><div class="modal-header"><span class="modal-title">Add Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit</label><select class="form-control" id="inv-uom"><option>pcs</option><option>kg</option><option>litres</option><option>boxes</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" id="saveInvBtn">Add Item</button></div></div></div></div>
-<div class="modal-overlay" id="modal-add-job" style="display:none" onclick="if(event.target===this)closeModal('modal-add-job')"><div class="modal"><div class="modal-header"><span class="modal-title">Schedule Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location</label><input type="text" class="form-control" id="jf-location"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control" id="jf-date"></div></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" id="saveJobBtn">Schedule</button></div></div></div></div>
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay" style="display:none">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Loading...</div>
+</div>
+
+<!-- STAFF MODAL -->
+<div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="overlayClick(event,'modal-add-staff')">
+  <div class="modal"><div class="modal-header"><span class="modal-title">Enrol New Staff Member</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
+  <div class="modal-body">
+    <div class="section-sep">Staff Photo</div>
+    <div class="form-group"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div></div>
+    <div class="section-sep">Personal Information</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"></div></div>
+    <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card ID</label><input type="text" class="form-control" id="sf-ghana"></div><div class="form-group"><label class="form-label">SSNIT Number</label><input type="text" class="form-control" id="sf-ssnit"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Ghana Card Front</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-front-preview','ghana-front-placeholder')"><img src="" id="ghana-front-preview" class="photo-preview-rect" style="display:none"><div id="ghana-front-placeholder">📷 Upload</div></div></div>
+    <div class="form-group"><label class="form-label">Ghana Card Back</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'ghana-back-preview','ghana-back-placeholder')"><img src="" id="ghana-back-preview" class="photo-preview-rect" style="display:none"><div id="ghana-back-placeholder">📷 Upload</div></div></div></div>
+    <div class="section-sep">Employment Details</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option><option>Driver</option><option>Equipment Officer</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div><div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div></div>
+    <div class="section-sep red">Family & Marital Status</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Marital Status</label><select class="form-control" id="sf-marital" onchange="toggleFamilyFields()"><option value="Single">Single</option><option value="Married">Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option><option value="Other">Other</option></select></div>
+      <div class="form-group" id="other-marital-group" style="display:none"><label class="form-label">Specify (Other)</label><input type="text" class="form-control" id="sf-marital-other" placeholder="Enter marital status"></div>
+    </div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Number of Children</label><input type="number" class="form-control" id="sf-kids" min="0" value="0"></div><div class="form-group"><label class="form-label">Partner/Spouse Name</label><input type="text" class="form-control" id="sf-spouse-name" placeholder="If applicable"></div></div>
+    <div class="form-group"><label class="form-label">Partner/Spouse Contact</label><input type="tel" class="form-control" id="sf-spouse-contact" placeholder="Phone number (if applicable)"></div>
+    <div class="section-sep">Emergency Contact</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Contact Name</label><input type="text" class="form-control" id="sf-emerg-name"></div><div class="form-group"><label class="form-label">Contact Phone</label><input type="tel" class="form-control" id="sf-emerg-phone"></div></div>
+    <div class="form-group"><label class="form-label">Relationship</label><select class="form-control" id="sf-emerg-rel"><option>Spouse/Partner</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Relative</option><option>Friend</option></select></div>
+    <div class="section-sep">Bank Details</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div><div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="save-staff-btn" onclick="saveStaff()">Enrol Staff Member</button></div>
+  </div></div>
+</div>
+
+<!-- STAFF PROFILE MODAL -->
+<div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="overlayClick(event,'modal-staff-profile')">
+  <div class="modal center-m">
+    <div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div>
+    <div class="modal-body">
+      <div id="prof-details"></div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button>
+        <button class="btn btn-outline btn-sm" onclick="printStaffPDF()">📄 PDF</button>
+        <button class="btn btn-danger btn-sm" id="delete-staff-btn" onclick="deleteCurrentStaff()">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGE VIEW MODAL -->
+<div class="modal-overlay center-ov" id="modal-image-view" style="display:none" onclick="overlayClick(event,'modal-image-view')">
+  <div class="modal center-m" style="max-width:90vw"><div class="modal-header"><span class="modal-title" id="image-modal-title">Image</span><button class="modal-close" onclick="closeModal('modal-image-view')">✕</button></div><div class="modal-body image-modal-content"><img id="image-view-img" src="" style="width:100%;height:auto;border-radius:var(--r-md)"></div></div>
+</div>
+
+<!-- INVENTORY MODAL -->
+<div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="overlayClick(event,'modal-add-inv')">
+  <div class="modal"><div class="modal-header"><span class="modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div>
+    <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-supplier-contact" placeholder="Phone/Email"></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" id="save-inv-btn" onclick="saveInventory()">Add Item</button></div>
+  </div></div>
+</div>
+
+<!-- INVENTORY DETAIL & DAILY LOGS MODAL -->
+<div class="modal-overlay center-ov" id="modal-inv-detail" style="display:none" onclick="overlayClick(event,'modal-inv-detail')">
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title" id="inv-detail-title">Inventory Item</span><button class="modal-close" onclick="closeModal('modal-inv-detail')">✕</button></div>
+  <div class="modal-body"><div id="inv-detail-info"></div><div id="inv-qty-ctrl" style="margin:15px 0"></div>
+  <div class="section-sep">Daily Usage Logs</div>
+  <div id="inv-usage-logs"></div>
+  <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button><button class="btn btn-primary" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Daily Usage</button><button class="btn btn-danger btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button></div>
+  </div></div>
+</div>
+
+<!-- LOG USAGE MODAL -->
+<div class="modal-overlay center-ov" id="modal-log-usage" style="display:none" onclick="overlayClick(event,'modal-log-usage')">
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Log Daily Inventory Usage</span><button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly style="background:#e8edf7"></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1" placeholder="0"></div><div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly style="background:#e8edf7"></div></div>
+    <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="log-date"></div>
+    <div class="form-group"><label class="form-label">Job / Project Name</label><input type="text" class="form-control" id="log-job" placeholder="e.g., Accra Mall Deep Clean"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-control" id="log-notes" rows="2" placeholder="Any additional info..."></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" id="save-log-btn" onclick="saveUsageLog()">✅ Log Usage & Update Stock</button></div>
+  </div></div>
+</div>
+
+<!-- JOB MODAL -->
+<div class="modal-overlay" id="modal-add-job" style="display:none" onclick="overlayClick(event,'modal-add-job')">
+  <div class="modal"><div class="modal-header"><span class="modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="jf-location"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option><option>Office Clean</option></select></div><div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="jf-date"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control" id="jf-time"></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div></div>
+    <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes"></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" id="save-job-btn" onclick="saveJob()">Schedule Job</button></div>
+  </div></div>
+</div>
+
+<!-- JOB DETAIL MODAL -->
+<div class="modal-overlay center-ov" id="modal-job-detail" style="display:none" onclick="overlayClick(event,'modal-job-detail')">
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Job Details</span><button class="modal-close" onclick="closeModal('modal-job-detail')">✕</button></div>
+  <div class="modal-body"><div id="job-detail-info"></div>
+  <div class="form-actions" id="job-detail-actions"></div>
+  </div></div>
+</div>
 
 <script>
-// Supabase Configuration
-const SB_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
+// ================================================================
+// SUPABASE CONFIGURATION
+// ================================================================
+const SUPABASE_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Use a different variable name to avoid conflict
-const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
-
-// App State
+// ================================================================
+// APP STATE — in-memory only, no localStorage
+// ================================================================
 let currentUser = null;
-let staffList = [];
-let inventoryList = [];
-let jobsList = [];
+let state = { staff: [], inventory: [], jobs: [] };
 let currentStaffId = null;
-let currentStaffFilter = 'all';
-let currentInvFilter = 'all';
-let currentJobFilter = 'all';
+let currentInvId = null;
+let currentJobId = null;
 
-const PASSWORDS = { director: 'Director@3Rock', manager: 'Manager@3Rock', supervisor: 'Supervisor@3Rock' };
-const STORAGE_KEY = '3rock_data';
+const PASSWORDS = {
+  director: 'Director@3Rock',
+  manager: 'Manager@3Rock',
+  supervisor: 'Supervisor@3Rock'
+};
 
-// Helper Functions
-function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+// ================================================================
+// UTILITY HELPERS
+// ================================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function initials(n) { return (n || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
-function pillClass(s) { 
-  if (s === 'On Shift' || s === 'Done') return 'pill-done'; 
-  if (s === 'On Leave' || s === 'In Progress') return 'pill-inprogress'; 
-  return 'pill-scheduled'; 
+
+function pillClass(s) {
+  if (s === 'On Shift' || s === 'Done') return 'pill-done';
+  if (s === 'On Leave' || s === 'In Progress') return 'pill-inprogress';
+  return 'pill-scheduled';
 }
+
+function detRow(k, v, clickable = false, onclick = '') {
+  return `<div class="detail-row ${clickable ? 'clickable' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="dk">${k}</span><span class="dv">${v || '—'}</span></div>`;
+}
+
+function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(''); return; }
+    let img = new Image();
+    img.onload = () => {
+      let canvas = document.createElement('canvas');
+      let scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve('');
+    img.src = dataUrl;
+  });
+}
+
+function showLoading(msg = 'Saving...') {
+  document.getElementById('loading-text').textContent = msg;
+  document.getElementById('loading-overlay').style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+function setSyncDot(s) {
+  let dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot ' + s;
+}
+
+function toggleFamilyFields() {
+  let val = document.getElementById('sf-marital').value;
+  document.getElementById('other-marital-group').style.display = val === 'Other' ? 'block' : 'none';
+}
+
+function previewPhoto(event, previewId, placeholderId) {
+  let f = event.target.files[0]; if (!f) return;
+  let r = new FileReader();
+  r.onload = ev => {
+    let img = document.getElementById(previewId);
+    let ph = document.getElementById(placeholderId);
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    if (ph) ph.style.display = 'none';
+  };
+  r.readAsDataURL(f);
+}
+
+function viewImage(imageSrc, title) {
+  if (!imageSrc || !imageSrc.startsWith('data:')) { alert('No image available'); return; }
+  document.getElementById('image-modal-title').textContent = title;
+  document.getElementById('image-view-img').src = imageSrc;
+  openModal('modal-image-view');
+}
+
+// ================================================================
+// AUTHENTICATION
+// ================================================================
+function handleLogin() {
+  let role = document.getElementById('auth-role').value;
+  let pass = document.getElementById('auth-pass').value;
+  let err = document.getElementById('auth-error');
+  if (!role) { err.style.display = 'block'; err.textContent = 'Select a role'; return; }
+  if (PASSWORDS[role] !== pass) { err.style.display = 'block'; err.textContent = 'Incorrect password'; return; }
+  err.style.display = 'none';
+  currentUser = { role, name: role.charAt(0).toUpperCase() + role.slice(1) };
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('hdr-avatar').textContent = role[0].toUpperCase();
+  document.getElementById('hdr-name').textContent = currentUser.name;
+  document.getElementById('hdr-role').textContent = role.toUpperCase();
+  initApp();
+}
+
+function handleLogout() {
+  currentUser = null;
+  state = { staff: [], inventory: [], jobs: [] };
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-pass').value = '';
+  document.getElementById('auth-role').value = '';
+}
+
 function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
+function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
-// Migrate old data from previous versions
-function migrateOldData() {
-  console.log('Checking for old data to migrate...');
-  let migrated = false;
-  
-  // Check for old v5 data
-  const oldV5 = localStorage.getItem('3rock_v5');
-  if (oldV5) {
-    try {
-      const oldData = JSON.parse(oldV5);
-      if (oldData.staff && oldData.staff.length > 0) {
-        staffList = oldData.staff;
-        console.log(`✅ Migrated ${staffList.length} staff from v5`);
-        migrated = true;
-      }
-      if (oldData.inventory && oldData.inventory.length > 0) {
-        inventoryList = oldData.inventory;
-        console.log(`✅ Migrated ${inventoryList.length} inventory from v5`);
-        migrated = true;
-      }
-      if (oldData.jobs && oldData.jobs.length > 0) {
-        jobsList = oldData.jobs;
-        console.log(`✅ Migrated ${jobsList.length} jobs from v5`);
-        migrated = true;
-      }
-      // Clear old data after migration
-      localStorage.removeItem('3rock_v5');
-    } catch(e) { console.error('Migration from v5 failed:', e); }
+// ================================================================
+// APP INITIALIZATION
+// ================================================================
+async function initApp() {
+  updateDateTime();
+  setInterval(updateDateTime, 60000);
+  buildQuickActions();
+  buildActionBars();
+  if (['director', 'manager'].includes(currentUser.role)) {
+    document.getElementById('director-kpi').style.display = 'block';
+    document.getElementById('director-metrics-section').style.display = 'block';
   }
-  
-  // Check for old v6 data
-  const oldV6 = localStorage.getItem('3rock_v6');
-  if (oldV6) {
-    try {
-      const oldData = JSON.parse(oldV6);
-      if (oldData.staff && oldData.staff.length > 0 && staffList.length === 0) {
-        staffList = oldData.staff;
-        console.log(`✅ Migrated ${staffList.length} staff from v6`);
-        migrated = true;
-      }
-      if (oldData.inventory && oldData.inventory.length > 0 && inventoryList.length === 0) {
-        inventoryList = oldData.inventory;
-        console.log(`✅ Migrated ${inventoryList.length} inventory from v6`);
-        migrated = true;
-      }
-      if (oldData.jobs && oldData.jobs.length > 0 && jobsList.length === 0) {
-        jobsList = oldData.jobs;
-        console.log(`✅ Migrated ${jobsList.length} jobs from v6`);
-        migrated = true;
-      }
-      localStorage.removeItem('3rock_v6');
-    } catch(e) { console.error('Migration from v6 failed:', e); }
-  }
-  
-  // Check current storage
-  const currentData = localStorage.getItem(STORAGE_KEY);
-  if (currentData && !migrated) {
-    try {
-      const data = JSON.parse(currentData);
-      if (data.staff && data.staff.length > 0) staffList = data.staff;
-      if (data.inventory && data.inventory.length > 0) inventoryList = data.inventory;
-      if (data.jobs && data.jobs.length > 0) jobsList = data.jobs;
-      console.log(`Loaded current data: ${staffList.length} staff, ${inventoryList.length} inventory, ${jobsList.length} jobs`);
-    } catch(e) { console.error('Current data load failed:', e); }
-  }
-  
-  // Add sample data if everything is empty
-  if (staffList.length === 0 && inventoryList.length === 0 && jobsList.length === 0) {
-    console.log('No data found, adding sample data...');
-    staffList.push({ id: uid(), name: 'John Mensah', role: 'Cleaner', staffid: 'STF001', phone: '0244123456', shift: 'Morning', status: 'On Shift', startdate: '2024-01-15' });
-    inventoryList.push({ id: uid(), name: 'Bleach', category: 'Chemicals', qty: 45, uom: 'litres', reorder: 20 });
-    jobsList.push({ id: uid(), client: 'Accra Mall', type: 'Regular Clean', location: 'Airport City', date: todayStr(), status: 'Scheduled' });
-    migrated = true;
-  }
-  
-  if (migrated) {
-    saveToLocal();
-    console.log('Data migration complete and saved to localStorage');
-  }
-  
-  return migrated;
+  await loadFromCloud();
 }
 
-// Storage functions
-function saveToLocal() { 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ staff: staffList, inventory: inventoryList, jobs: jobsList })); 
-  console.log('Saved to localStorage');
+function updateDateTime() {
+  if (!currentUser) return;
+  let now = new Date();
+  let h = now.getHours();
+  let g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dash-greeting').textContent = `${g}, ${currentUser.name} 👋`;
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function loadFromLocal() {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (data) {
-    try {
-      const parsed = JSON.parse(data);
-      staffList = parsed.staff || [];
-      inventoryList = parsed.inventory || [];
-      jobsList = parsed.jobs || [];
-      console.log(`Loaded from localStorage: ${staffList.length} staff, ${inventoryList.length} inventory, ${jobsList.length} jobs`);
-    } catch(e) { console.error('Local load error:', e); }
-  }
-}
-
-// Force sync all local data to Supabase
-async function forceSyncToSupabase() {
-  if (!currentUser) {
-    alert('Please login first');
-    return;
-  }
-  
-  const dot = document.getElementById('sync-dot');
-  if (dot) dot.className = 'sync-dot syncing';
-  
+// ================================================================
+// SUPABASE — LOAD FROM CLOUD (single source of truth)
+// ================================================================
+async function loadFromCloud() {
+  setSyncDot('syncing');
+  showLoading('Loading data...');
   try {
-    console.log('🔄 Starting manual sync...');
-    console.log(`📊 Data to sync: ${staffList.length} staff, ${inventoryList.length} inventory, ${jobsList.length} jobs`);
-    
-    let syncedStaff = 0, syncedInv = 0, syncedJobs = 0;
-    
-    // Sync staff
-    if (staffList.length > 0) {
-      const staffToSync = staffList.map(s => ({
-        id: s.id, name: s.name, role: s.role, staffid: s.staffid || '', phone: s.phone || '',
-        shift: s.shift || '', startdate: s.startdate || '', address: s.address || '', status: s.status || 'Off Shift'
+    const [staffRes, invRes, jobsRes] = await Promise.all([
+      db.from('staff').select('*'),
+      db.from('inventory').select('*'),
+      db.from('jobs').select('*')
+    ]);
+
+    if (staffRes.error) console.error('Staff load:', staffRes.error.message);
+    else state.staff = staffRes.data || [];
+
+    if (invRes.error) console.error('Inventory load:', invRes.error.message);
+    else {
+      state.inventory = (invRes.data || []).map(item => ({
+        ...item,
+        usageLog: Array.isArray(item.usagelog || item.usageLog)
+          ? (item.usagelog || item.usageLog)
+          : []
       }));
-      const { data, error } = await _supabase.from('staff').upsert(staffToSync, { onConflict: 'id' }).select();
-      if (error) throw new Error(`Staff sync error: ${error.message}`);
-      syncedStaff = data?.length || 0;
-      console.log(`✅ Synced ${syncedStaff} staff records`);
     }
-    
-    // Sync inventory
-    if (inventoryList.length > 0) {
-      const invToSync = inventoryList.map(i => ({
-        id: i.id, name: i.name, category: i.category, qty: i.qty, uom: i.uom, reorder: i.reorder, supplier: i.supplier || ''
-      }));
-      const { data, error } = await _supabase.from('inventory').upsert(invToSync, { onConflict: 'id' }).select();
-      if (error) throw new Error(`Inventory sync error: ${error.message}`);
-      syncedInv = data?.length || 0;
-      console.log(`✅ Synced ${syncedInv} inventory records`);
-    }
-    
-    // Sync jobs
-    if (jobsList.length > 0) {
-      const { data, error } = await _supabase.from('jobs').upsert(jobsList, { onConflict: 'id' }).select();
-      if (error) throw new Error(`Jobs sync error: ${error.message}`);
-      syncedJobs = data?.length || 0;
-      console.log(`✅ Synced ${syncedJobs} job records`);
-    }
-    
-    if (dot) dot.className = 'sync-dot synced';
-    setTimeout(() => { if(dot) dot.className = 'sync-dot'; }, 2000);
-    
-    alert(`✅ Sync Complete!\n\n📋 Staff: ${syncedStaff}\n📦 Inventory: ${syncedInv}\n📋 Jobs: ${syncedJobs}`);
-  } catch(e) {
-    console.error('❌ Sync error:', e);
-    if (dot) dot.className = 'sync-dot error';
-    alert(`❌ Sync failed!\n\nError: ${e.message}\n\nCheck console (F12) for details.`);
+
+    if (jobsRes.error) console.error('Jobs load:', jobsRes.error.message);
+    else state.jobs = jobsRes.data || [];
+
+    setSyncDot('synced');
+  } catch (err) {
+    console.error('Load failed:', err);
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+    renderAll();
   }
 }
 
-// Auto sync on data changes
-async function syncToSupabase() {
-  const dot = document.getElementById('sync-dot');
-  if (dot) dot.className = 'sync-dot syncing';
-  
-  try {
-    if (staffList.length > 0) {
-      const staffToSync = staffList.map(s => ({
-        id: s.id, name: s.name, role: s.role, staffid: s.staffid || '', phone: s.phone || '',
-        shift: s.shift || '', startdate: s.startdate || '', address: s.address || '', status: s.status || 'Off Shift'
-      }));
-      await _supabase.from('staff').upsert(staffToSync, { onConflict: 'id' });
-    }
-    
-    if (inventoryList.length > 0) {
-      const invToSync = inventoryList.map(i => ({
-        id: i.id, name: i.name, category: i.category, qty: i.qty, uom: i.uom, reorder: i.reorder, supplier: i.supplier || ''
-      }));
-      await _supabase.from('inventory').upsert(invToSync, { onConflict: 'id' });
-    }
-    
-    if (jobsList.length > 0) {
-      await _supabase.from('jobs').upsert(jobsList, { onConflict: 'id' });
-    }
-    
-    if (dot) dot.className = 'sync-dot synced';
-    setTimeout(() => { if(dot) dot.className = 'sync-dot'; }, 2000);
-  } catch(e) {
-    console.error('Auto sync error:', e);
-    if (dot) dot.className = 'sync-dot error';
-  }
+// ================================================================
+// SUPABASE — WRITE HELPERS (insert / update / delete)
+// ================================================================
+async function dbInsert(table, row) {
+  const { error } = await db.from(table).insert(row);
+  if (error) { console.error(`Insert ${table}:`, error.message); throw error; }
 }
 
-// Load from Supabase (loads data INTO local from cloud)
-async function loadFromSupabase() {
-  try {
-    console.log('Loading from Supabase...');
-    let hasData = false;
-    
-    const { data: staffData } = await _supabase.from('staff').select('*');
-    if (staffData && staffData.length > 0) {
-      staffList = staffData;
-      hasData = true;
-      console.log(`Loaded ${staffData.length} staff from cloud`);
-    }
-    
-    const { data: invData } = await _supabase.from('inventory').select('*');
-    if (invData && invData.length > 0) {
-      inventoryList = invData;
-      hasData = true;
-      console.log(`Loaded ${invData.length} inventory from cloud`);
-    }
-    
-    const { data: jobsData } = await _supabase.from('jobs').select('*');
-    if (jobsData && jobsData.length > 0) {
-      jobsList = jobsData;
-      hasData = true;
-      console.log(`Loaded ${jobsData.length} jobs from cloud`);
-    }
-    
-    if (hasData) {
-      saveToLocal();
-      renderAll();
-    }
-  } catch(e) { console.error('Load from Supabase error:', e); }
+async function dbUpdate(table, id, changes) {
+  const { error } = await db.from(table).update(changes).eq('id', id);
+  if (error) { console.error(`Update ${table}:`, error.message); throw error; }
 }
 
-// Dashboard Render
-function renderDashboard() {
-  let onShift = staffList.filter(s => s.status === 'On Shift').length;
-  let todayJobs = jobsList.filter(j => j.date === todayStr());
-  let lowStock = inventoryList.filter(i => (i.qty || 0) <= (i.reorder || 0));
-  
-  document.getElementById('stat-onshift').innerHTML = onShift;
-  document.getElementById('stat-staff-sub').innerHTML = `of ${staffList.length} staff`;
-  document.getElementById('stat-jobs-today').innerHTML = todayJobs.length;
-  document.getElementById('stat-jobs-sub').innerHTML = `${todayJobs.filter(j => j.status === 'In Progress').length} in progress`;
-  document.getElementById('stat-lowstock').innerHTML = lowStock.length;
-  document.getElementById('kpi-staff').innerHTML = staffList.length;
-  document.getElementById('kpi-onshift').innerHTML = onShift;
-  document.getElementById('kpi-done').innerHTML = jobsList.filter(j => j.status === 'Done').length;
-  
-  let banner = document.getElementById('low-stock-banner');
-  if (lowStock.length > 0) {
-    banner.style.display = 'flex';
-    document.getElementById('low-stock-list').innerHTML = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', ');
-  } else {
-    banner.style.display = 'none';
-  }
-  
-  let todayList = document.getElementById('today-jobs-list');
-  if (todayJobs.length === 0) {
-    todayList.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div>No jobs today</div></div>';
-  } else {
-    todayList.innerHTML = todayJobs.map(j => `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`).join('');
-  }
+async function dbDelete(table, id) {
+  const { error } = await db.from(table).delete().eq('id', id);
+  if (error) { console.error(`Delete ${table}:`, error.message); throw error; }
 }
 
-// Staff Functions
-function renderStaff() {
-  let search = document.getElementById('staff-search')?.value.toLowerCase() || '';
-  let filtered = staffList.filter(s => 
-    (currentStaffFilter === 'all' || s.status === currentStaffFilter) &&
-    (s.name.toLowerCase().includes(search) || (s.role || '').toLowerCase().includes(search))
-  );
-  document.getElementById('staff-count-lbl').innerHTML = `${staffList.length} staff`;
-  document.getElementById('onshift-count-lbl').innerHTML = `${staffList.filter(s => s.status === 'On Shift').length} on shift`;
-  
-  let grid = document.getElementById('staff-grid');
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-text">No staff found</div></div>';
-    return;
-  }
-  grid.innerHTML = filtered.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${s.staffid ? `<div class="detail-row"><span class="dk">ID</span><span class="dv">${s.staffid}</span></div>` : ''}<div class="detail-row"><span class="dk">Phone</span><span class="dv">${s.phone || '—'}</span></div><div class="detail-row"><span class="dk">Shift</span><span class="dv">${s.shift || '—'}</span></div></div></div>`).join('');
-}
-
-function filterStaff(filter) {
-  currentStaffFilter = filter;
-  document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  renderStaff();
-}
-
-function openStaffProfile(id) {
-  let s = staffList.find(x => x.id === id);
-  if (!s) return;
-  currentStaffId = id;
-  document.getElementById('prof-name').innerHTML = s.name;
-  document.getElementById('prof-role').innerHTML = s.role;
-  document.getElementById('prof-photo').innerHTML = initials(s.name);
-  let details = `<div class="detail-row"><span class="dk">Staff ID</span><span class="dv">${s.staffid || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Phone</span><span class="dv">${s.phone || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Shift</span><span class="dv">${s.shift || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Start Date</span><span class="dv">${s.startdate || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Address</span><span class="dv">${s.address || '—'}</span></div>
-    <div class="detail-row"><span class="dk">Status</span><span class="dv">${s.status || 'Off Shift'}</span></div>`;
-  document.getElementById('prof-details').innerHTML = details;
-  document.getElementById('deleteStaffBtn').style.display = canEdit() ? 'inline-flex' : 'none';
-  openModal('modal-staff-profile');
-}
-
-async function saveStaff() {
-  if (!canEdit()) return;
-  let name = document.getElementById('sf-name').value.trim();
-  let role = document.getElementById('sf-role').value;
-  if (!name || !role) { alert('Name and role required'); return; }
-  
-  staffList.push({
-    id: uid(), name, role,
-    staffid: document.getElementById('sf-id').value,
-    phone: document.getElementById('sf-phone').value,
-    shift: document.getElementById('sf-shift').value,
-    startdate: document.getElementById('sf-startdate').value,
-    address: document.getElementById('sf-address').value,
-    status: 'Off Shift'
-  });
-  saveToLocal();
-  await syncToSupabase();
-  closeModal('modal-add-staff');
-  renderStaff();
-  renderDashboard();
-  alert(`✅ ${name} added successfully!`);
-}
-
-async function deleteCurrentStaff() {
-  if (!canEdit()) return;
-  if (!confirm('Remove this staff?')) return;
-  staffList = staffList.filter(x => x.id !== currentStaffId);
-  saveToLocal();
-  await syncToSupabase();
-  closeModal('modal-staff-profile');
-  renderStaff();
-  renderDashboard();
-}
-
-// Inventory Functions
-function renderInventory() {
-  let search = document.getElementById('inv-search')?.value.toLowerCase() || '';
-  let filtered = inventoryList.filter(i => 
-    (currentInvFilter === 'all' || i.category === currentInvFilter) &&
-    i.name.toLowerCase().includes(search)
-  );
-  let lowCount = inventoryList.filter(i => (i.qty || 0) <= (i.reorder || 0)).length;
-  document.getElementById('inv-count-lbl').innerHTML = `${inventoryList.length} items`;
-  document.getElementById('inv-low-lbl').innerHTML = `${lowCount} low stock`;
-  
-  let grid = document.getElementById('inventory-grid');
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>';
-    return;
-  }
-  grid.innerHTML = filtered.map(i => `<div class="inv-card"><div class="inv-img">📦</div><div class="inv-body"><div class="inv-name">${i.name}</div><div class="inv-cat">${i.category}</div><div class="stock-info"><span>Qty: ${i.qty || 0} ${i.uom || ''}</span><span>Reorder: ${i.reorder || 0}</span></div>${(i.qty || 0) <= (i.reorder || 0) ? '<div class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW</div>' : ''}</div></div>`).join('');
-}
-
-function filterInv(filter) {
-  currentInvFilter = filter;
-  document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  renderInventory();
-}
-
-async function saveInventory() {
-  if (!canEdit()) return;
-  let name = document.getElementById('inv-name').value.trim();
-  let cat = document.getElementById('inv-cat').value;
-  if (!name || !cat) { alert('Name and category required'); return; }
-  
-  inventoryList.push({
-    id: uid(), name, category: cat,
-    qty: parseInt(document.getElementById('inv-qty').value) || 0,
-    uom: document.getElementById('inv-uom').value,
-    reorder: parseInt(document.getElementById('inv-reorder').value) || 0,
-    supplier: document.getElementById('inv-supplier').value
-  });
-  saveToLocal();
-  await syncToSupabase();
-  closeModal('modal-add-inv');
-  renderInventory();
-  renderDashboard();
-  alert(`✅ ${name} added to inventory!`);
-}
-
-// Jobs Functions
-function renderJobs() {
-  let search = document.getElementById('jobs-search')?.value.toLowerCase() || '';
-  let filtered = jobsList.filter(j => 
-    (currentJobFilter === 'all' || j.status === currentJobFilter) &&
-    (j.client.toLowerCase().includes(search) || (j.location || '').toLowerCase().includes(search))
-  );
-  document.getElementById('jobs-sub-lbl').innerHTML = `${jobsList.length} total · ${jobsList.filter(j => j.status === 'In Progress').length} in progress`;
-  
-  let list = document.getElementById('jobs-list');
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs</div></div>';
-    return;
-  }
-  list.innerHTML = filtered.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span></div></div>`).join('');
-}
-
-function filterJobs(filter) {
-  currentJobFilter = filter;
-  document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  renderJobs();
-}
-
-async function saveJob() {
-  if (!canEdit()) return;
-  let client = document.getElementById('jf-client').value.trim();
-  if (!client) { alert('Client name required'); return; }
-  
-  jobsList.push({
-    id: uid(), client,
-    type: document.getElementById('jf-type').value,
-    location: document.getElementById('jf-location').value,
-    date: document.getElementById('jf-date').value || todayStr(),
-    assignedstaff: document.getElementById('jf-staff').value,
-    status: 'Scheduled'
-  });
-  saveToLocal();
-  await syncToSupabase();
-  closeModal('modal-add-job');
-  renderJobs();
-  renderDashboard();
-  alert(`✅ Job scheduled for ${client}`);
-}
-
-function openJobDetail(id) {
-  let j = jobsList.find(x => x.id === id);
-  if (j && canEdit()) {
-    let newStatus = prompt(`Job: ${j.client}\nCurrent: ${j.status}\n\nNew status (Scheduled/In Progress/Done):`, j.status);
-    if (newStatus && ['Scheduled', 'In Progress', 'Done'].includes(newStatus)) {
-      j.status = newStatus;
-      saveToLocal();
-      syncToSupabase();
-      renderJobs();
-      renderDashboard();
-    }
-  } else if (j) {
-    alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location || 'Not set'}\nDate: ${j.date || 'Not set'}`);
-  }
-}
-
-// Reports
-function renderReports() {
-  let from = document.getElementById('report-from').value;
-  let to = document.getElementById('report-to').value;
-  let filtered = jobsList.filter(j => {
-    if (from && j.date < from) return false;
-    if (to && j.date > to) return false;
-    return true;
-  });
-  let done = filtered.filter(j => j.status === 'Done').length;
-  let inProgress = filtered.filter(j => j.status === 'In Progress').length;
-  document.getElementById('report-summary').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-    <div class="report-stat"><div class="report-stat-val">${filtered.length}</div><div class="report-stat-lbl">Total</div></div>
-    <div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div>
-    <div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inProgress}</div><div class="report-stat-lbl">In Progress</div></div></div>`;
-}
-
-function setReportRange(range) {
-  let today = new Date();
-  let fmt = d => d.toISOString().split('T')[0];
-  if (range === 'today') {
-    document.getElementById('report-from').value = fmt(today);
-    document.getElementById('report-to').value = fmt(today);
-  } else if (range === 'week') {
-    let weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
-    document.getElementById('report-from').value = fmt(weekAgo);
-    document.getElementById('report-to').value = fmt(today);
-  } else if (range === 'month') {
-    document.getElementById('report-from').value = fmt(today).slice(0,7) + '-01';
-    document.getElementById('report-to').value = fmt(today);
-  } else {
-    document.getElementById('report-from').value = '';
-    document.getElementById('report-to').value = '';
-  }
-  renderReports();
-}
-
-// Navigation
+// ================================================================
+// NAVIGATION
+// ================================================================
 function goToTab(tab) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`screen-${tab}`).classList.add('active');
-  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
-  
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
   if (tab === 'dashboard') renderDashboard();
   if (tab === 'staff') renderStaff();
   if (tab === 'inventory') renderInventory();
@@ -765,120 +797,788 @@ function renderAll() {
   renderJobs();
 }
 
-// Modal Functions
+function buildQuickActions() {
+  let items = [
+    { icon: '👥', label: 'Enrol Staff', tab: 'staff', sup: true },
+    { icon: '📋', label: 'New Job', tab: 'jobs', sup: true },
+    { icon: '📦', label: 'Add Item', tab: 'inventory', sup: true },
+    { icon: '📊', label: 'Reports', tab: 'reports', sup: false }
+  ];
+  document.getElementById('qa-grid').innerHTML = items.map(a =>
+    `<div class="qa-btn ${!a.sup || canEdit() ? '' : 'locked'}" onclick="goToTab('${a.tab}')"><span class="qa-icon">${a.icon}</span><span class="qa-label">${a.label}</span></div>`
+  ).join('');
+}
+
+function buildActionBars() {
+  let notice = `<div class="viewer-notice">👁 View only — supervisor can make changes</div>`;
+  document.getElementById('staff-actions').innerHTML = canEdit()
+    ? `<button class="btn btn-primary" onclick="openModal('modal-add-staff')">+ Enrol Staff</button>`
+    : notice;
+  document.getElementById('inv-actions').innerHTML = canEdit()
+    ? `<button class="btn btn-primary" onclick="openModal('modal-add-inv')">+ Add Item</button>`
+    : notice;
+  document.getElementById('jobs-actions').innerHTML = canEdit()
+    ? `<button class="btn btn-primary" onclick="openModal('modal-add-job')">+ Schedule Job</button>`
+    : notice;
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+function renderDashboard() {
+  let onShift = state.staff.filter(s => s.status === 'On Shift').length;
+  let todayJobs = state.jobs.filter(j => j.date === todayStr());
+  let lowStock = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder));
+
+  document.getElementById('stat-onshift').textContent = onShift;
+  document.getElementById('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
+  document.getElementById('stat-jobs-today').textContent = todayJobs.length;
+  document.getElementById('stat-jobs-sub').textContent = `${todayJobs.filter(j => j.status === 'In Progress').length} in progress`;
+  document.getElementById('stat-lowstock').textContent = lowStock.length;
+  document.getElementById('kpi-staff').textContent = state.staff.length;
+  document.getElementById('kpi-onshift').textContent = onShift;
+  document.getElementById('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0, 7))).length;
+  document.getElementById('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
+
+  let banner = document.getElementById('low-stock-banner');
+  if (lowStock.length) {
+    banner.style.display = 'flex';
+    document.getElementById('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', ');
+  } else {
+    banner.style.display = 'none';
+  }
+
+  if (document.getElementById('director-metrics-section').style.display !== 'none') {
+    let off = state.staff.filter(s => s.status === 'Off Shift').length;
+    let leave = state.staff.filter(s => s.status === 'On Leave').length;
+    let t = state.staff.length || 1;
+    document.getElementById('staff-bars').innerHTML =
+      actBar('On Shift', onShift, t, 'var(--green)') +
+      actBar('Off Shift', off, t, 'var(--text-muted)') +
+      actBar('On Leave', leave, t, 'var(--amber)');
+    let sTot = todayJobs.length || 1;
+    document.getElementById('job-bars').innerHTML =
+      actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') +
+      actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') +
+      actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
+  }
+
+  let listEl = document.getElementById('today-jobs-list');
+  if (!todayJobs.length) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
+  } else {
+    listEl.innerHTML = todayJobs.map(j =>
+      `<div class="job-row"><div class="job-time">${j.time || '--:--'}</div><div style="flex:1"><div class="job-client-name">${j.client}</div><div class="job-type-info">${j.type} · ${j.location || ''}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div>`
+    ).join('');
+  }
+}
+
+function actBar(l, v, t, c) {
+  let p = Math.round(v / t * 100);
+  return `<div class="act-item"><span class="act-label">${l}</span><div class="act-bar-wrap"><div class="act-bar" style="width:${p}%;background:${c}"></div></div><span class="act-val">${v}</span></div>`;
+}
+
+// ================================================================
+// STAFF MANAGEMENT
+// ================================================================
+let staffFilter = 'all';
+
+function renderStaff() {
+  let q = (document.getElementById('staff-search').value || '').toLowerCase();
+  let list = state.staff.filter(s =>
+    ((s.name || '').toLowerCase().includes(q) || (s.role || '').toLowerCase().includes(q)) &&
+    (staffFilter === 'all' || s.status === staffFilter)
+  );
+  document.getElementById('staff-count-lbl').textContent = `${state.staff.length} staff`;
+  document.getElementById('onshift-count-lbl').textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
+  let grid = document.getElementById('staff-grid');
+  if (!list.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-text">No staff found</div></div>`; return; }
+  grid.innerHTML = list.map(s =>
+    `<div class="staff-card" onclick="openStaffProfile('${s.id}')">
+      <div class="sc-header">
+        <div class="sc-avatar">${s.photo ? `<img src="${s.photo}">` : initials(s.name)}</div>
+        <div style="flex:1"><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div>
+        <span class="pill ${pillClass(s.status)}">${s.status}</span>
+      </div>
+      <div class="sc-body">${detRow('Staff ID', s.staffid || s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift || '—')}</div>
+    </div>`
+  ).join('');
+}
+
+function filterStaff(f, btn) {
+  staffFilter = f;
+  document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderStaff();
+}
+
+async function saveStaff() {
+  if (!canEdit()) return;
+  let name = document.getElementById('sf-name').value.trim();
+  let role = document.getElementById('sf-role').value;
+  if (!name || !role) { alert('Name and role are required'); return; }
+
+  let saveBtn = document.getElementById('save-staff-btn');
+  saveBtn.disabled = true;
+  showLoading('Enrolling staff member...');
+
+  try {
+    let rawPhoto = document.getElementById('staff-photo-preview').src || '';
+    let rawFront = document.getElementById('ghana-front-preview').src || '';
+    let rawBack  = document.getElementById('ghana-back-preview').src || '';
+
+    let [photo, ghanafront, ghanaback] = await Promise.all([
+      compressImage(rawPhoto.startsWith('data:') ? rawPhoto : '', 300, 0.6),
+      compressImage(rawFront.startsWith('data:') ? rawFront : '', 600, 0.7),
+      compressImage(rawBack.startsWith('data:')  ? rawBack  : '', 600, 0.7)
+    ]);
+
+    let maritalstatus = document.getElementById('sf-marital').value;
+    if (maritalstatus === 'Other') maritalstatus = document.getElementById('sf-marital-other').value.trim() || 'Other';
+
+    let row = {
+      id: uid(), name, role, photo,
+      staffid: document.getElementById('sf-id').value,
+      phone: document.getElementById('sf-phone').value,
+      shift: document.getElementById('sf-shift').value,
+      startdate: document.getElementById('sf-startdate').value,
+      address: document.getElementById('sf-address').value,
+      ghanacard: document.getElementById('sf-ghana').value,
+      ghanafront, ghanaback,
+      ssnit: document.getElementById('sf-ssnit').value,
+      emergname: document.getElementById('sf-emerg-name').value,
+      emergphone: document.getElementById('sf-emerg-phone').value,
+      emergrel: document.getElementById('sf-emerg-rel').value,
+      bankname: document.getElementById('sf-bank-name').value,
+      bankacct: document.getElementById('sf-bank-acct').value,
+      status: 'Off Shift',
+      maritalstatus,
+      spousename: document.getElementById('sf-spouse-name').value,
+      spousecontact: document.getElementById('sf-spouse-contact').value,
+      numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
+    };
+
+    await dbInsert('staff', row);
+    state.staff.push(row);
+    closeModal('modal-add-staff');
+    renderStaff();
+    renderDashboard();
+    setSyncDot('synced');
+  } catch (err) {
+    alert('Error saving staff. Please try again.');
+    setSyncDot('error');
+  } finally {
+    saveBtn.disabled = false;
+    hideLoading();
+  }
+}
+
+function openStaffProfile(id) {
+  let s = state.staff.find(x => x.id === id);
+  if (!s) return;
+  currentStaffId = id;
+
+  let photo        = s.photo || '';
+  let name         = s.name || '';
+  let role         = s.role || '';
+  let staffId      = s.staffid || s.staffId || '';
+  let phone        = s.phone || '';
+  let shift        = s.shift || '';
+  let startDate    = s.startdate || s.startDate || '';
+  let address      = s.address || '';
+  let ghanaCard    = s.ghanacard || s.ghanaCard || '';
+  let ghanaFront   = s.ghanafront || s.ghanaFrontImg || '';
+  let ghanaBack    = s.ghanaback || s.ghanaBackImg || '';
+  let marital      = s.maritalstatus || s.maritalStatus || 'Single';
+  let spouseName   = s.spousename || s.spouseName || '';
+  let spouseContact= s.spousecontact || s.spouseContact || '';
+  let kids         = s.numberofkids || s.numberOfKids || 0;
+  let emergName    = s.emergname || s.emergName || '';
+  let emergPhone   = s.emergphone || s.emergPhone || '';
+  let emergRel     = s.emergrel || s.emergRel || '';
+  let bankName     = s.bankname || s.bankName || '';
+  let bankAcct     = s.bankacct || s.bankAcct || '';
+
+  let photoDiv = document.getElementById('prof-photo');
+  if (photo) { photoDiv.innerHTML = `<img src="${photo}">`; photoDiv.style.background = 'transparent'; }
+  else { photoDiv.textContent = initials(name); photoDiv.style.background = 'var(--red)'; }
+  document.getElementById('prof-name').textContent = name;
+  document.getElementById('prof-role').textContent = role;
+
+  let ghanaHtml = '';
+  if (ghanaFront && ghanaFront.startsWith('data:'))
+    ghanaHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaFront}','Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
+  if (ghanaBack && ghanaBack.startsWith('data:'))
+    ghanaHtml += `<div class="detail-row clickable" onclick="viewImage('${ghanaBack}','Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
+
+  let statusBtns = canEdit() ? `
+    <div class="section-sep">Update Status</div>
+    <div class="status-btns">
+      <button class="btn btn-sm btn-success" onclick="updateStaffStatus('On Shift')">✅ On Shift</button>
+      <button class="btn btn-sm btn-outline" onclick="updateStaffStatus('Off Shift')">🔴 Off Shift</button>
+      <button class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:none;padding:5px 11px;border-radius:var(--r-md);font-size:11px;font-weight:600;cursor:pointer" onclick="updateStaffStatus('On Leave')">🟡 On Leave</button>
+    </div>` : '';
+
+  document.getElementById('prof-details').innerHTML = `
+    <div class="section-sep">Personal</div>
+    ${detRow('Staff ID', staffId)}${detRow('Phone', phone)}${detRow('Shift', shift)}
+    ${detRow('Start Date', startDate)}
+    ${address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${address}</span></div>` : ''}
+    ${detRow('Ghana Card No.', ghanaCard)}${ghanaHtml}
+    <div class="section-sep">Family & Marital</div>
+    ${detRow('Marital Status', marital)}${detRow('Spouse/Partner', spouseName)}
+    ${detRow('Spouse Contact', spouseContact)}${detRow('No. of Children', kids)}
+    <div class="section-sep">Emergency Contact</div>
+    ${detRow('Contact', emergName)}${detRow('Phone', emergPhone)}${detRow('Relation', emergRel)}
+    <div class="section-sep">Bank</div>
+    ${detRow('Bank', bankName)}${detRow('Account', bankAcct)}
+    ${statusBtns}`;
+
+  let delBtn = document.getElementById('delete-staff-btn');
+  if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+
+  openModal('modal-staff-profile');
+}
+
+async function updateStaffStatus(newStatus) {
+  if (!canEdit()) return;
+  showLoading('Updating status...');
+  try {
+    await dbUpdate('staff', currentStaffId, { status: newStatus });
+    let s = state.staff.find(x => x.id === currentStaffId);
+    if (s) s.status = newStatus;
+    setSyncDot('synced');
+    closeModal('modal-staff-profile');
+    renderStaff();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to update status');
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function deleteCurrentStaff() {
+  if (!canEdit()) return;
+  if (!confirm('Remove this staff member? This cannot be undone.')) return;
+  showLoading('Removing...');
+  try {
+    await dbDelete('staff', currentStaffId);
+    state.staff = state.staff.filter(x => x.id !== currentStaffId);
+    setSyncDot('synced');
+    closeModal('modal-staff-profile');
+    renderStaff();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to delete staff');
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function printStaffPDF() {
+  if (!canPrint()) return;
+  let s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  let name         = s.name || '';
+  let role         = s.role || '';
+  let staffId      = s.staffid || s.staffId || '';
+  let phone        = s.phone || '';
+  let shift        = s.shift || '';
+  let photo        = s.photo || '';
+  let ghanaCard    = s.ghanacard || s.ghanaCard || '';
+  let address      = s.address || '';
+  let marital      = s.maritalstatus || s.maritalStatus || 'Single';
+  let spouseName   = s.spousename || s.spouseName || '';
+  let spouseContact= s.spousecontact || s.spouseContact || '';
+  let kids         = s.numberofkids || s.numberOfKids || 0;
+  let emergName    = s.emergname || s.emergName || '';
+  let emergPhone   = s.emergphone || s.emergPhone || '';
+  let emergRel     = s.emergrel || s.emergRel || '';
+  let bankName     = s.bankname || s.bankName || '';
+  let bankAcct     = s.bankacct || s.bankAcct || '';
+
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  doc.setFillColor(10, 22, 40); doc.rect(0, 0, 210, 44, 'F');
+  doc.setFillColor(204, 31, 46); doc.rect(0, 42, 210, 3, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('3-Rock Builders', 14, 18);
+  doc.setFontSize(10); doc.text('Staff Profile Document', 14, 27);
+  doc.text('Generated: ' + new Date().toLocaleDateString(), 14, 35);
+  let px = 14, py = 52, pw = 50, ph = 65;
+  doc.setFillColor(230, 234, 244); doc.rect(px, py, pw, ph, 'F');
+  if (photo && photo.startsWith('data:')) { try { doc.addImage(photo, 'JPEG', px, py, pw, ph); } catch(e){} }
+  doc.setFontSize(20); doc.setTextColor(10, 22, 40); doc.text(name, px + pw + 10, 62);
+  doc.setFillColor(10, 22, 40); doc.roundedRect(px + pw + 10, 65, 70, 9, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.text(role.toUpperCase(), px + pw + 14, 70.5);
+  doc.setFontSize(9); doc.setTextColor(70, 88, 128);
+  doc.text(`Staff ID: ${staffId || '—'}`, px + pw + 10, 82);
+  doc.text(`Phone: ${phone || '—'}`, px + pw + 10, 90);
+  doc.text(`Shift: ${shift || '—'}`, px + pw + 10, 98);
+  let y = py + ph + 14;
+  y = addSection(doc, 'PERSONAL DETAILS', y);
+  y = addRow(doc, 'Ghana Card', ghanaCard, y, true);
+  if (address) y = addRow(doc, 'Address', address, y, false);
+  y = addRow(doc, 'Marital Status', marital, y, true);
+  if (spouseName) y = addRow(doc, 'Spouse/Partner', spouseName, y, false);
+  if (spouseContact) y = addRow(doc, 'Spouse Contact', spouseContact, y, true);
+  y = addRow(doc, 'Children', kids, y, false);
+  y = addSection(doc, 'EMERGENCY CONTACT', y + 4);
+  y = addRow(doc, 'Contact', emergName, y, true);
+  y = addRow(doc, 'Phone', emergPhone, y, false);
+  y = addRow(doc, 'Relation', emergRel, y, true);
+  y = addSection(doc, 'BANK DETAILS', y + 4);
+  y = addRow(doc, 'Bank Name', bankName, y, true);
+  y = addRow(doc, 'Account Number', bankAcct, y, false);
+  doc.save(`3Rock_Staff_${name.replace(/\s+/g,'_')}.pdf`);
+}
+
+function addSection(doc, lbl, y) {
+  doc.setFillColor(10, 22, 40); doc.rect(14, y, 182, 7, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+  doc.text(lbl, 17, y + 5); return y + 7;
+}
+function addRow(doc, k, v, y, shade) {
+  doc.setFillColor(shade ? 247 : 255, shade ? 249 : 255, shade ? 253 : 255);
+  doc.rect(14, y, 182, 8, 'F');
+  doc.setDrawColor(220, 225, 235); doc.line(14, y + 8, 196, y + 8);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 115, 145);
+  doc.text(k, 17, y + 5.5);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(10, 22, 40);
+  doc.text(String(v || '—'), 90, y + 5.5);
+  return y + 8;
+}
+
+// ================================================================
+// INVENTORY MANAGEMENT
+// ================================================================
+let invFilter = 'all';
+
+function renderInventory() {
+  let q = (document.getElementById('inv-search').value || '').toLowerCase();
+  let list = state.inventory.filter(i =>
+    ((i.name || '').toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)) &&
+    (invFilter === 'all' || i.category === invFilter)
+  );
+  let lowCount = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder)).length;
+  document.getElementById('inv-count-lbl').textContent = `${state.inventory.length} items`;
+  document.getElementById('inv-low-lbl').textContent = `${lowCount} low stock`;
+  let grid = document.getElementById('inventory-grid');
+  if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items found</div></div>'; return; }
+  grid.innerHTML = list.map(item => {
+    let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
+    let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
+    return `<div class="inv-card" onclick="openInvDetail('${item.id}')">
+      <div class="inv-img">${item.img ? `<img src="${item.img}">` : '📦'}</div>
+      <div class="inv-body">
+        <div class="inv-name">${item.name}</div>
+        <div class="inv-cat">${item.category}</div>
+        <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
+        <div class="stock-info"><span>Qty: ${item.qty} ${item.uom || ''}</span><span>Reorder: ${item.reorder}</span></div>
+        ${Number(item.qty) <= Number(item.reorder) ? '<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW STOCK</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterInv(f, btn) {
+  invFilter = f;
+  document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderInventory();
+}
+
+async function saveInventory() {
+  if (!canEdit()) return;
+  let name = document.getElementById('inv-name').value.trim();
+  let category = document.getElementById('inv-cat').value;
+  if (!name || !category) { alert('Name and category are required'); return; }
+
+  let saveBtn = document.getElementById('save-inv-btn');
+  saveBtn.disabled = true;
+  showLoading('Adding item...');
+
+  try {
+    let rawImg = document.getElementById('inv-img-preview').src || '';
+    let img = await compressImage(rawImg.startsWith('data:') ? rawImg : '', 400, 0.65);
+    let row = {
+      id: uid(), name, category,
+      qty: parseInt(document.getElementById('inv-qty').value) || 0,
+      uom: document.getElementById('inv-uom').value,
+      reorder: parseInt(document.getElementById('inv-reorder').value) || 0,
+      supplier: document.getElementById('inv-supplier').value.trim(),
+      suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
+      img,
+      usagelog: []
+    };
+    await dbInsert('inventory', row);
+    row.usageLog = [];
+    state.inventory.push(row);
+    setSyncDot('synced');
+    closeModal('modal-add-inv');
+    renderInventory();
+    renderDashboard();
+  } catch (err) {
+    alert('Error saving item. Please try again.');
+    setSyncDot('error');
+  } finally {
+    saveBtn.disabled = false;
+    hideLoading();
+  }
+}
+
+function openInvDetail(id) {
+  let item = state.inventory.find(x => x.id === id);
+  if (!item) return;
+  currentInvId = id;
+
+  if (!Array.isArray(item.usageLog)) item.usageLog = item.usagelog || [];
+
+  document.getElementById('inv-detail-title').textContent = item.name;
+  let pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
+  let cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
+  document.getElementById('inv-detail-info').innerHTML = `
+    <div class="detail-row"><span class="dk">Category</span><span class="dv">${item.category}</span></div>
+    <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${item.uom || 'units'}</strong></span></div>
+    <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${item.uom || 'units'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${item.supplier || '—'}</span></div>
+    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${item.suppliercontact || item.supplierContact || '—'}</span></div>
+    <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
+
+  let qtyCtrl = document.getElementById('inv-qty-ctrl');
+  if (canEdit()) {
+    qtyCtrl.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty}</span>
+      <button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>
+    </div>`;
+  } else {
+    qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty} ${item.uom || 'units'}</span>`;
+  }
+
+  let logs = item.usageLog || [];
+  let logsHtml = logs.length
+    ? logs.slice().reverse().map(log =>
+        `<div class="log-entry">
+          <div class="log-date">📅 ${log.date}</div>
+          <div class="log-details">Used: <strong>${log.qty} ${item.uom || 'units'}</strong>${log.job ? `<br>📍 Job: ${log.job}` : ''}${log.notes ? `<br>📝 ${log.notes}` : ''}<br>
+          <span style="font-size:10px;color:var(--text-muted)">by ${log.loggedby || log.loggedBy} at ${(log.loggedat || log.loggedAt || '').slice(0,16)}</span></div>
+        </div>`
+      ).join('')
+    : '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div><div class="empty-sub">Tap "Log Daily Usage" to record consumption</div></div>';
+  document.getElementById('inv-usage-logs').innerHTML = logsHtml;
+
+  let logBtn = document.getElementById('log-usage-btn');
+  let delBtn = document.getElementById('delete-inv-btn');
+  if (logBtn) logBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  openModal('modal-inv-detail');
+}
+
+async function adjustQty(delta) {
+  if (!canEdit()) return;
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  let newQty = item.qty + delta;
+  if (newQty < 0) { alert('Cannot go below zero'); return; }
+  showLoading('Updating stock...');
+  try {
+    await dbUpdate('inventory', currentInvId, { qty: newQty });
+    item.qty = newQty;
+    setSyncDot('synced');
+    openInvDetail(currentInvId);
+    renderInventory();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to update quantity');
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function openLogUsageModal() {
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  document.getElementById('log-item-name').value = item.name;
+  document.getElementById('log-unit').value = item.uom || 'units';
+  document.getElementById('log-qty').value = '';
+  document.getElementById('log-date').value = todayStr();
+  document.getElementById('log-job').value = '';
+  document.getElementById('log-notes').value = '';
+  closeModal('modal-inv-detail');
+  openModal('modal-log-usage');
+}
+
+async function saveUsageLog() {
+  if (!canEdit()) return;
+  let qty = parseInt(document.getElementById('log-qty').value);
+  let date = document.getElementById('log-date').value;
+  if (!qty || qty < 1) { alert('Enter a valid quantity'); return; }
+  if (!date) { alert('Select a date'); return; }
+
+  let item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  if (item.qty < qty) { alert(`Insufficient stock! Only ${item.qty} ${item.uom} available.`); return; }
+
+  let saveBtn = document.getElementById('save-log-btn');
+  saveBtn.disabled = true;
+  showLoading('Logging usage...');
+
+  try {
+    if (!Array.isArray(item.usageLog)) item.usageLog = [];
+    let entry = {
+      id: uid(), date, qty,
+      job: document.getElementById('log-job').value,
+      notes: document.getElementById('log-notes').value,
+      loggedby: currentUser.name,
+      loggedat: new Date().toISOString()
+    };
+    item.usageLog.push(entry);
+    item.qty -= qty;
+
+    await dbUpdate('inventory', currentInvId, {
+      qty: item.qty,
+      usagelog: item.usageLog
+    });
+
+    setSyncDot('synced');
+    closeModal('modal-log-usage');
+    openInvDetail(currentInvId);
+    renderInventory();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to log usage');
+    setSyncDot('error');
+  } finally {
+    saveBtn.disabled = false;
+    hideLoading();
+  }
+}
+
+async function deleteCurrentInv() {
+  if (!canEdit()) return;
+  if (!confirm('Delete this inventory item and all its usage history?')) return;
+  showLoading('Deleting...');
+  try {
+    await dbDelete('inventory', currentInvId);
+    state.inventory = state.inventory.filter(x => x.id !== currentInvId);
+    setSyncDot('synced');
+    closeModal('modal-inv-detail');
+    renderInventory();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to delete item');
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ================================================================
+// JOB MANAGEMENT
+// ================================================================
+let jobFilter = 'all';
+
+function renderJobs() {
+  let q = (document.getElementById('jobs-search').value || '').toLowerCase();
+  let list = state.jobs.filter(j =>
+    ((j.client || '').toLowerCase().includes(q) || (j.location || '').toLowerCase().includes(q)) &&
+    (jobFilter === 'all' || j.status === jobFilter)
+  ).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  document.getElementById('jobs-sub-lbl').textContent =
+    `${state.jobs.length} total · ${state.jobs.filter(j => j.status === 'In Progress').length} in progress`;
+
+  let listEl = document.getElementById('jobs-list');
+  if (!list.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-text">No jobs found</div></div>'; return; }
+  listEl.innerHTML = list.map(j =>
+    `<div class="job-card" onclick="openJobDetail('${j.id}')">
+      <div class="jc-header">
+        <div style="flex:1"><div style="font-weight:700">${j.client}</div><div style="font-size:11px;color:var(--text-muted)">${j.location || '—'}</div></div>
+        <span class="pill ${pillClass(j.status)}">${j.status}</span>
+      </div>
+      <div class="jc-body">
+        <span class="job-type-tag">${j.type}</span>
+        <span style="font-size:12px;margin-left:6px">📅 ${j.date || '—'}${j.time ? ` 🕐 ${j.time}` : ''}</span>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function filterJobs(f, btn) {
+  jobFilter = f;
+  document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderJobs();
+}
+
+async function saveJob() {
+  if (!canEdit()) return;
+  let client = document.getElementById('jf-client').value.trim();
+  let type = document.getElementById('jf-type').value;
+  if (!client || !type) { alert('Client and type are required'); return; }
+
+  let saveBtn = document.getElementById('save-job-btn');
+  saveBtn.disabled = true;
+  showLoading('Scheduling job...');
+
+  try {
+    let row = {
+      id: uid(), client, type, status: 'Scheduled',
+      location: document.getElementById('jf-location').value,
+      date: document.getElementById('jf-date').value,
+      time: document.getElementById('jf-time').value,
+      assignedstaff: document.getElementById('jf-staff').value,
+      notes: document.getElementById('jf-notes').value
+    };
+    await dbInsert('jobs', row);
+    state.jobs.push(row);
+    setSyncDot('synced');
+    closeModal('modal-add-job');
+    renderJobs();
+    renderDashboard();
+  } catch (err) {
+    alert('Error scheduling job. Please try again.');
+    setSyncDot('error');
+  } finally {
+    saveBtn.disabled = false;
+    hideLoading();
+  }
+}
+
+function openJobDetail(id) {
+  let j = state.jobs.find(x => x.id === id);
+  if (!j) return;
+  currentJobId = id;
+
+  document.getElementById('job-detail-info').innerHTML = `
+    <div class="section-sep">Job Information</div>
+    ${detRow('Client', j.client)}
+    ${detRow('Location', j.location)}
+    ${detRow('Type', j.type)}
+    ${detRow('Date', j.date)}
+    ${detRow('Time', j.time)}
+    ${detRow('Assigned Staff', j.assignedstaff || j.assignedStaff)}
+    ${j.notes ? `<div class="detail-row"><span class="dk">Notes</span><span class="dv">${j.notes}</span></div>` : ''}
+    <div class="detail-row"><span class="dk">Status</span><span class="dv"><span class="pill ${pillClass(j.status)}">${j.status}</span></span></div>`;
+
+  let actionsHtml = `<button class="btn btn-outline" onclick="closeModal('modal-job-detail')">Close</button>`;
+  if (canEdit()) {
+    actionsHtml += `
+      <button class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:none;padding:5px 11px;border-radius:var(--r-md);font-size:11px;font-weight:600;cursor:pointer" onclick="updateJobStatus('In Progress')">▶ In Progress</button>
+      <button class="btn btn-success btn-sm" onclick="updateJobStatus('Done')">✅ Done</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentJob()">Delete</button>`;
+  }
+  document.getElementById('job-detail-actions').innerHTML = actionsHtml;
+  openModal('modal-job-detail');
+}
+
+async function updateJobStatus(newStatus) {
+  if (!canEdit()) return;
+  showLoading('Updating job...');
+  try {
+    await dbUpdate('jobs', currentJobId, { status: newStatus });
+    let j = state.jobs.find(x => x.id === currentJobId);
+    if (j) j.status = newStatus;
+    setSyncDot('synced');
+    closeModal('modal-job-detail');
+    renderJobs();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to update job status');
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function deleteCurrentJob() {
+  if (!canEdit()) return;
+  if (!confirm('Delete this job?')) return;
+  showLoading('Deleting...');
+  try {
+    await dbDelete('jobs', currentJobId);
+    state.jobs = state.jobs.filter(x => x.id !== currentJobId);
+    setSyncDot('synced');
+    closeModal('modal-job-detail');
+    renderJobs();
+    renderDashboard();
+  } catch (err) {
+    alert('Failed to delete job');
+    setSyncDot('error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ================================================================
+// REPORTS
+// ================================================================
+function renderReports() {
+  let from = document.getElementById('report-from').value;
+  let to   = document.getElementById('report-to').value;
+  let fJobs = state.jobs.filter(j => {
+    if (from && j.date < from) return false;
+    if (to && j.date > to) return false;
+    return true;
+  });
+  let done = fJobs.filter(j => j.status === 'Done').length;
+  let inPr = fJobs.filter(j => j.status === 'In Progress').length;
+  document.getElementById('report-summary').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div class="report-stat"><div class="report-stat-val">${fJobs.length}</div><div class="report-stat-lbl">Total</div></div>
+      <div class="report-stat" style="background:#dcfce7"><div class="report-stat-val" style="color:#166534">${done}</div><div class="report-stat-lbl">Completed</div></div>
+      <div class="report-stat" style="background:#fef3c7"><div class="report-stat-val" style="color:#92400e">${inPr}</div><div class="report-stat-lbl">In Progress</div></div>
+    </div>`;
+
+  // Inventory usage summary
+  let usageSummary = state.inventory.map(item => {
+    let logs = item.usageLog || item.usagelog || [];
+    let filtered = logs.filter(l => {
+      if (from && l.date < from) return false;
+      if (to && l.date > to) return false;
+      return true;
+    });
+    let total = filtered.reduce((sum, l) => sum + (l.qty || 0), 0);
+    return { name: item.name, uom: item.uom, total, count: filtered.length };
+  }).filter(x => x.total > 0).sort((a, b) => b.total - a.total);
+
+  document.getElementById('report-inv').innerHTML = usageSummary.length
+    ? usageSummary.map(x =>
+        `<div class="detail-row"><span class="dk">${x.name}</span><span class="dv">${x.total} ${x.uom || 'units'} (${x.count} log${x.count !== 1 ? 's' : ''})</span></div>`
+      ).join('')
+    : '<div class="empty-state" style="padding:16px"><div class="empty-text">No usage data for this period</div></div>';
+}
+
+function setReportRange(r) {
+  let now = new Date();
+  let fmt = d => d.toISOString().split('T')[0];
+  if (r === 'today') {
+    document.getElementById('report-from').value = fmt(now);
+    document.getElementById('report-to').value = fmt(now);
+  } else if (r === 'week') {
+    let w = new Date(now); w.setDate(w.getDate() - 7);
+    document.getElementById('report-from').value = fmt(w);
+    document.getElementById('report-to').value = fmt(now);
+  } else if (r === 'month') {
+    document.getElementById('report-from').value = fmt(now).slice(0, 7) + '-01';
+    document.getElementById('report-to').value = fmt(now);
+  } else {
+    document.getElementById('report-from').value = '';
+    document.getElementById('report-to').value = '';
+  }
+  renderReports();
+}
+
+// ================================================================
+// MODAL CONTROLS
+// ================================================================
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-// Auth Functions
-function handleLogin() {
-  let role = document.getElementById('auth-role').value;
-  let pass = document.getElementById('auth-pass').value;
-  let errDiv = document.getElementById('auth-error');
-  
-  if (!role) { errDiv.style.display = 'block'; errDiv.textContent = 'Select a role'; return; }
-  if (PASSWORDS[role] !== pass) { errDiv.style.display = 'block'; errDiv.textContent = 'Incorrect password'; return; }
-  
-  errDiv.style.display = 'none';
-  currentUser = { role, name: role.charAt(0).toUpperCase() + role.slice(1) };
-  
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('hdr-avatar').innerHTML = role[0].toUpperCase();
-  document.getElementById('hdr-name').innerHTML = currentUser.name;
-  document.getElementById('hdr-role').innerHTML = role.toUpperCase();
-  document.getElementById('manualSyncBtn').style.display = 'inline-block';
-  
-  let canEditStaff = canEdit();
-  document.getElementById('staff-actions').innerHTML = canEditStaff ? '<button class="btn btn-primary" onclick="openModal(\'modal-add-staff\')">+ Enrol Staff</button>' : '<div class="viewer-notice">👁 View only</div>';
-  document.getElementById('inv-actions').innerHTML = canEditStaff ? '<button class="btn btn-primary" onclick="openModal(\'modal-add-inv\')">+ Add Item</button>' : '<div class="viewer-notice">👁 View only</div>';
-  document.getElementById('jobs-actions').innerHTML = canEditStaff ? '<button class="btn btn-primary" onclick="openModal(\'modal-add-job\')">+ Schedule Job</button>' : '<div class="viewer-notice">👁 View only</div>';
-  
-  if (role === 'director' || role === 'manager') {
-    document.getElementById('director-kpi').style.display = 'block';
-  }
-  
-  updateDateTime();
-  setInterval(updateDateTime, 60000);
-  renderAll();
-  
-  // Ask if user wants to sync existing data
-  if (staffList.length > 0 || inventoryList.length > 0 || jobsList.length > 0) {
-    if (confirm(`You have ${staffList.length} staff, ${inventoryList.length} inventory items, and ${jobsList.length} jobs in local storage.\n\nWould you like to sync this data to Supabase now?`)) {
-      forceSyncToSupabase();
-    }
-  }
-}
-
-function handleLogout() {
-  currentUser = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('auth-pass').value = '';
-  document.getElementById('auth-role').value = '';
-  document.getElementById('manualSyncBtn').style.display = 'none';
-}
-
-function updateDateTime() {
-  if (!currentUser) return;
-  let now = new Date();
-  let hour = now.getHours();
-  let greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dash-greeting').innerHTML = `${greeting}, ${currentUser.name} 👋`;
-  document.getElementById('dash-date').innerHTML = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-// Initialize the app
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('App initializing...');
-  
-  // First try to migrate any old data
-  migrateOldData();
-  
-  // Then load from localStorage
-  loadFromLocal();
-  
-  // Setup event listeners
-  document.getElementById('loginBtn').onclick = handleLogin;
-  document.getElementById('logoutBtn').onclick = handleLogout;
-  document.getElementById('manualSyncBtn').onclick = forceSyncToSupabase;
-  document.getElementById('saveStaffBtn').onclick = saveStaff;
-  document.getElementById('saveInvBtn').onclick = saveInventory;
-  document.getElementById('saveJobBtn').onclick = saveJob;
-  document.getElementById('deleteStaffBtn').onclick = deleteCurrentStaff;
-  document.getElementById('reportTodayBtn').onclick = () => setReportRange('today');
-  document.getElementById('reportWeekBtn').onclick = () => setReportRange('week');
-  document.getElementById('reportMonthBtn').onclick = () => setReportRange('month');
-  document.getElementById('reportAllBtn').onclick = () => setReportRange('all');
-  
-  document.querySelectorAll('.nav-item').forEach(btn => {
-    btn.onclick = () => goToTab(btn.getAttribute('data-tab'));
-  });
-  
-  document.querySelectorAll('#screen-staff .tab').forEach(btn => {
-    btn.onclick = () => filterStaff(btn.getAttribute('data-filter'));
-  });
-  
-  document.querySelectorAll('#screen-inventory .tab').forEach(btn => {
-    btn.onclick = () => filterInv(btn.getAttribute('data-filter'));
-  });
-  
-  document.querySelectorAll('#screen-jobs .tab').forEach(btn => {
-    btn.onclick = () => filterJobs(btn.getAttribute('data-filter'));
-  });
-  
-  document.getElementById('statOnShiftCard').onclick = () => goToTab('staff');
-  document.getElementById('statJobsCard').onclick = () => goToTab('jobs');
-  document.getElementById('statInvCard').onclick = () => goToTab('inventory');
-  
-  document.getElementById('qa-grid').innerHTML = `
-    <div class="qa-btn" onclick="goToTab('staff');setTimeout(()=>openModal('modal-add-staff'),100)"><span class="qa-icon">👥</span><span class="qa-label">Enrol Staff</span></div>
-    <div class="qa-btn" onclick="goToTab('jobs');setTimeout(()=>openModal('modal-add-job'),100)"><span class="qa-icon">📋</span><span class="qa-label">New Job</span></div>
-    <div class="qa-btn" onclick="goToTab('inventory');setTimeout(()=>openModal('modal-add-inv'),100)"><span class="qa-icon">📦</span><span class="qa-label">Add Item</span></div>
-    <div class="qa-btn" onclick="goToTab('reports')"><span class="qa-icon">📊</span><span class="qa-label">Reports</span></div>
-  `;
-  
-  console.log('App ready. Data count:', staffList.length, inventoryList.length, jobsList.length);
-});
+function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 </script>
 </body>
 </html>
