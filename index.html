@@ -3,25 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>3-Rock Builders</title>
+<title>3-Rock Builders - With Data Migration</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{
-  --navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;
-  --red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;
-  --gold:#f5c842;--white:#fff;--off-white:#f0f3fa;
-  --surface:#e8edf7;--text-primary:#0a1628;--text-secondary:#4a5880;
-  --text-muted:#8a96b0;--border:#c8d0e8;--border-light:#dde3f0;
-  --green:#16a34a;--amber:#d97706;--danger:#dc2626;
-  --shadow-sm:0 1px 4px rgba(10,22,40,.1);
-  --shadow-md:0 4px 16px rgba(10,22,40,.15);
-  --shadow-lg:0 8px 32px rgba(10,22,40,.2);
-  --r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:20px;
-}
+/* [All your existing CSS styles remain the same - keeping compact] */
+:root{--navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;--red:#cc1f2e;--red-dark:#9e1520;--red-light:#e63244;--gold:#f5c842;--white:#fff;--off-white:#f0f3fa;--surface:#e8edf7;--text-primary:#0a1628;--text-secondary:#4a5880;--text-muted:#8a96b0;--border:#c8d0e8;--border-light:#dde3f0;--green:#16a34a;--amber:#d97706;--danger:#dc2626;--shadow-sm:0 1px 4px rgba(10,22,40,.1);--shadow-md:0 4px 16px rgba(10,22,40,.15);--shadow-lg:0 8px 32px rgba(10,22,40,.2);--r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:20px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
-
 #auth-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;background-image:radial-gradient(ellipse at 20% 50%,rgba(30,48,96,.8) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(204,31,46,.2) 0%,transparent 50%)}
 .auth-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-xl);padding:44px 36px;width:100%;max-width:400px;backdrop-filter:blur(20px)}
 .auth-logo{text-align:center;margin-bottom:32px}
@@ -35,7 +24,6 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .auth-btn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:var(--r-md);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s}
 .auth-btn:hover{background:var(--red-light)}
 .auth-error{color:var(--red-light);font-size:13px;text-align:center;margin-top:10px;display:none}
-
 #app{display:none;flex-direction:column;min-height:100vh}
 .app-header{background:var(--navy);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:2px solid var(--red);box-shadow:var(--shadow-md)}
 .hdr-logo .s{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
@@ -47,35 +35,31 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .u-role{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px}
 .logout-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer}
 .logout-btn:hover{border-color:var(--red-light);color:var(--red-light)}
-
+.sync-btn{background:var(--green);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--r-sm);padding:5px 10px;font-size:11px;cursor:pointer;margin-left:5px}
+.sync-btn:hover{background:var(--green);opacity:0.8}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s;flex-shrink:0}
 .sync-dot.synced{background:var(--green)}
 .sync-dot.error{background:var(--danger)}
 .sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200;box-shadow:0 -4px 20px rgba(10,22,40,.4)}
 .nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif}
 .nav-item.active{background:rgba(204,31,46,.18)}
 .nav-icon{font-size:19px;line-height:1}
 .nav-label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.38)}
 .nav-item.active .nav-label{color:var(--red-light)}
-
 .main-content{flex:1;padding:18px 14px 86px;max-width:800px;margin:0 auto;width:100%}
 .screen{display:none}.screen.active{display:block}
 .page-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
 .page-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
 .page-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .page-header{margin-bottom:20px}
-
 .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
-.btn-primary{background:var(--navy);color:#fff}
-.btn-primary:hover{background:var(--navy-light)}
-.btn-red{background:var(--red);color:#fff}
-.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}
-.btn-danger{background:var(--danger);color:#fff}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-light)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:var(--red-light)}
 .btn-sm{padding:5px 11px;font-size:11px}
-
 .card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
 .card-title{font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
@@ -88,36 +72,29 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--navy);line-height:1}
 .stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-top:3px;font-weight:700}
 .stat-sub{font-size:11px;color:var(--text-secondary);margin-top:6px}
-
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
 .kpi-item{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);padding:11px;text-align:center}
 .kpi-num{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .kpi-lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;font-weight:700}
-
 .section-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border-light)}
-
 .alert-banner{background:linear-gradient(135deg,#fff5f5,#ffe8e8);border:1px solid rgba(220,38,38,.3);border-left:4px solid var(--red);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
 .alert-title{font-size:12px;font-weight:700;color:var(--red-dark)}
 .alert-items{font-size:11px;color:var(--text-secondary);margin-top:3px}
-
 .act-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .act-label{font-size:12px;color:var(--text-secondary);min-width:100px;font-weight:500}
 .act-bar-wrap{flex:1;height:7px;background:var(--surface);border-radius:4px;overflow:hidden}
 .act-bar{height:100%;border-radius:4px;background:var(--navy);transition:width .5s}
 .act-val{font-size:11px;font-weight:700;color:var(--navy);min-width:24px;text-align:right}
-
 .qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:18px}
 .qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .2s}
 .qa-btn:hover{border-color:var(--red);box-shadow:var(--shadow-sm)}
 .qa-icon{font-size:20px}
 .qa-label{font-size:12px;font-weight:700;color:var(--navy)}
-
 .job-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:7px;box-shadow:var(--shadow-sm)}
 .job-time{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--navy);min-width:46px}
 .job-client-name{font-size:13px;font-weight:600;color:var(--navy)}
 .job-type-info{font-size:11px;color:var(--text-muted)}
-
 .pill{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 8px;border-radius:20px}
 .pill-scheduled{background:#e8edf7;color:var(--navy)}
 .pill-inprogress{background:#fef3c7;color:#92400e}
@@ -125,14 +102,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .pill-onshift{background:#dcfce7;color:#166534}
 .pill-offshift{background:#f3f4f6;color:#374151}
 .pill-onleave{background:#fef3c7;color:#92400e}
-
 .search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px}
 .search-bar input{border:none;outline:none;flex:1;background:transparent}
-
 .tabs{display:flex;gap:3px;background:var(--surface);border-radius:var(--r-md);padding:3px;margin-bottom:16px}
 .tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;text-transform:uppercase}
 .tab.active{background:var(--navy);color:#fff}
-
 .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .staff-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .2s}
 .staff-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -142,12 +116,10 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .sc-name{font-size:14px;font-weight:700;color:#fff}
 .sc-role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
 .sc-body{padding:12px}
-
 .detail-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);font-size:11px}
 .detail-row:last-child{border-bottom:none}
 .dk{color:var(--text-muted);font-weight:600}
 .dv{color:var(--text-primary);font-weight:500}
-
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 .inv-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .2s}
 .inv-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -160,13 +132,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .stock-fill{height:100%;border-radius:3px;transition:width .4s}
 .fill-green{background:var(--green)}.fill-amber{background:var(--amber)}.fill-red{background:var(--danger)}
 .stock-info{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted)}
-
 .job-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;cursor:pointer}
 .job-card:hover{box-shadow:var(--shadow-md)}
 .jc-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light)}
 .jc-body{padding:10px 14px}
 .job-type-tag{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface);color:var(--navy)}
-
 .modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px);display:none}
 .modal-overlay.center-ov{align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-height:92vh;overflow-y:auto;max-width:620px}
@@ -175,13 +145,11 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff}
 .modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
 .modal-body{padding:20px}
-
 .profile-hdr{background:var(--navy);padding:24px 20px;text-align:center}
 .profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
 .profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .profile-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff}
 .profile-role-badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;margin-top:7px}
-
 .form-group{margin-bottom:16px}
 .form-label{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
 .form-control{width:100%;padding:10px 12px;background:var(--off-white);border:1.5px solid var(--border);border-radius:var(--r-md);font-family:'Barlow',sans-serif;font-size:13px;outline:none}
@@ -190,26 +158,21 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
 .section-sep{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--navy)}
 .section-sep.red{border-color:var(--red)}
-
 .photo-upload-box{border:2px dashed var(--border);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
 .photo-upload-box:hover{border-color:var(--navy);background:var(--off-white)}
 .photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-preview-circle{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);margin:0 auto 6px;display:block}
 .photo-preview-rect{width:100%;height:90px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--border);display:block}
-
 .viewer-notice{background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:7px}
 .empty-state{text-align:center;padding:40px 16px;color:var(--text-muted)}
 .empty-icon{font-size:42px;margin-bottom:10px}
 .empty-text{font-size:14px;font-weight:500;color:var(--text-secondary)}
-
 .log-entry{background:#f8f9fc;border-left:3px solid var(--red);padding:10px;margin-bottom:8px;border-radius:var(--r-md);font-size:12px}
 .log-date{font-weight:700;color:var(--navy);margin-bottom:4px}
 .log-details{color:var(--text-secondary)}
-
 .report-stat{text-align:center;padding:10px;background:var(--off-white);border-radius:var(--r-md)}
 .report-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--navy)}
 .report-stat-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
-
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
 </style>
@@ -231,12 +194,14 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
     <div class="hdr-logo"><span class="s">3-Rock</span><span class="c"> Builders</span></div>
     <div class="hdr-right">
       <div class="sync-dot" id="sync-dot"></div>
+      <button class="sync-btn" id="manualSyncBtn" style="display:none">⟳ Sync Now</button>
       <div class="user-badge"><div class="u-avatar" id="hdr-avatar">D</div><div><div class="u-name" id="hdr-name">Director</div><div class="u-role" id="hdr-role">Director</div></div></div>
       <button class="logout-btn" id="logoutBtn">Out</button>
     </div>
   </header>
 
   <main class="main-content">
+    <!-- Same content as before -->
     <div class="screen active" id="screen-dashboard">
       <div class="page-header"><div class="page-title" id="dash-greeting">Welcome 👋</div><div class="page-sub" id="dash-date"></div></div>
       <div id="director-kpi" style="display:none"><div class="kpi-row"><div class="kpi-item"><div class="kpi-num" id="kpi-staff">0</div><div class="kpi-lbl">Total Staff</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-onshift">0</div><div class="kpi-lbl">On Shift</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-month">0</div><div class="kpi-lbl">Jobs/Month</div></div><div class="kpi-item"><div class="kpi-num" id="kpi-done">0</div><div class="kpi-lbl">Completed</div></div></div></div>
@@ -246,32 +211,10 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
       <div class="section-title">Quick Actions</div><div class="qa-grid" id="qa-grid"></div>
       <div class="section-title">Today's Schedule</div><div id="today-jobs-list"></div>
     </div>
-
-    <div class="screen" id="screen-staff">
-      <div class="page-header"><div class="page-title">Staff Management</div><div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div><div class="page-actions" id="staff-actions"></div></div>
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="staff-search" oninput="renderStaff()"></div>
-      <div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="On Shift">On Shift</button><button class="tab" data-filter="Off Shift">Off</button><button class="tab" data-filter="On Leave">Leave</button></div>
-      <div id="staff-grid" class="staff-grid"></div>
-    </div>
-
-    <div class="screen" id="screen-inventory">
-      <div class="page-header"><div class="page-title">Inventory</div><div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div><div class="page-actions" id="inv-actions"></div></div>
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="inv-search" oninput="renderInventory()"></div>
-      <div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Chemicals">Chemicals</button><button class="tab" data-filter="Equipment">Equipment</button><button class="tab" data-filter="PPE">PPE</button><button class="tab" data-filter="Consumables">Consumables</button></div>
-      <div id="inventory-grid" class="inv-grid"></div>
-    </div>
-
-    <div class="screen" id="screen-jobs">
-      <div class="page-header"><div class="page-title">Jobs</div><div class="page-sub" id="jobs-sub-lbl">Loading...</div><div class="page-actions" id="jobs-actions"></div></div>
-      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="jobs-search" oninput="renderJobs()"></div>
-      <div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Scheduled">Scheduled</button><button class="tab" data-filter="In Progress">In Progress</button><button class="tab" data-filter="Done">Done</button></div>
-      <div id="jobs-list"></div>
-    </div>
-
-    <div class="screen" id="screen-reports">
-      <div class="page-header"><div class="page-title">Reports</div><div class="page-sub">Performance analytics</div></div>
-      <div class="section-title">Jobs Summary</div><div class="card"><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" id="reportTodayBtn">Today</button><button class="btn btn-outline btn-sm" id="reportWeekBtn">This Week</button><button class="btn btn-outline btn-sm" id="reportMonthBtn">This Month</button><button class="btn btn-outline btn-sm" id="reportAllBtn">All Time</button></div><div class="form-row" style="margin-bottom:12px"><div class="form-group"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div><div class="form-group"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div></div><div id="report-summary"></div></div>
-    </div>
+    <div class="screen" id="screen-staff"><div class="page-header"><div class="page-title">Staff Management</div><div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div><div class="page-actions" id="staff-actions"></div></div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="staff-search" oninput="renderStaff()"></div><div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="On Shift">On Shift</button><button class="tab" data-filter="Off Shift">Off</button><button class="tab" data-filter="On Leave">Leave</button></div><div id="staff-grid" class="staff-grid"></div></div>
+    <div class="screen" id="screen-inventory"><div class="page-header"><div class="page-title">Inventory</div><div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div><div class="page-actions" id="inv-actions"></div></div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="inv-search" oninput="renderInventory()"></div><div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Chemicals">Chemicals</button><button class="tab" data-filter="Equipment">Equipment</button><button class="tab" data-filter="PPE">PPE</button><button class="tab" data-filter="Consumables">Consumables</button></div><div id="inventory-grid" class="inv-grid"></div></div>
+    <div class="screen" id="screen-jobs"><div class="page-header"><div class="page-title">Jobs</div><div class="page-sub" id="jobs-sub-lbl">Loading...</div><div class="page-actions" id="jobs-actions"></div></div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="jobs-search" oninput="renderJobs()"></div><div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Scheduled">Scheduled</button><button class="tab" data-filter="In Progress">In Progress</button><button class="tab" data-filter="Done">Done</button></div><div id="jobs-list"></div></div>
+    <div class="screen" id="screen-reports"><div class="page-header"><div class="page-title">Reports</div><div class="page-sub">Performance analytics</div></div><div class="section-title">Jobs Summary</div><div class="card"><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" id="reportTodayBtn">Today</button><button class="btn btn-outline btn-sm" id="reportWeekBtn">This Week</button><button class="btn btn-outline btn-sm" id="reportMonthBtn">This Month</button><button class="btn btn-outline btn-sm" id="reportAllBtn">All Time</button></div><div class="form-row" style="margin-bottom:12px"><div class="form-group"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div><div class="form-group"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div></div><div id="report-summary"></div></div></div>
   </main>
 
   <nav class="bottom-nav">
@@ -283,21 +226,18 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
   </nav>
 </div>
 
-<!-- MODALS -->
+<!-- MODALS (simplified) -->
 <div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="if(event.target===this)closeModal('modal-add-staff')"><div class="modal"><div class="modal-header"><span class="modal-title">Enrol Staff</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID</label><input type="text" class="form-control" id="sf-id"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option></select></div><div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-control" id="sf-phone"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Shift</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div><div class="form-group"><label class="form-label">Address</label><textarea class="form-control" id="sf-address" rows="2"></textarea></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="saveStaffBtn">Save Staff</button></div></div></div></div>
-
 <div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="if(event.target===this)closeModal('modal-staff-profile')"><div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-danger btn-sm" id="deleteStaffBtn" style="display:none">Remove</button></div></div></div></div>
-
 <div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="if(event.target===this)closeModal('modal-add-inv')"><div class="modal"><div class="modal-header"><span class="modal-title">Add Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit</label><select class="form-control" id="inv-uom"><option>pcs</option><option>kg</option><option>litres</option><option>boxes</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" id="saveInvBtn">Add Item</button></div></div></div></div>
-
 <div class="modal-overlay" id="modal-add-job" style="display:none" onclick="if(event.target===this)closeModal('modal-add-job')"><div class="modal"><div class="modal-header"><span class="modal-title">Schedule Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location</label><input type="text" class="form-control" id="jf-location"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control" id="jf-date"></div></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" id="saveJobBtn">Schedule</button></div></div></div></div>
 
 <script>
-// Use a different variable name to avoid conflict with Supabase's global
+// Supabase Configuration
 const SB_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
 
-// Get Supabase client from the global object
+// Use a different variable name to avoid conflict
 const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
 // App State
@@ -324,29 +264,169 @@ function pillClass(s) {
 }
 function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
 
-// Storage
-function saveToLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ staff: staffList, inventory: inventoryList, jobs: jobsList })); }
-function loadFromLocal() {
-  let data = localStorage.getItem(STORAGE_KEY);
-  if (data) {
+// Migrate old data from previous versions
+function migrateOldData() {
+  console.log('Checking for old data to migrate...');
+  let migrated = false;
+  
+  // Check for old v5 data
+  const oldV5 = localStorage.getItem('3rock_v5');
+  if (oldV5) {
     try {
-      let parsed = JSON.parse(data);
-      staffList = parsed.staff || [];
-      inventoryList = parsed.inventory || [];
-      jobsList = parsed.jobs || [];
-    } catch(e) { console.error(e); }
+      const oldData = JSON.parse(oldV5);
+      if (oldData.staff && oldData.staff.length > 0) {
+        staffList = oldData.staff;
+        console.log(`✅ Migrated ${staffList.length} staff from v5`);
+        migrated = true;
+      }
+      if (oldData.inventory && oldData.inventory.length > 0) {
+        inventoryList = oldData.inventory;
+        console.log(`✅ Migrated ${inventoryList.length} inventory from v5`);
+        migrated = true;
+      }
+      if (oldData.jobs && oldData.jobs.length > 0) {
+        jobsList = oldData.jobs;
+        console.log(`✅ Migrated ${jobsList.length} jobs from v5`);
+        migrated = true;
+      }
+      // Clear old data after migration
+      localStorage.removeItem('3rock_v5');
+    } catch(e) { console.error('Migration from v5 failed:', e); }
   }
-  if (staffList.length === 0) {
+  
+  // Check for old v6 data
+  const oldV6 = localStorage.getItem('3rock_v6');
+  if (oldV6) {
+    try {
+      const oldData = JSON.parse(oldV6);
+      if (oldData.staff && oldData.staff.length > 0 && staffList.length === 0) {
+        staffList = oldData.staff;
+        console.log(`✅ Migrated ${staffList.length} staff from v6`);
+        migrated = true;
+      }
+      if (oldData.inventory && oldData.inventory.length > 0 && inventoryList.length === 0) {
+        inventoryList = oldData.inventory;
+        console.log(`✅ Migrated ${inventoryList.length} inventory from v6`);
+        migrated = true;
+      }
+      if (oldData.jobs && oldData.jobs.length > 0 && jobsList.length === 0) {
+        jobsList = oldData.jobs;
+        console.log(`✅ Migrated ${jobsList.length} jobs from v6`);
+        migrated = true;
+      }
+      localStorage.removeItem('3rock_v6');
+    } catch(e) { console.error('Migration from v6 failed:', e); }
+  }
+  
+  // Check current storage
+  const currentData = localStorage.getItem(STORAGE_KEY);
+  if (currentData && !migrated) {
+    try {
+      const data = JSON.parse(currentData);
+      if (data.staff && data.staff.length > 0) staffList = data.staff;
+      if (data.inventory && data.inventory.length > 0) inventoryList = data.inventory;
+      if (data.jobs && data.jobs.length > 0) jobsList = data.jobs;
+      console.log(`Loaded current data: ${staffList.length} staff, ${inventoryList.length} inventory, ${jobsList.length} jobs`);
+    } catch(e) { console.error('Current data load failed:', e); }
+  }
+  
+  // Add sample data if everything is empty
+  if (staffList.length === 0 && inventoryList.length === 0 && jobsList.length === 0) {
+    console.log('No data found, adding sample data...');
     staffList.push({ id: uid(), name: 'John Mensah', role: 'Cleaner', staffid: 'STF001', phone: '0244123456', shift: 'Morning', status: 'On Shift', startdate: '2024-01-15' });
     inventoryList.push({ id: uid(), name: 'Bleach', category: 'Chemicals', qty: 45, uom: 'litres', reorder: 20 });
     jobsList.push({ id: uid(), client: 'Accra Mall', type: 'Regular Clean', location: 'Airport City', date: todayStr(), status: 'Scheduled' });
+    migrated = true;
+  }
+  
+  if (migrated) {
     saveToLocal();
+    console.log('Data migration complete and saved to localStorage');
+  }
+  
+  return migrated;
+}
+
+// Storage functions
+function saveToLocal() { 
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ staff: staffList, inventory: inventoryList, jobs: jobsList })); 
+  console.log('Saved to localStorage');
+}
+
+function loadFromLocal() {
+  const data = localStorage.getItem(STORAGE_KEY);
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      staffList = parsed.staff || [];
+      inventoryList = parsed.inventory || [];
+      jobsList = parsed.jobs || [];
+      console.log(`Loaded from localStorage: ${staffList.length} staff, ${inventoryList.length} inventory, ${jobsList.length} jobs`);
+    } catch(e) { console.error('Local load error:', e); }
   }
 }
 
-// Sync to Supabase
+// Force sync all local data to Supabase
+async function forceSyncToSupabase() {
+  if (!currentUser) {
+    alert('Please login first');
+    return;
+  }
+  
+  const dot = document.getElementById('sync-dot');
+  if (dot) dot.className = 'sync-dot syncing';
+  
+  try {
+    console.log('🔄 Starting manual sync...');
+    console.log(`📊 Data to sync: ${staffList.length} staff, ${inventoryList.length} inventory, ${jobsList.length} jobs`);
+    
+    let syncedStaff = 0, syncedInv = 0, syncedJobs = 0;
+    
+    // Sync staff
+    if (staffList.length > 0) {
+      const staffToSync = staffList.map(s => ({
+        id: s.id, name: s.name, role: s.role, staffid: s.staffid || '', phone: s.phone || '',
+        shift: s.shift || '', startdate: s.startdate || '', address: s.address || '', status: s.status || 'Off Shift'
+      }));
+      const { data, error } = await _supabase.from('staff').upsert(staffToSync, { onConflict: 'id' }).select();
+      if (error) throw new Error(`Staff sync error: ${error.message}`);
+      syncedStaff = data?.length || 0;
+      console.log(`✅ Synced ${syncedStaff} staff records`);
+    }
+    
+    // Sync inventory
+    if (inventoryList.length > 0) {
+      const invToSync = inventoryList.map(i => ({
+        id: i.id, name: i.name, category: i.category, qty: i.qty, uom: i.uom, reorder: i.reorder, supplier: i.supplier || ''
+      }));
+      const { data, error } = await _supabase.from('inventory').upsert(invToSync, { onConflict: 'id' }).select();
+      if (error) throw new Error(`Inventory sync error: ${error.message}`);
+      syncedInv = data?.length || 0;
+      console.log(`✅ Synced ${syncedInv} inventory records`);
+    }
+    
+    // Sync jobs
+    if (jobsList.length > 0) {
+      const { data, error } = await _supabase.from('jobs').upsert(jobsList, { onConflict: 'id' }).select();
+      if (error) throw new Error(`Jobs sync error: ${error.message}`);
+      syncedJobs = data?.length || 0;
+      console.log(`✅ Synced ${syncedJobs} job records`);
+    }
+    
+    if (dot) dot.className = 'sync-dot synced';
+    setTimeout(() => { if(dot) dot.className = 'sync-dot'; }, 2000);
+    
+    alert(`✅ Sync Complete!\n\n📋 Staff: ${syncedStaff}\n📦 Inventory: ${syncedInv}\n📋 Jobs: ${syncedJobs}`);
+  } catch(e) {
+    console.error('❌ Sync error:', e);
+    if (dot) dot.className = 'sync-dot error';
+    alert(`❌ Sync failed!\n\nError: ${e.message}\n\nCheck console (F12) for details.`);
+  }
+}
+
+// Auto sync on data changes
 async function syncToSupabase() {
-  let dot = document.getElementById('sync-dot');
+  const dot = document.getElementById('sync-dot');
   if (dot) dot.className = 'sync-dot syncing';
   
   try {
@@ -356,7 +436,6 @@ async function syncToSupabase() {
         shift: s.shift || '', startdate: s.startdate || '', address: s.address || '', status: s.status || 'Off Shift'
       }));
       await _supabase.from('staff').upsert(staffToSync, { onConflict: 'id' });
-      console.log('Staff synced');
     }
     
     if (inventoryList.length > 0) {
@@ -364,37 +443,52 @@ async function syncToSupabase() {
         id: i.id, name: i.name, category: i.category, qty: i.qty, uom: i.uom, reorder: i.reorder, supplier: i.supplier || ''
       }));
       await _supabase.from('inventory').upsert(invToSync, { onConflict: 'id' });
-      console.log('Inventory synced');
     }
     
     if (jobsList.length > 0) {
       await _supabase.from('jobs').upsert(jobsList, { onConflict: 'id' });
-      console.log('Jobs synced');
     }
     
     if (dot) dot.className = 'sync-dot synced';
     setTimeout(() => { if(dot) dot.className = 'sync-dot'; }, 2000);
   } catch(e) {
-    console.error('Sync error:', e);
+    console.error('Auto sync error:', e);
     if (dot) dot.className = 'sync-dot error';
   }
 }
 
-// Load from Supabase
+// Load from Supabase (loads data INTO local from cloud)
 async function loadFromSupabase() {
   try {
-    let { data: staffData } = await _supabase.from('staff').select('*');
-    if (staffData && staffData.length > 0) staffList = staffData;
+    console.log('Loading from Supabase...');
+    let hasData = false;
     
-    let { data: invData } = await _supabase.from('inventory').select('*');
-    if (invData && invData.length > 0) inventoryList = invData;
+    const { data: staffData } = await _supabase.from('staff').select('*');
+    if (staffData && staffData.length > 0) {
+      staffList = staffData;
+      hasData = true;
+      console.log(`Loaded ${staffData.length} staff from cloud`);
+    }
     
-    let { data: jobsData } = await _supabase.from('jobs').select('*');
-    if (jobsData && jobsData.length > 0) jobsList = jobsData;
+    const { data: invData } = await _supabase.from('inventory').select('*');
+    if (invData && invData.length > 0) {
+      inventoryList = invData;
+      hasData = true;
+      console.log(`Loaded ${invData.length} inventory from cloud`);
+    }
     
-    saveToLocal();
-    renderAll();
-  } catch(e) { console.error('Load error:', e); }
+    const { data: jobsData } = await _supabase.from('jobs').select('*');
+    if (jobsData && jobsData.length > 0) {
+      jobsList = jobsData;
+      hasData = true;
+      console.log(`Loaded ${jobsData.length} jobs from cloud`);
+    }
+    
+    if (hasData) {
+      saveToLocal();
+      renderAll();
+    }
+  } catch(e) { console.error('Load from Supabase error:', e); }
 }
 
 // Dashboard Render
@@ -692,23 +786,27 @@ function handleLogin() {
   document.getElementById('hdr-avatar').innerHTML = role[0].toUpperCase();
   document.getElementById('hdr-name').innerHTML = currentUser.name;
   document.getElementById('hdr-role').innerHTML = role.toUpperCase();
+  document.getElementById('manualSyncBtn').style.display = 'inline-block';
   
-  // Show/hide edit buttons based on role
   let canEditStaff = canEdit();
   document.getElementById('staff-actions').innerHTML = canEditStaff ? '<button class="btn btn-primary" onclick="openModal(\'modal-add-staff\')">+ Enrol Staff</button>' : '<div class="viewer-notice">👁 View only</div>';
   document.getElementById('inv-actions').innerHTML = canEditStaff ? '<button class="btn btn-primary" onclick="openModal(\'modal-add-inv\')">+ Add Item</button>' : '<div class="viewer-notice">👁 View only</div>';
   document.getElementById('jobs-actions').innerHTML = canEditStaff ? '<button class="btn btn-primary" onclick="openModal(\'modal-add-job\')">+ Schedule Job</button>' : '<div class="viewer-notice">👁 View only</div>';
   
-  // Show KPI for director/manager
   if (role === 'director' || role === 'manager') {
     document.getElementById('director-kpi').style.display = 'block';
-    document.getElementById('director-metrics-section').style.display = 'block';
   }
   
   updateDateTime();
   setInterval(updateDateTime, 60000);
   renderAll();
-  loadFromSupabase();
+  
+  // Ask if user wants to sync existing data
+  if (staffList.length > 0 || inventoryList.length > 0 || jobsList.length > 0) {
+    if (confirm(`You have ${staffList.length} staff, ${inventoryList.length} inventory items, and ${jobsList.length} jobs in local storage.\n\nWould you like to sync this data to Supabase now?`)) {
+      forceSyncToSupabase();
+    }
+  }
 }
 
 function handleLogout() {
@@ -717,6 +815,7 @@ function handleLogout() {
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-pass').value = '';
   document.getElementById('auth-role').value = '';
+  document.getElementById('manualSyncBtn').style.display = 'none';
 }
 
 function updateDateTime() {
@@ -728,12 +827,20 @@ function updateDateTime() {
   document.getElementById('dash-date').innerHTML = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// Initialize event listeners
+// Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('App initializing...');
+  
+  // First try to migrate any old data
+  migrateOldData();
+  
+  // Then load from localStorage
   loadFromLocal();
   
+  // Setup event listeners
   document.getElementById('loginBtn').onclick = handleLogin;
   document.getElementById('logoutBtn').onclick = handleLogout;
+  document.getElementById('manualSyncBtn').onclick = forceSyncToSupabase;
   document.getElementById('saveStaffBtn').onclick = saveStaff;
   document.getElementById('saveInvBtn').onclick = saveInventory;
   document.getElementById('saveJobBtn').onclick = saveJob;
@@ -763,13 +870,14 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('statJobsCard').onclick = () => goToTab('jobs');
   document.getElementById('statInvCard').onclick = () => goToTab('inventory');
   
-  // Quick actions
   document.getElementById('qa-grid').innerHTML = `
     <div class="qa-btn" onclick="goToTab('staff');setTimeout(()=>openModal('modal-add-staff'),100)"><span class="qa-icon">👥</span><span class="qa-label">Enrol Staff</span></div>
     <div class="qa-btn" onclick="goToTab('jobs');setTimeout(()=>openModal('modal-add-job'),100)"><span class="qa-icon">📋</span><span class="qa-label">New Job</span></div>
     <div class="qa-btn" onclick="goToTab('inventory');setTimeout(()=>openModal('modal-add-inv'),100)"><span class="qa-icon">📦</span><span class="qa-label">Add Item</span></div>
     <div class="qa-btn" onclick="goToTab('reports')"><span class="qa-icon">📊</span><span class="qa-label">Reports</span></div>
   `;
+  
+  console.log('App ready. Data count:', staffList.length, inventoryList.length, jobsList.length);
 });
 </script>
 </body>
