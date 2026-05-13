@@ -6,7 +6,6 @@
 <title>3-Rock Builders</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;
@@ -251,27 +250,27 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
     <div class="screen" id="screen-staff">
       <div class="page-header"><div class="page-title">Staff Management</div><div class="page-sub"><span id="staff-count-lbl">0 staff</span> · <span id="onshift-count-lbl">0 on shift</span></div><div class="page-actions" id="staff-actions"></div></div>
       <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="staff-search" oninput="renderStaff()"></div>
-      <div class="tabs"><button class="tab active" data-filter="all" onclick="filterStaff('all',this)">All</button><button class="tab" data-filter="On Shift" onclick="filterStaff('On Shift',this)">On Shift</button><button class="tab" data-filter="Off Shift" onclick="filterStaff('Off Shift',this)">Off</button><button class="tab" data-filter="On Leave" onclick="filterStaff('On Leave',this)">Leave</button></div>
+      <div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="On Shift">On Shift</button><button class="tab" data-filter="Off Shift">Off</button><button class="tab" data-filter="On Leave">Leave</button></div>
       <div id="staff-grid" class="staff-grid"></div>
     </div>
 
     <div class="screen" id="screen-inventory">
       <div class="page-header"><div class="page-title">Inventory</div><div class="page-sub"><span id="inv-count-lbl">0 items</span> · <span id="inv-low-lbl">0 low stock</span></div><div class="page-actions" id="inv-actions"></div></div>
       <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="inv-search" oninput="renderInventory()"></div>
-      <div class="tabs"><button class="tab active" data-filter="all" onclick="filterInv('all',this)">All</button><button class="tab" data-filter="Chemicals" onclick="filterInv('Chemicals',this)">Chemicals</button><button class="tab" data-filter="Equipment" onclick="filterInv('Equipment',this)">Equipment</button><button class="tab" data-filter="PPE" onclick="filterInv('PPE',this)">PPE</button><button class="tab" data-filter="Consumables" onclick="filterInv('Consumables',this)">Consumables</button></div>
+      <div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Chemicals">Chemicals</button><button class="tab" data-filter="Equipment">Equipment</button><button class="tab" data-filter="PPE">PPE</button><button class="tab" data-filter="Consumables">Consumables</button></div>
       <div id="inventory-grid" class="inv-grid"></div>
     </div>
 
     <div class="screen" id="screen-jobs">
       <div class="page-header"><div class="page-title">Jobs</div><div class="page-sub" id="jobs-sub-lbl">Loading...</div><div class="page-actions" id="jobs-actions"></div></div>
       <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..." id="jobs-search" oninput="renderJobs()"></div>
-      <div class="tabs"><button class="tab active" data-filter="all" onclick="filterJobs('all',this)">All</button><button class="tab" data-filter="Scheduled" onclick="filterJobs('Scheduled',this)">Scheduled</button><button class="tab" data-filter="In Progress" onclick="filterJobs('In Progress',this)">In Progress</button><button class="tab" data-filter="Done" onclick="filterJobs('Done',this)">Done</button></div>
+      <div class="tabs"><button class="tab active" data-filter="all">All</button><button class="tab" data-filter="Scheduled">Scheduled</button><button class="tab" data-filter="In Progress">In Progress</button><button class="tab" data-filter="Done">Done</button></div>
       <div id="jobs-list"></div>
     </div>
 
     <div class="screen" id="screen-reports">
       <div class="page-header"><div class="page-title">Reports</div><div class="page-sub">Performance analytics</div></div>
-      <div class="section-title">Jobs Summary</div><div class="card"><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="setReportRange('today')">Today</button><button class="btn btn-outline btn-sm" onclick="setReportRange('week')">This Week</button><button class="btn btn-outline btn-sm" onclick="setReportRange('month')">This Month</button><button class="btn btn-outline btn-sm" onclick="setReportRange('all')">All Time</button></div><div class="form-row" style="margin-bottom:12px"><div class="form-group"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div><div class="form-group"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div></div><div id="report-summary"></div></div>
+      <div class="section-title">Jobs Summary</div><div class="card"><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" id="reportTodayBtn">Today</button><button class="btn btn-outline btn-sm" id="reportWeekBtn">This Week</button><button class="btn btn-outline btn-sm" id="reportMonthBtn">This Month</button><button class="btn btn-outline btn-sm" id="reportAllBtn">All Time</button></div><div class="form-row" style="margin-bottom:12px"><div class="form-group"><label class="form-label">From</label><input type="date" class="form-control" id="report-from" onchange="renderReports()"></div><div class="form-group"><label class="form-label">To</label><input type="date" class="form-control" id="report-to" onchange="renderReports()"></div></div><div id="report-summary"></div></div>
     </div>
   </main>
 
@@ -284,21 +283,22 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
   </nav>
 </div>
 
-<!-- MODALS (simplified) -->
-<div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="if(event.target===this)closeModal('modal-add-staff')"><div class="modal"><div class="modal-header"><span class="modal-title">Enrol Staff</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID</label><input type="text" class="form-control" id="sf-id"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option></select></div><div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-control" id="sf-phone"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Shift</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div><div class="form-group"><label class="form-label">Address</label><textarea class="form-control" id="sf-address" rows="2"></textarea></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Save Staff</button></div></div></div></div>
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-add-staff" style="display:none" onclick="if(event.target===this)closeModal('modal-add-staff')"><div class="modal"><div class="modal-header"><span class="modal-title">Enrol Staff</span><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"></div><div class="form-group"><label class="form-label">Staff ID</label><input type="text" class="form-control" id="sf-id"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="sf-role"><option>Cleaner</option><option>Senior Cleaner</option><option>Team Lead</option><option>Supervisor</option></select></div><div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-control" id="sf-phone"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Shift</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="sf-startdate"></div></div><div class="form-group"><label class="form-label">Address</label><textarea class="form-control" id="sf-address" rows="2"></textarea></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="saveStaffBtn">Save Staff</button></div></div></div></div>
 
-<div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="if(event.target===this)closeModal('modal-staff-profile')"><div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-danger btn-sm" id="deleteStaffBtn" onclick="deleteCurrentStaff()">Remove</button></div></div></div></div>
+<div class="modal-overlay center-ov" id="modal-staff-profile" style="display:none" onclick="if(event.target===this)closeModal('modal-staff-profile')"><div class="modal center-m"><div class="profile-hdr"><div class="profile-photo" id="prof-photo"></div><div class="profile-name" id="prof-name"></div><div class="profile-role-badge" id="prof-role"></div></div><div class="modal-body"><div id="prof-details"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-staff-profile')">Close</button><button class="btn btn-danger btn-sm" id="deleteStaffBtn" style="display:none">Remove</button></div></div></div></div>
 
-<div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="if(event.target===this)closeModal('modal-add-inv')"><div class="modal"><div class="modal-header"><span class="modal-title">Add Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit</label><select class="form-control" id="inv-uom"><option>pcs</option><option>kg</option><option>litres</option><option>boxes</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" onclick="saveInventory()">Add Item</button></div></div></div></div>
+<div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="if(event.target===this)closeModal('modal-add-inv')"><div class="modal"><div class="modal-header"><span class="modal-title">Add Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"></div><div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-qty" min="0"></div><div class="form-group"><label class="form-label">Unit</label><select class="form-control" id="inv-uom"><option>pcs</option><option>kg</option><option>litres</option><option>boxes</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div><div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" id="saveInvBtn">Add Item</button></div></div></div></div>
 
-<div class="modal-overlay" id="modal-add-job" style="display:none" onclick="if(event.target===this)closeModal('modal-add-job')"><div class="modal"><div class="modal-header"><span class="modal-title">Schedule Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location</label><input type="text" class="form-control" id="jf-location"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control" id="jf-date"></div></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Schedule</button></div></div></div></div>
+<div class="modal-overlay" id="modal-add-job" style="display:none" onclick="if(event.target===this)closeModal('modal-add-job')"><div class="modal"><div class="modal-header"><span class="modal-title">Schedule Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div><div class="modal-body"><div class="form-row"><div class="form-group"><label class="form-label">Client *</label><input type="text" class="form-control" id="jf-client"></div><div class="form-group"><label class="form-label">Location</label><input type="text" class="form-control" id="jf-location"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Job Type *</label><select class="form-control" id="jf-type"><option>Regular Clean</option><option>Deep Clean</option><option>Post-Construction</option></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control" id="jf-date"></div></div><div class="form-group"><label class="form-label">Assigned Staff</label><input type="text" class="form-control" id="jf-staff"></div><div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" id="saveJobBtn">Schedule</button></div></div></div></div>
 
 <script>
-// Supabase Configuration
-const SUPABASE_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
+// Use a different variable name to avoid conflict with Supabase's global
+const SB_URL = 'https://hzgpgixdlrkkszcofdxs.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z3BnaXhkbHJra3N6Y29mZHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDAzNjIsImV4cCI6MjA5NDE3NjM2Mn0.Xv8diOB3DleI7c4goGSMAQmFFjRtykNyX11E4hVtTnM';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Get Supabase client from the global object
+const _supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
 // App State
 let currentUser = null;
@@ -323,7 +323,6 @@ function pillClass(s) {
   return 'pill-scheduled'; 
 }
 function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
-function canViewReports() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
 // Storage
 function saveToLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ staff: staffList, inventory: inventoryList, jobs: jobsList })); }
@@ -356,7 +355,7 @@ async function syncToSupabase() {
         id: s.id, name: s.name, role: s.role, staffid: s.staffid || '', phone: s.phone || '',
         shift: s.shift || '', startdate: s.startdate || '', address: s.address || '', status: s.status || 'Off Shift'
       }));
-      await supabase.from('staff').upsert(staffToSync, { onConflict: 'id' });
+      await _supabase.from('staff').upsert(staffToSync, { onConflict: 'id' });
       console.log('Staff synced');
     }
     
@@ -364,12 +363,12 @@ async function syncToSupabase() {
       const invToSync = inventoryList.map(i => ({
         id: i.id, name: i.name, category: i.category, qty: i.qty, uom: i.uom, reorder: i.reorder, supplier: i.supplier || ''
       }));
-      await supabase.from('inventory').upsert(invToSync, { onConflict: 'id' });
+      await _supabase.from('inventory').upsert(invToSync, { onConflict: 'id' });
       console.log('Inventory synced');
     }
     
     if (jobsList.length > 0) {
-      await supabase.from('jobs').upsert(jobsList, { onConflict: 'id' });
+      await _supabase.from('jobs').upsert(jobsList, { onConflict: 'id' });
       console.log('Jobs synced');
     }
     
@@ -384,13 +383,13 @@ async function syncToSupabase() {
 // Load from Supabase
 async function loadFromSupabase() {
   try {
-    let { data: staffData } = await supabase.from('staff').select('*');
+    let { data: staffData } = await _supabase.from('staff').select('*');
     if (staffData && staffData.length > 0) staffList = staffData;
     
-    let { data: invData } = await supabase.from('inventory').select('*');
+    let { data: invData } = await _supabase.from('inventory').select('*');
     if (invData && invData.length > 0) inventoryList = invData;
     
-    let { data: jobsData } = await supabase.from('jobs').select('*');
+    let { data: jobsData } = await _supabase.from('jobs').select('*');
     if (jobsData && jobsData.length > 0) jobsList = jobsData;
     
     saveToLocal();
@@ -412,6 +411,14 @@ function renderDashboard() {
   document.getElementById('kpi-staff').innerHTML = staffList.length;
   document.getElementById('kpi-onshift').innerHTML = onShift;
   document.getElementById('kpi-done').innerHTML = jobsList.filter(j => j.status === 'Done').length;
+  
+  let banner = document.getElementById('low-stock-banner');
+  if (lowStock.length > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('low-stock-list').innerHTML = lowStock.map(i => `${i.name} (${i.qty} ${i.uom || 'units'})`).join(', ');
+  } else {
+    banner.style.display = 'none';
+  }
   
   let todayList = document.getElementById('today-jobs-list');
   if (todayJobs.length === 0) {
@@ -439,10 +446,10 @@ function renderStaff() {
   grid.innerHTML = filtered.map(s => `<div class="staff-card" onclick="openStaffProfile('${s.id}')"><div class="sc-header"><div class="sc-avatar">${initials(s.name)}</div><div><div class="sc-name">${s.name}</div><div class="sc-role">${s.role}</div></div><span class="pill ${pillClass(s.status)}">${s.status}</span></div><div class="sc-body">${s.staffid ? `<div class="detail-row"><span class="dk">ID</span><span class="dv">${s.staffid}</span></div>` : ''}<div class="detail-row"><span class="dk">Phone</span><span class="dv">${s.phone || '—'}</span></div><div class="detail-row"><span class="dk">Shift</span><span class="dv">${s.shift || '—'}</span></div></div></div>`).join('');
 }
 
-function filterStaff(filter, btn) {
+function filterStaff(filter) {
   currentStaffFilter = filter;
   document.querySelectorAll('#screen-staff .tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  event.target.classList.add('active');
   renderStaff();
 }
 
@@ -517,10 +524,10 @@ function renderInventory() {
   grid.innerHTML = filtered.map(i => `<div class="inv-card"><div class="inv-img">📦</div><div class="inv-body"><div class="inv-name">${i.name}</div><div class="inv-cat">${i.category}</div><div class="stock-info"><span>Qty: ${i.qty || 0} ${i.uom || ''}</span><span>Reorder: ${i.reorder || 0}</span></div>${(i.qty || 0) <= (i.reorder || 0) ? '<div class="pill" style="background:#fef2f2;color:#dc2626">⚠ LOW</div>' : ''}</div></div>`).join('');
 }
 
-function filterInv(filter, btn) {
+function filterInv(filter) {
   currentInvFilter = filter;
   document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  event.target.classList.add('active');
   renderInventory();
 }
 
@@ -562,10 +569,10 @@ function renderJobs() {
   list.innerHTML = filtered.map(j => `<div class="job-card" onclick="openJobDetail('${j.id}')"><div class="jc-header"><div><div style="font-weight:700">${j.client}</div><div style="font-size:11px">${j.location || '—'}</div></div><span class="pill ${pillClass(j.status)}">${j.status}</span></div><div class="jc-body"><span class="job-type-tag">${j.type}</span> <span>📅 ${j.date || '—'}</span></div></div>`).join('');
 }
 
-function filterJobs(filter, btn) {
+function filterJobs(filter) {
   currentJobFilter = filter;
   document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  event.target.classList.add('active');
   renderJobs();
 }
 
@@ -695,6 +702,7 @@ function handleLogin() {
   // Show KPI for director/manager
   if (role === 'director' || role === 'manager') {
     document.getElementById('director-kpi').style.display = 'block';
+    document.getElementById('director-metrics-section').style.display = 'block';
   }
   
   updateDateTime();
@@ -712,31 +720,57 @@ function handleLogout() {
 }
 
 function updateDateTime() {
+  if (!currentUser) return;
   let now = new Date();
   let hour = now.getHours();
   let greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dash-greeting').innerHTML = `${greeting}, ${currentUser?.name || 'User'} 👋`;
+  document.getElementById('dash-greeting').innerHTML = `${greeting}, ${currentUser.name} 👋`;
   document.getElementById('dash-date').innerHTML = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// Initialize
-loadFromLocal();
-document.getElementById('loginBtn').onclick = handleLogin;
-document.getElementById('logoutBtn').onclick = handleLogout;
-document.querySelectorAll('.nav-item').forEach(btn => {
-  btn.onclick = () => goToTab(btn.getAttribute('data-tab'));
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  loadFromLocal();
+  
+  document.getElementById('loginBtn').onclick = handleLogin;
+  document.getElementById('logoutBtn').onclick = handleLogout;
+  document.getElementById('saveStaffBtn').onclick = saveStaff;
+  document.getElementById('saveInvBtn').onclick = saveInventory;
+  document.getElementById('saveJobBtn').onclick = saveJob;
+  document.getElementById('deleteStaffBtn').onclick = deleteCurrentStaff;
+  document.getElementById('reportTodayBtn').onclick = () => setReportRange('today');
+  document.getElementById('reportWeekBtn').onclick = () => setReportRange('week');
+  document.getElementById('reportMonthBtn').onclick = () => setReportRange('month');
+  document.getElementById('reportAllBtn').onclick = () => setReportRange('all');
+  
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.onclick = () => goToTab(btn.getAttribute('data-tab'));
+  });
+  
+  document.querySelectorAll('#screen-staff .tab').forEach(btn => {
+    btn.onclick = () => filterStaff(btn.getAttribute('data-filter'));
+  });
+  
+  document.querySelectorAll('#screen-inventory .tab').forEach(btn => {
+    btn.onclick = () => filterInv(btn.getAttribute('data-filter'));
+  });
+  
+  document.querySelectorAll('#screen-jobs .tab').forEach(btn => {
+    btn.onclick = () => filterJobs(btn.getAttribute('data-filter'));
+  });
+  
+  document.getElementById('statOnShiftCard').onclick = () => goToTab('staff');
+  document.getElementById('statJobsCard').onclick = () => goToTab('jobs');
+  document.getElementById('statInvCard').onclick = () => goToTab('inventory');
+  
+  // Quick actions
+  document.getElementById('qa-grid').innerHTML = `
+    <div class="qa-btn" onclick="goToTab('staff');setTimeout(()=>openModal('modal-add-staff'),100)"><span class="qa-icon">👥</span><span class="qa-label">Enrol Staff</span></div>
+    <div class="qa-btn" onclick="goToTab('jobs');setTimeout(()=>openModal('modal-add-job'),100)"><span class="qa-icon">📋</span><span class="qa-label">New Job</span></div>
+    <div class="qa-btn" onclick="goToTab('inventory');setTimeout(()=>openModal('modal-add-inv'),100)"><span class="qa-icon">📦</span><span class="qa-label">Add Item</span></div>
+    <div class="qa-btn" onclick="goToTab('reports')"><span class="qa-icon">📊</span><span class="qa-label">Reports</span></div>
+  `;
 });
-document.getElementById('statOnShiftCard').onclick = () => goToTab('staff');
-document.getElementById('statJobsCard').onclick = () => goToTab('jobs');
-document.getElementById('statInvCard').onclick = () => goToTab('inventory');
-
-// Quick actions
-document.getElementById('qa-grid').innerHTML = `
-  <div class="qa-btn" onclick="goToTab('staff');setTimeout(()=>openModal('modal-add-staff'),100)"><span class="qa-icon">👥</span><span class="qa-label">Enrol Staff</span></div>
-  <div class="qa-btn" onclick="goToTab('jobs');setTimeout(()=>openModal('modal-add-job'),100)"><span class="qa-icon">📋</span><span class="qa-label">New Job</span></div>
-  <div class="qa-btn" onclick="goToTab('inventory');setTimeout(()=>openModal('modal-add-inv'),100)"><span class="qa-icon">📦</span><span class="qa-label">Add Item</span></div>
-  <div class="qa-btn" onclick="goToTab('reports')"><span class="qa-icon">📊</span><span class="qa-label">Reports</span></div>
-`;
 </script>
 </body>
 </html>
