@@ -361,6 +361,14 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div>
 </div>
 
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:var(--navy);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#fff">3-Rock <span style="color:var(--red-light)">Builders</span></div>
+  <div style="width:42px;height:42px;border:4px solid rgba(255,255,255,.15);border-top-color:var(--red-light);border-radius:50%;animation:spin .8s linear infinite"></div>
+  <div style="font-size:13px;color:rgba(255,255,255,.5)" id="loading-msg">Connecting to cloud…</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
 <!-- APP -->
 <div id="app">
   <header class="app-header">
@@ -711,17 +719,7 @@ const PASSWORDS = {
   supervisor: 'Supervisor@3Rock',
   cleaner: 'Cleaner@3Rock'
 };
-const STORAGE_KEY = '3rock_v6';
-
-// ================================================================
-// LOCAL STORAGE
-// ================================================================
-function localSave() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
-function localLoad() {
-  let d = localStorage.getItem(STORAGE_KEY);
-  if (d) { try { let s = JSON.parse(d); state = { ...state, ...s }; } catch(e) {} }
-}
-localLoad();
+// localStorage fully removed — all data lives in Supabase only
 
 // ================================================================
 // IMAGE COMPRESSION
@@ -776,7 +774,13 @@ async function syncToCloud() {
 }
 
 async function loadFromCloud() {
+  let overlay = document.getElementById('loading-overlay');
+  let msg = document.getElementById('loading-msg');
+  if (overlay) overlay.style.display = 'flex';
+  if (msg) msg.textContent = 'Loading data from cloud…';
   try {
+    // Always reset state so no stale in-memory data is ever displayed
+    state = { staff: [], inventory: [], jobs: [], tasks: [], zones: [], taskLogs: [], incidents: [], supplyRequests: [], attendance: [], damageReports: [] };
     const loads = [
       { key: 'staff', table: 'staff' },
       { key: 'inventory', table: 'inventory' },
@@ -800,8 +804,56 @@ async function loadFromCloud() {
         }
       }
     });
-    localSave(); renderAll(); setSyncDot('synced');
+    renderAll(); setSyncDot('synced');
+    subscribeToRealtimeUpdates();
   } catch(e) { console.error('Load failed:', e); setSyncDot('error'); renderAll(); }
+  finally { if (overlay) overlay.style.display = 'none'; }
+}
+
+// ================================================================
+// REALTIME SUBSCRIPTIONS — keeps all devices in sync automatically
+// ================================================================
+let realtimeChannels = [];
+function subscribeToRealtimeUpdates() {
+  // Remove any existing subscriptions first
+  realtimeChannels.forEach(ch => supabaseClient.removeChannel(ch));
+  realtimeChannels = [];
+
+  const tableMap = {
+    staff: 'staff', inventory: 'inventory', jobs: 'jobs', tasks: 'tasks',
+    zones: 'zones', tasklogs: 'taskLogs', incidents: 'incidents',
+    supplyrequests: 'supplyRequests', attendance: 'attendance', damagereports: 'damageReports'
+  };
+
+  Object.entries(tableMap).forEach(([table, key]) => {
+    let ch = supabaseClient.channel('realtime:' + table)
+      .on('postgres_changes', { event: '*', schema: 'public', table }, payload => {
+        let { eventType, new: newRow, old: oldRow } = payload;
+        if (eventType === 'INSERT') {
+          let exists = state[key].some(r => r.id === newRow.id);
+          if (!exists) {
+            if (key === 'inventory') {
+              newRow = { ...newRow, usageLog: Array.isArray(newRow.usagelog) ? newRow.usagelog : [], damageReports: [] };
+            }
+            state[key].push(newRow);
+          }
+        } else if (eventType === 'UPDATE') {
+          let idx = state[key].findIndex(r => r.id === newRow.id);
+          if (idx >= 0) {
+            if (key === 'inventory') {
+              newRow = { ...newRow, usageLog: Array.isArray(newRow.usagelog) ? newRow.usagelog : state[key][idx].usageLog || [] };
+            }
+            state[key][idx] = newRow;
+          }
+        } else if (eventType === 'DELETE') {
+          state[key] = state[key].filter(r => r.id !== oldRow.id);
+        }
+        setSyncDot('synced');
+        renderAll();
+      })
+      .subscribe();
+    realtimeChannels.push(ch);
+  });
 }
 
 async function deleteFromCloud(table, id) {
@@ -809,7 +861,7 @@ async function deleteFromCloud(table, id) {
 }
 
 function setSyncDot(s) { let d = document.getElementById('sync-dot'); if (d) d.className = 'sync-dot ' + s; }
-function saveState() { localSave(); syncToCloud(); }
+function saveState() { syncToCloud(); }
 
 // ================================================================
 // HELPERS
@@ -852,17 +904,27 @@ function isManagement() { return currentUser && ['director', 'manager', 'supervi
 // ================================================================
 // AUTHENTICATION
 // ================================================================
-document.getElementById('auth-role').addEventListener('change', function() {
+document.getElementById('auth-role').addEventListener('change', async function() {
   let wrap = document.getElementById('cleaner-select-wrap');
   if (this.value === 'cleaner') {
     wrap.style.display = 'block';
     let sel = document.getElementById('auth-cleaner-name');
-    let cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
-    sel.innerHTML = cleaners.length ? cleaners.map(c => `<option value="${c.id}">${c.name} (${c.shift || 'Morning'})</option>`).join('') : '<option value="">No cleaners enrolled yet</option>';
+    sel.innerHTML = '<option value="">Loading staff…</option>';
+    // Fetch cleaners directly from Supabase so we never rely on stale local state
+    try {
+      let { data, error } = await supabaseClient.from('staff').select('id,name,shift,role').in('role', ['Cleaner','Senior Cleaner','Team Lead']);
+      if (!error && data && data.length) {
+        sel.innerHTML = data.map(c => `<option value="${c.id}">${c.name} (${c.shift || 'Morning'})</option>`).join('');
+        // Keep state.staff in sync for the login step
+        data.forEach(c => { if (!state.staff.find(s => s.id === c.id)) state.staff.push(c); });
+      } else {
+        sel.innerHTML = '<option value="">No cleaners enrolled yet</option>';
+      }
+    } catch(e) { sel.innerHTML = '<option value="">Error loading staff</option>'; }
   } else { wrap.style.display = 'none'; }
 });
 
-function handleLogin() {
+async function handleLogin() {
   let role = document.getElementById('auth-role').value;
   let pass = document.getElementById('auth-pass').value;
   let err = document.getElementById('auth-error');
@@ -873,8 +935,13 @@ function handleLogin() {
   let staffRef = null;
   if (role === 'cleaner') {
     let cleanerId = document.getElementById('auth-cleaner-name').value;
-    staffRef = state.staff.find(s => s.id === cleanerId);
-    if (!staffRef) { err.style.display = 'block'; err.textContent = 'No cleaner selected'; return; }
+    if (!cleanerId) { err.style.display = 'block'; err.textContent = 'No cleaner selected'; return; }
+    // Fetch the full cleaner record from Supabase
+    try {
+      let { data } = await supabaseClient.from('staff').select('*').eq('id', cleanerId).single();
+      staffRef = data || state.staff.find(s => s.id === cleanerId);
+    } catch(e) { staffRef = state.staff.find(s => s.id === cleanerId); }
+    if (!staffRef) { err.style.display = 'block'; err.textContent = 'Cleaner record not found'; return; }
     name = staffRef.name;
   }
   currentUser = { role, name, staffRef };
@@ -888,6 +955,11 @@ function handleLogin() {
 
 function handleLogout() {
   currentUser = null;
+  // Clear in-memory state so next login always fetches fresh from Supabase
+  state = { staff: [], inventory: [], jobs: [], tasks: [], zones: [], taskLogs: [], incidents: [], supplyRequests: [], attendance: [], damageReports: [] };
+  // Unsubscribe from realtime channels
+  realtimeChannels.forEach(ch => supabaseClient.removeChannel(ch));
+  realtimeChannels = [];
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-pass').value = '';
@@ -1242,7 +1314,6 @@ async function deleteCurrentStaff() {
   if (!confirm('Remove this staff member?')) return;
   if (currentStaffId) {
     state.staff = state.staff.filter(x => x.id !== currentStaffId);
-    localSave();
     await deleteFromCloud('staff', currentStaffId);
   }
   closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
@@ -1444,7 +1515,7 @@ async function deleteCurrentInv() {
   if (!canEdit()) return;
   if (!confirm('Delete this inventory item?')) return;
   state.inventory = state.inventory.filter(x => x.id !== currentInvId);
-  localSave(); await deleteFromCloud('inventory', currentInvId);
+  await deleteFromCloud('inventory', currentInvId);
   closeModal('modal-inv-detail'); renderInventory(); renderDashboard();
 }
 
