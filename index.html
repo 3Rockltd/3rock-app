@@ -361,14 +361,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div>
 </div>
 
-<!-- LOADING OVERLAY -->
-<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:var(--navy);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:14px">
-  <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#fff">3-Rock <span style="color:var(--red-light)">Builders</span></div>
-  <div style="width:42px;height:42px;border:4px solid rgba(255,255,255,.15);border-top-color:var(--red-light);border-radius:50%;animation:spin .8s linear infinite"></div>
-  <div style="font-size:13px;color:rgba(255,255,255,.5)" id="loading-msg">Connecting to cloud…</div>
-</div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-
 <!-- APP -->
 <div id="app">
   <header class="app-header">
@@ -709,8 +701,6 @@ let editingStaffId = null;
 let state = { staff: [], inventory: [], jobs: [], tasks: [], zones: [], taskLogs: [], incidents: [], supplyRequests: [], attendance: [], damageReports: [] };
 let currentStaffId = null;
 let currentInvId = null;
-let syncInProgress = false;
-let syncQueue = [];
 let activeShift = 'Morning';
 
 const PASSWORDS = {
@@ -719,68 +709,56 @@ const PASSWORDS = {
   supervisor: 'Supervisor@3Rock',
   cleaner: 'Cleaner@3Rock'
 };
-// localStorage fully removed — all data lives in Supabase only
 
 // ================================================================
-// IMAGE COMPRESSION
+// LOADING OVERLAY
 // ================================================================
-function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
-  return new Promise((resolve) => {
-    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(''); return; }
-    let img = new Image();
-    img.onload = () => {
-      let canvas = document.createElement('canvas');
-      let scale = Math.min(1, maxWidth / img.width);
-      canvas.width = img.width * scale; canvas.height = img.height * scale;
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.onerror = () => resolve('');
-    img.src = dataUrl;
-  });
+function showLoading(msg) {
+  let ov = document.getElementById('loading-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'loading-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,.65);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+    ov.innerHTML = '<div style="width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite"></div><div id="loading-msg" style="color:#fff;font-family:Barlow,sans-serif;font-size:14px;font-weight:600;margin-top:14px;letter-spacing:.3px"></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+    document.body.appendChild(ov);
+  }
+  document.getElementById('loading-msg').textContent = msg || 'Saving…';
+  ov.style.display = 'flex';
+}
+function hideLoading() {
+  let ov = document.getElementById('loading-overlay');
+  if (ov) ov.style.display = 'none';
 }
 
 // ================================================================
-// CLOUD SYNC
+// DIRECT DB HELPERS
 // ================================================================
-async function syncToCloud() {
-  if (syncInProgress) { syncQueue.push('sync'); return; }
-  syncInProgress = true; setSyncDot('syncing');
-  try {
-    const tables = [
-      { name: 'staff', data: state.staff },
-      { name: 'inventory', data: state.inventory },
-      { name: 'jobs', data: state.jobs },
-      { name: 'tasks', data: state.tasks },
-      { name: 'zones', data: state.zones },
-      { name: 'tasklogs', data: state.taskLogs },
-      { name: 'incidents', data: state.incidents },
-      { name: 'supplyrequests', data: state.supplyRequests },
-      { name: 'attendance', data: state.attendance },
-      { name: 'damagereports', data: state.damageReports }
-    ];
-    for (let t of tables) {
-      if (t.data && t.data.length > 0) {
-        const { error } = await supabaseClient.from(t.name).upsert(t.data, { onConflict: 'id' });
-        if (error) console.error(t.name + ' sync error:', error.message);
-      }
-    }
-    setSyncDot('synced');
-  } catch(e) { console.error('Sync failed:', e); setSyncDot('error'); }
-  finally {
-    syncInProgress = false;
-    if (syncQueue.length > 0) { syncQueue.shift(); syncToCloud(); }
-  }
+async function dbInsert(table, row) {
+  setSyncDot('syncing');
+  const { data, error } = await supabaseClient.from(table).insert(row).select().single();
+  if (error) { console.error('dbInsert error', table, error.message); setSyncDot('error'); throw error; }
+  setSyncDot('synced');
+  return data;
+}
+
+async function dbUpdate(table, id, changes) {
+  setSyncDot('syncing');
+  const { data, error } = await supabaseClient.from(table).update(changes).eq('id', id).select().single();
+  if (error) { console.error('dbUpdate error', table, error.message); setSyncDot('error'); throw error; }
+  setSyncDot('synced');
+  return data;
+}
+
+async function dbDelete(table, id) {
+  setSyncDot('syncing');
+  const { error } = await supabaseClient.from(table).delete().eq('id', id);
+  if (error) { console.error('dbDelete error', table, error.message); setSyncDot('error'); throw error; }
+  setSyncDot('synced');
 }
 
 async function loadFromCloud() {
-  let overlay = document.getElementById('loading-overlay');
-  let msg = document.getElementById('loading-msg');
-  if (overlay) overlay.style.display = 'flex';
-  if (msg) msg.textContent = 'Loading data from cloud…';
+  showLoading('Loading data…');
   try {
-    // Always reset state so no stale in-memory data is ever displayed
-    state = { staff: [], inventory: [], jobs: [], tasks: [], zones: [], taskLogs: [], incidents: [], supplyRequests: [], attendance: [], damageReports: [] };
     const loads = [
       { key: 'staff', table: 'staff' },
       { key: 'inventory', table: 'inventory' },
@@ -798,70 +776,48 @@ async function loadFromCloud() {
       if (!r.error && r.data) {
         let key = loads[i].key;
         if (key === 'inventory') {
-          state[key] = r.data.map(item => ({ ...item, usageLog: Array.isArray(item.usagelog || item.usageLog) ? (item.usagelog || item.usageLog) : [], damageReports: Array.isArray(item.damagereports || item.damageReports) ? (item.damagereports || item.damageReports) : [] }));
+          state[key] = r.data.map(item => ({
+            ...item,
+            usageLog: Array.isArray(item.usagelog || item.usageLog) ? (item.usagelog || item.usageLog) : [],
+            damageReports: Array.isArray(item.damagereports || item.damageReports) ? (item.damagereports || item.damageReports) : []
+          }));
         } else {
           state[key] = r.data;
         }
+      } else if (r.error) {
+        console.error('Load error for', loads[i].table, r.error.message);
       }
     });
-    renderAll(); setSyncDot('synced');
-    subscribeToRealtimeUpdates();
-  } catch(e) { console.error('Load failed:', e); setSyncDot('error'); renderAll(); }
-  finally { if (overlay) overlay.style.display = 'none'; }
-}
-
-// ================================================================
-// REALTIME SUBSCRIPTIONS — keeps all devices in sync automatically
-// ================================================================
-let realtimeChannels = [];
-function subscribeToRealtimeUpdates() {
-  // Remove any existing subscriptions first
-  realtimeChannels.forEach(ch => supabaseClient.removeChannel(ch));
-  realtimeChannels = [];
-
-  const tableMap = {
-    staff: 'staff', inventory: 'inventory', jobs: 'jobs', tasks: 'tasks',
-    zones: 'zones', tasklogs: 'taskLogs', incidents: 'incidents',
-    supplyrequests: 'supplyRequests', attendance: 'attendance', damagereports: 'damageReports'
-  };
-
-  Object.entries(tableMap).forEach(([table, key]) => {
-    let ch = supabaseClient.channel('realtime:' + table)
-      .on('postgres_changes', { event: '*', schema: 'public', table }, payload => {
-        let { eventType, new: newRow, old: oldRow } = payload;
-        if (eventType === 'INSERT') {
-          let exists = state[key].some(r => r.id === newRow.id);
-          if (!exists) {
-            if (key === 'inventory') {
-              newRow = { ...newRow, usageLog: Array.isArray(newRow.usagelog) ? newRow.usagelog : [], damageReports: [] };
-            }
-            state[key].push(newRow);
-          }
-        } else if (eventType === 'UPDATE') {
-          let idx = state[key].findIndex(r => r.id === newRow.id);
-          if (idx >= 0) {
-            if (key === 'inventory') {
-              newRow = { ...newRow, usageLog: Array.isArray(newRow.usagelog) ? newRow.usagelog : state[key][idx].usageLog || [] };
-            }
-            state[key][idx] = newRow;
-          }
-        } else if (eventType === 'DELETE') {
-          state[key] = state[key].filter(r => r.id !== oldRow.id);
-        }
-        setSyncDot('synced');
-        renderAll();
-      })
-      .subscribe();
-    realtimeChannels.push(ch);
-  });
-}
-
-async function deleteFromCloud(table, id) {
-  try { await supabaseClient.from(table).delete().eq('id', id); } catch(e) {}
+    setSyncDot('synced');
+  } catch(e) {
+    console.error('Load failed:', e);
+    setSyncDot('error');
+    alert('Could not load data from Supabase. Check console for details.');
+  } finally {
+    hideLoading();
+    renderAll();
+  }
 }
 
 function setSyncDot(s) { let d = document.getElementById('sync-dot'); if (d) d.className = 'sync-dot ' + s; }
-function saveState() { syncToCloud(); }
+
+// IMAGE COMPRESSION
+// ================================================================
+function compressImage(dataUrl, maxWidth = 400, quality = 0.7) {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) { resolve(''); return; }
+    let img = new Image();
+    img.onload = () => {
+      let canvas = document.createElement('canvas');
+      let scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale; canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve('');
+    img.src = dataUrl;
+  });
+}
 
 // ================================================================
 // HELPERS
@@ -909,22 +865,23 @@ document.getElementById('auth-role').addEventListener('change', async function()
   if (this.value === 'cleaner') {
     wrap.style.display = 'block';
     let sel = document.getElementById('auth-cleaner-name');
-    sel.innerHTML = '<option value="">Loading staff…</option>';
-    // Fetch cleaners directly from Supabase so we never rely on stale local state
+    sel.innerHTML = '<option value="">Loading staff...</option>';
     try {
-      let { data, error } = await supabaseClient.from('staff').select('id,name,shift,role').in('role', ['Cleaner','Senior Cleaner','Team Lead']);
-      if (!error && data && data.length) {
-        sel.innerHTML = data.map(c => `<option value="${c.id}">${c.name} (${c.shift || 'Morning'})</option>`).join('');
-        // Keep state.staff in sync for the login step
-        data.forEach(c => { if (!state.staff.find(s => s.id === c.id)) state.staff.push(c); });
+      const { data, error } = await supabaseClient.from('staff').select('id, name, shift, role');
+      if (!error && data) {
+        state.staff = data;
+        let cleaners = data.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
+        sel.innerHTML = cleaners.length ? cleaners.map(c => `<option value="${c.id}">${c.name} (${c.shift || 'Morning'})</option>`).join('') : '<option value="">No cleaners enrolled yet</option>';
       } else {
-        sel.innerHTML = '<option value="">No cleaners enrolled yet</option>';
+        sel.innerHTML = '<option value="">Could not load staff</option>';
       }
-    } catch(e) { sel.innerHTML = '<option value="">Error loading staff</option>'; }
+    } catch(e) {
+      sel.innerHTML = '<option value="">Error loading staff</option>';
+    }
   } else { wrap.style.display = 'none'; }
 });
 
-async function handleLogin() {
+function handleLogin() {
   let role = document.getElementById('auth-role').value;
   let pass = document.getElementById('auth-pass').value;
   let err = document.getElementById('auth-error');
@@ -935,13 +892,8 @@ async function handleLogin() {
   let staffRef = null;
   if (role === 'cleaner') {
     let cleanerId = document.getElementById('auth-cleaner-name').value;
-    if (!cleanerId) { err.style.display = 'block'; err.textContent = 'No cleaner selected'; return; }
-    // Fetch the full cleaner record from Supabase
-    try {
-      let { data } = await supabaseClient.from('staff').select('*').eq('id', cleanerId).single();
-      staffRef = data || state.staff.find(s => s.id === cleanerId);
-    } catch(e) { staffRef = state.staff.find(s => s.id === cleanerId); }
-    if (!staffRef) { err.style.display = 'block'; err.textContent = 'Cleaner record not found'; return; }
+    staffRef = state.staff.find(s => s.id === cleanerId);
+    if (!staffRef) { err.style.display = 'block'; err.textContent = 'No cleaner selected'; return; }
     name = staffRef.name;
   }
   currentUser = { role, name, staffRef };
@@ -955,11 +907,7 @@ async function handleLogin() {
 
 function handleLogout() {
   currentUser = null;
-  // Clear in-memory state so next login always fetches fresh from Supabase
   state = { staff: [], inventory: [], jobs: [], tasks: [], zones: [], taskLogs: [], incidents: [], supplyRequests: [], attendance: [], damageReports: [] };
-  // Unsubscribe from realtime channels
-  realtimeChannels.forEach(ch => supabaseClient.removeChannel(ch));
-  realtimeChannels = [];
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-pass').value = '';
@@ -1176,21 +1124,20 @@ async function saveStaff() {
     spousecontact: document.getElementById('sf-spouse-contact').value,
     numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
   };
-  // camelCase aliases
-  s.staffId = s.staffid; s.startDate = s.startdate; s.ghanaCard = s.ghanacard;
-  s.ghanaFrontImg = s.ghanafront; s.ghanaBackImg = s.ghanaback;
-  s.emergName = s.emergname; s.emergPhone = s.emergphone; s.emergRel = s.emergrel;
-  s.bankName = s.bankname; s.bankAcct = s.bankacct; s.maritalStatus = s.maritalstatus;
-  s.spouseName = s.spousename; s.spouseContact = s.spousecontact; s.numberOfKids = s.numberofkids;
-
-  if (isEditing) {
-    let idx = state.staff.findIndex(x => x.id === editingStaffId);
-    if (idx >= 0) state.staff[idx] = s;
-  } else {
-    state.staff.push(s);
-  }
-  editingStaffId = null;
-  saveState(); closeModal('modal-add-staff'); renderStaff(); renderDashboard();
+  showLoading(isEditing ? 'Updating staff member…' : 'Enrolling staff member…');
+  try {
+    if (isEditing) {
+      await dbUpdate('staff', s.id, s);
+      let idx = state.staff.findIndex(x => x.id === s.id);
+      if (idx >= 0) state.staff[idx] = s;
+    } else {
+      await dbInsert('staff', s);
+      state.staff.push(s);
+    }
+    editingStaffId = null;
+    closeModal('modal-add-staff'); renderStaff(); renderDashboard();
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function openEditStaff() {
@@ -1302,21 +1249,29 @@ function openStaffProfile(id) {
   openModal('modal-staff-profile');
 }
 
-function updateStaffStatus(newStatus) {
+async function updateStaffStatus(newStatus) {
   let s = state.staff.find(x => x.id === currentStaffId);
   if (!s) return;
-  s.status = newStatus;
-  saveState(); renderDashboard(); renderStaff();
+  showLoading('Updating status…');
+  try {
+    await dbUpdate('staff', s.id, { status: newStatus });
+    s.status = newStatus;
+    renderDashboard(); renderStaff();
+  } catch(e) { alert('Update failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 async function deleteCurrentStaff() {
   if (!canEdit()) return;
   if (!confirm('Remove this staff member?')) return;
-  if (currentStaffId) {
+  if (!currentStaffId) return;
+  showLoading('Removing staff member…');
+  try {
+    await dbDelete('staff', currentStaffId);
     state.staff = state.staff.filter(x => x.id !== currentStaffId);
-    await deleteFromCloud('staff', currentStaffId);
-  }
-  closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
+    closeModal('modal-staff-profile'); renderStaff(); renderDashboard();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function printStaffPDF() {
@@ -1408,12 +1363,17 @@ async function saveInventory() {
   let name = document.getElementById('inv-name').value.trim();
   let cat = document.getElementById('inv-cat').value;
   if (!name || !cat) { alert('Name/category required'); return; }
-  let rawImg = document.getElementById('inv-img-preview').src || '';
-  let img = await compressImage(rawImg, 400, 0.65);
-  let item = { id: uid(), name, category: cat, qty: parseInt(document.getElementById('inv-qty').value)||0, uom: document.getElementById('inv-uom').value, reorder: parseInt(document.getElementById('inv-reorder').value)||0, supplier: document.getElementById('inv-supplier').value.trim(), suppliercontact: document.getElementById('inv-supplier-contact').value.trim(), img, usageLog: [] };
-  item.supplierContact = item.suppliercontact;
-  state.inventory.push(item);
-  saveState(); closeModal('modal-add-inv'); renderInventory(); renderDashboard();
+  showLoading('Adding inventory item…');
+  try {
+    let rawImg = document.getElementById('inv-img-preview').src || '';
+    let img = await compressImage(rawImg, 400, 0.65);
+    let item = { id: uid(), name, category: cat, qty: parseInt(document.getElementById('inv-qty').value)||0, uom: document.getElementById('inv-uom').value, reorder: parseInt(document.getElementById('inv-reorder').value)||0, supplier: document.getElementById('inv-supplier').value.trim(), suppliercontact: document.getElementById('inv-supplier-contact').value.trim(), img, usagelog: [], damagereports: [] };
+    await dbInsert('inventory', item);
+    item.usageLog = [];
+    state.inventory.push(item);
+    closeModal('modal-add-inv'); renderInventory(); renderDashboard();
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function openInvDetail(id) {
@@ -1448,13 +1408,19 @@ function openInvDetail(id) {
   openModal('modal-inv-detail');
 }
 
-function adjustQty(delta) {
+async function adjustQty(delta) {
   if (!canEdit()) return;
   let item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
   let n = item.qty + delta;
   if (n < 0) { alert('Cannot go below zero'); return; }
-  item.qty = n; saveState(); openInvDetail(currentInvId); renderInventory(); renderDashboard();
+  showLoading('Updating stock…');
+  try {
+    await dbUpdate('inventory', item.id, { qty: n });
+    item.qty = n;
+    openInvDetail(currentInvId); renderInventory(); renderDashboard();
+  } catch(e) { alert('Update failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function openLogUsageModal() {
@@ -1471,7 +1437,7 @@ function openLogUsageModal() {
   document.getElementById('log-notes').value = '';
 }
 
-function saveUsageLog() {
+async function saveUsageLog() {
   if (!canEdit()) return;
   let qty = parseInt(document.getElementById('log-qty').value);
   let date = document.getElementById('log-date').value;
@@ -1481,9 +1447,16 @@ function saveUsageLog() {
   if (!item) return;
   if (item.qty < qty) { alert(`Insufficient stock! Only ${item.qty} ${item.uom} available.`); return; }
   if (!Array.isArray(item.usageLog)) item.usageLog = [];
-  item.usageLog.push({ id: uid(), date, qty, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() });
-  item.qty -= qty;
-  saveState(); closeModal('modal-log-usage'); openInvDetail(currentInvId); renderInventory(); renderDashboard();
+  let newLog = { id: uid(), date, qty, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() };
+  item.usageLog.push(newLog);
+  let newQty = item.qty - qty;
+  showLoading('Logging usage…');
+  try {
+    await dbUpdate('inventory', item.id, { qty: newQty, usagelog: item.usageLog });
+    item.qty = newQty;
+    closeModal('modal-log-usage'); openInvDetail(currentInvId); renderInventory(); renderDashboard();
+  } catch(e) { item.usageLog.pop(); alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function openDamageModal() {
@@ -1505,18 +1478,32 @@ async function saveDamageReport() {
   let dmgQty = parseInt(document.getElementById('dmg-qty').value) || 0;
   let report = { id: uid(), invid: currentInvId, itemname: item ? item.name : '', date, description: desc, qty: dmgQty, photo, reportedby: currentUser.name, createdat: new Date().toISOString() };
   if (!state.damageReports) state.damageReports = [];
-  state.damageReports.push(report);
-  if (item && dmgQty > 0) { item.qty = Math.max(0, item.qty - dmgQty); }
-  saveState(); closeModal('modal-damage-report'); renderInventory(); renderDashboard();
-  alert('Damage report submitted.');
+  showLoading('Submitting damage report…');
+  try {
+    await dbInsert('damagereports', report);
+    state.damageReports.push(report);
+    if (item && dmgQty > 0) {
+      let newQty = Math.max(0, item.qty - dmgQty);
+      await dbUpdate('inventory', item.id, { qty: newQty });
+      item.qty = newQty;
+    }
+    closeModal('modal-damage-report'); renderInventory(); renderDashboard();
+    alert('Damage report submitted.');
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 async function deleteCurrentInv() {
   if (!canEdit()) return;
   if (!confirm('Delete this inventory item?')) return;
-  state.inventory = state.inventory.filter(x => x.id !== currentInvId);
-  await deleteFromCloud('inventory', currentInvId);
-  closeModal('modal-inv-detail'); renderInventory(); renderDashboard();
+  if (!currentInvId) return;
+  showLoading('Deleting item…');
+  try {
+    await dbDelete('inventory', currentInvId);
+    state.inventory = state.inventory.filter(x => x.id !== currentInvId);
+    closeModal('modal-inv-detail'); renderInventory(); renderDashboard();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 // ================================================================
@@ -1536,25 +1523,80 @@ function renderJobs() {
 
 function filterJobs(f, btn) { jobFilter = f; document.querySelectorAll('#screen-jobs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderJobs(); }
 
-function saveJob() {
+async function saveJob() {
   if (!canEdit()) return;
   let client = document.getElementById('jf-client').value.trim();
   let type = document.getElementById('jf-type').value;
   if (!client || !type) { alert('Client and type required'); return; }
-  let job = { id: uid(), client, type, location: document.getElementById('jf-location').value, date: document.getElementById('jf-date').value, time: document.getElementById('jf-time').value, assignedstaff: document.getElementById('jf-staff').value, notes: document.getElementById('jf-notes').value, status: 'Scheduled' };
-  job.assignedStaff = job.assignedstaff;
-  state.jobs.push(job); saveState(); closeModal('modal-add-job'); renderJobs(); renderDashboard();
+  showLoading('Scheduling job…');
+  try {
+    let job = { id: uid(), client, type, location: document.getElementById('jf-location').value, date: document.getElementById('jf-date').value, time: document.getElementById('jf-time').value, assignedstaff: document.getElementById('jf-staff').value, notes: document.getElementById('jf-notes').value, status: 'Scheduled' };
+    await dbInsert('jobs', job);
+    state.jobs.push(job);
+    closeModal('modal-add-job'); renderJobs(); renderDashboard();
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function openJobDetail(id) {
   let j = state.jobs.find(x => x.id === id);
   if (!j) return;
-  if (!canEdit()) { alert(`Job: ${j.client}\nStatus: ${j.status}\nLocation: ${j.location||'—'}\nDate: ${j.date||'—'}`); return; }
-  let statuses = ['Scheduled','In Progress','Done'];
-  let opts = statuses.map(s => `<option ${j.status===s?'selected':''}>${s}</option>`).join('');
-  let html = `<b>${j.client}</b><br>Location: ${j.location||'—'}<br>Date: ${j.date||'—'} ${j.time||''}<br>Type: ${j.type}<br>Assigned: ${j.assignedStaff||j.assignedstaff||'—'}<br>Notes: ${j.notes||'—'}`;
-  let newStatus = prompt(`${j.client} — ${j.type}\nCurrent status: ${j.status}\n\nUpdate status to (Scheduled/In Progress/Done):`);
-  if (newStatus && statuses.includes(newStatus.trim())) { j.status = newStatus.trim(); saveState(); renderJobs(); renderDashboard(); }
+  let existing = document.getElementById('job-detail-overlay');
+  if (existing) existing.remove();
+  let statBtns = canEdit() ? `
+    <div style="margin-top:16px">
+      <div class="form-label">Update Status</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button class="btn btn-outline btn-sm" onclick="updateJobStatus('${id}','Scheduled')">Scheduled</button>
+        <button class="btn btn-amber btn-sm" onclick="updateJobStatus('${id}','In Progress')">In Progress</button>
+        <button class="btn btn-success btn-sm" onclick="updateJobStatus('${id}','Done')">Done</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteJob('${id}')">Delete</button>
+      </div>
+    </div>` : '';
+  let ov = document.createElement('div');
+  ov.id = 'job-detail-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+  ov.innerHTML = `<div style="background:#fff;border-radius:16px;width:calc(100% - 28px);max-width:500px;overflow:hidden">
+    <div style="background:var(--navy);padding:18px 20px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:#fff">Job Details</span>
+      <button onclick="document.getElementById('job-detail-overlay').remove()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px">X</button>
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px">${j.client}</div>
+      <span class="pill ${pillClass(j.status)}" style="margin-bottom:14px;display:inline-block">${j.status}</span>
+      ${detRow('Type', j.type)}${detRow('Location', j.location)}${detRow('Date', j.date)}${detRow('Time', j.time)}${detRow('Assigned Staff', j.assignedstaff)}${detRow('Notes', j.notes)}
+      ${statBtns}
+    </div>
+  </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+async function updateJobStatus(id, newStatus) {
+  let j = state.jobs.find(x => x.id === id);
+  if (!j) return;
+  let ov = document.getElementById('job-detail-overlay');
+  if (ov) ov.remove();
+  showLoading('Updating job status...');
+  try {
+    await dbUpdate('jobs', id, { status: newStatus });
+    j.status = newStatus;
+    renderJobs(); renderDashboard();
+  } catch(e) { alert('Update failed: ' + e.message); }
+  finally { hideLoading(); }
+}
+
+async function deleteJob(id) {
+  if (!confirm('Delete this job?')) return;
+  let ov = document.getElementById('job-detail-overlay');
+  if (ov) ov.remove();
+  showLoading('Deleting job...');
+  try {
+    await dbDelete('jobs', id);
+    state.jobs = state.jobs.filter(x => x.id !== id);
+    renderJobs(); renderDashboard();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 // ================================================================
@@ -1676,26 +1718,43 @@ function renderCleanerTasks(el) {
   el.innerHTML = `<div class="page-header"><div class="page-title">My Tasks</div><div class="page-sub">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div></div>${headerHtml}${tasksHtml}`;
 }
 
-function cleanerToggleTask(taskId, shift) {
+async function cleanerToggleTask(taskId, shift) {
   let existing = state.taskLogs.findIndex(l => l.taskid === taskId && l.date === todayStr() && l.shift === shift);
-  if (existing >= 0) {
-    state.taskLogs.splice(existing, 1);
-  } else {
-    let now = new Date();
-    state.taskLogs.push({ id: uid(), taskid: taskId, date: todayStr(), shift, completedby: currentUser.name, time: now.toTimeString().slice(0,5), createdat: now.toISOString() });
-  }
-  saveState(); renderTasks();
+  showLoading('Updating task…');
+  try {
+    if (existing >= 0) {
+      let logId = state.taskLogs[existing].id;
+      await dbDelete('tasklogs', logId);
+      state.taskLogs.splice(existing, 1);
+    } else {
+      let now = new Date();
+      let log = { id: uid(), taskid: taskId, date: todayStr(), shift, completedby: currentUser.name, time: now.toTimeString().slice(0,5), createdat: now.toISOString() };
+      await dbInsert('tasklogs', log);
+      state.taskLogs.push(log);
+    }
+    renderTasks();
+  } catch(e) { alert('Update failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
-function toggleTask(taskId, shift) {
+async function toggleTask(taskId, shift) {
   if (!canEdit()) return;
   let existing = state.taskLogs.findIndex(l => l.taskid === taskId && l.date === todayStr() && l.shift === shift);
-  if (existing >= 0) state.taskLogs.splice(existing, 1);
-  else {
-    let now = new Date();
-    state.taskLogs.push({ id: uid(), taskid: taskId, date: todayStr(), shift, completedby: currentUser.name, time: now.toTimeString().slice(0,5), createdat: now.toISOString() });
-  }
-  saveState(); renderTasks(); renderDashboard();
+  showLoading('Updating task…');
+  try {
+    if (existing >= 0) {
+      let logId = state.taskLogs[existing].id;
+      await dbDelete('tasklogs', logId);
+      state.taskLogs.splice(existing, 1);
+    } else {
+      let now = new Date();
+      let log = { id: uid(), taskid: taskId, date: todayStr(), shift, completedby: currentUser.name, time: now.toTimeString().slice(0,5), createdat: now.toISOString() };
+      await dbInsert('tasklogs', log);
+      state.taskLogs.push(log);
+    }
+    renderTasks(); renderDashboard();
+  } catch(e) { alert('Update failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 function setShift(sh, btn) {
@@ -1711,26 +1770,43 @@ function openAddTaskModal() {
   openModal('modal-add-task');
 }
 
-function saveZone() {
+async function saveZone() {
   let name = document.getElementById('zone-name').value.trim();
   if (!name) return;
-  state.zones.push({ id: uid(), name });
-  saveState(); closeModal('modal-add-zone'); renderTasks();
+  showLoading('Adding zone…');
+  try {
+    let zone = { id: uid(), name };
+    await dbInsert('zones', zone);
+    state.zones.push(zone);
+    closeModal('modal-add-zone'); renderTasks();
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
-function saveTask() {
+async function saveTask() {
   let name = document.getElementById('task-name-input').value.trim();
   if (!name) { alert('Task name required'); return; }
-  let zoneId = document.getElementById('task-zone-select').value || 'default';
-  state.tasks.push({ id: uid(), name, zoneid: zoneId, zoneId, shift: document.getElementById('task-shift-select').value, frequency: document.getElementById('task-freq-select').value });
-  saveState(); closeModal('modal-add-task'); renderTasks();
+  showLoading('Adding task…');
+  try {
+    let zoneId = document.getElementById('task-zone-select').value || 'default';
+    let task = { id: uid(), name, zoneid: zoneId, shift: document.getElementById('task-shift-select').value, frequency: document.getElementById('task-freq-select').value };
+    await dbInsert('tasks', task);
+    state.tasks.push(task);
+    closeModal('modal-add-task'); renderTasks();
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
   if (!canEdit()) return;
   if (!confirm('Remove task?')) return;
-  state.tasks = state.tasks.filter(t => t.id !== id);
-  saveState(); renderTasks();
+  showLoading('Removing task…');
+  try {
+    await dbDelete('tasks', id);
+    state.tasks = state.tasks.filter(t => t.id !== id);
+    renderTasks();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 // ================================================================
@@ -1752,42 +1828,72 @@ function openAttendance() {
   openModal('modal-attendance');
 }
 
-function checkIn(staffId) {
+async function checkIn(staffId) {
   let now = new Date().toTimeString().slice(0,5);
   let today = todayStr();
   let existing = state.attendance.find(a => a.staffid === staffId && a.date === today);
   if (existing) return;
-  state.attendance.push({ id: uid(), staffid: staffId, date: today, checkin: now, checkout: null, recordedby: currentUser.name });
-  let staff = state.staff.find(s => s.id === staffId);
-  if (staff) { staff.status = 'On Shift'; }
-  saveState(); openAttendance(); renderDashboard();
+  showLoading('Checking in…');
+  try {
+    let rec = { id: uid(), staffid: staffId, date: today, checkin: now, checkout: null, recordedby: currentUser.name };
+    await dbInsert('attendance', rec);
+    state.attendance.push(rec);
+    let staff = state.staff.find(s => s.id === staffId);
+    if (staff) {
+      await dbUpdate('staff', staffId, { status: 'On Shift' });
+      staff.status = 'On Shift';
+    }
+    openAttendance(); renderDashboard();
+  } catch(e) { alert('Check-in failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
-function checkOut(staffId) {
+async function checkOut(staffId) {
   let now = new Date().toTimeString().slice(0,5);
   let today = todayStr();
   let rec = state.attendance.find(a => a.staffid === staffId && a.date === today);
-  if (rec) { rec.checkout = now; }
-  let staff = state.staff.find(s => s.id === staffId);
-  if (staff) { staff.status = 'Off Shift'; }
-  saveState(); openAttendance(); renderDashboard();
+  if (!rec) return;
+  showLoading('Checking out…');
+  try {
+    await dbUpdate('attendance', rec.id, { checkout: now });
+    rec.checkout = now;
+    let staff = state.staff.find(s => s.id === staffId);
+    if (staff) {
+      await dbUpdate('staff', staffId, { status: 'Off Shift' });
+      staff.status = 'Off Shift';
+    }
+    openAttendance(); renderDashboard();
+  } catch(e) { alert('Check-out failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 // ================================================================
 // INCIDENTS & SUPPLY REQUESTS
 // ================================================================
-function saveIncident() {
+async function saveIncident() {
   let desc = document.getElementById('inc-desc').value.trim();
   if (!desc) { alert('Description required'); return; }
-  state.incidents.push({ id: uid(), type: document.getElementById('inc-type').value, location: document.getElementById('inc-location').value, description: desc, reportedby: currentUser.name, date: todayStr(), createdat: new Date().toISOString() });
-  saveState(); closeModal('modal-incident'); alert('Incident reported successfully.');
+  showLoading('Submitting incident…');
+  try {
+    let inc = { id: uid(), type: document.getElementById('inc-type').value, location: document.getElementById('inc-location').value, description: desc, reportedby: currentUser.name, date: todayStr(), createdat: new Date().toISOString() };
+    await dbInsert('incidents', inc);
+    state.incidents.push(inc);
+    closeModal('modal-incident'); alert('Incident reported successfully.');
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
-function saveSupplyRequest() {
+async function saveSupplyRequest() {
   let item = document.getElementById('req-item').value.trim();
   if (!item) { alert('Item name required'); return; }
-  state.supplyRequests.push({ id: uid(), item, qty: parseInt(document.getElementById('req-qty').value)||1, urgency: document.getElementById('req-urgency').value, notes: document.getElementById('req-notes').value, requestedby: currentUser.name, status: 'Pending', date: todayStr(), createdat: new Date().toISOString() });
-  saveState(); closeModal('modal-supply-req'); alert('Supply request submitted.');
+  showLoading('Submitting request…');
+  try {
+    let req = { id: uid(), item, qty: parseInt(document.getElementById('req-qty').value)||1, urgency: document.getElementById('req-urgency').value, notes: document.getElementById('req-notes').value, requestedby: currentUser.name, status: 'Pending', date: todayStr(), createdat: new Date().toISOString() };
+    await dbInsert('supplyrequests', req);
+    state.supplyRequests.push(req);
+    closeModal('modal-supply-req'); alert('Supply request submitted.');
+  } catch(e) { alert('Save failed: ' + e.message); }
+  finally { hideLoading(); }
 }
 
 // ================================================================
