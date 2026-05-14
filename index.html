@@ -853,7 +853,7 @@ function clearPhoto(previewId, placeholderId, deleteBtnId) {
   if (box) { let fileInput = box.querySelector('input[type=file]'); if (fileInput) fileInput.value = ''; }
 }
 function viewImage(imageSrc, title) { if (!imageSrc || !imageSrc.startsWith('data:')) { alert('No image available'); return; } document.getElementById('image-modal-title').textContent = title; document.getElementById('image-view-img').src = imageSrc; openModal('modal-image-view'); }
-function canEdit() { return currentUser && (currentUser.role === 'supervisor' || currentUser.role === 'manager'); }
+function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
 function canPrint() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 function isManagement() { return currentUser && ['director', 'manager', 'supervisor'].includes(currentUser.role); }
 
@@ -998,7 +998,7 @@ function buildQuickActions() {
 }
 
 function buildActionBars() {
-  let notice = `<div class="viewer-notice">👁 View only — supervisor/manager can make changes</div>`;
+  let notice = `<div class="viewer-notice">👁 View only — supervisor can make changes</div>`;
   let sa = document.getElementById('staff-actions');
   let ia = document.getElementById('inv-actions');
   let ja = document.getElementById('jobs-actions');
@@ -1953,13 +1953,11 @@ function setReportRange(r) {
 // MODAL CONTROLS
 // ================================================================
 function clearStaffForm() {
-  // Reset title and button
   let t = document.getElementById('add-staff-modal-title');
   let b = document.getElementById('save-staff-btn');
   if (t) t.textContent = 'Enrol New Staff Member';
   if (b) b.textContent = 'Enrol Staff Member';
   editingStaffId = null;
-  // Clear all text/select/date inputs
   ['sf-name','sf-id','sf-phone','sf-address','sf-ghana','sf-ssnit',
    'sf-startdate','sf-emerg-name','sf-emerg-phone','sf-bank-name',
    'sf-bank-acct','sf-spouse-name','sf-spouse-contact','sf-marital-other'].forEach(id => {
@@ -1971,10 +1969,18 @@ function clearStaffForm() {
   document.getElementById('sf-marital').selectedIndex = 0;
   document.getElementById('sf-emerg-rel').selectedIndex = 0;
   document.getElementById('other-marital-group').style.display = 'none';
-  // Clear all photos
-  clearPhoto('staff-photo-preview','staff-photo-placeholder','del-staff-photo');
-  clearPhoto('ghana-front-preview','ghana-front-placeholder','del-ghana-front');
-  clearPhoto('ghana-back-preview','ghana-back-placeholder','del-ghana-back');
+  ['staff-photo-preview','ghana-front-preview','ghana-back-preview'].forEach(id => {
+    let img = document.getElementById(id);
+    if (img) { img.removeAttribute('src'); img.src = ''; img.style.display = 'none'; }
+  });
+  ['staff-photo-placeholder','ghana-front-placeholder','ghana-back-placeholder'].forEach(id => {
+    let el = document.getElementById(id); if (el) el.style.display = 'block';
+  });
+  ['del-staff-photo','del-ghana-front','del-ghana-back'].forEach(id => {
+    let btn = document.getElementById(id); if (btn) btn.classList.remove('visible');
+  });
+  let modal = document.getElementById('modal-add-staff');
+  if (modal) modal.querySelectorAll('input[type=file]').forEach(function(f){ f.value = ''; });
 }
 
 function clearInvForm() {
@@ -1983,7 +1989,14 @@ function clearInvForm() {
   });
   document.getElementById('inv-cat').selectedIndex = 0;
   document.getElementById('inv-uom').selectedIndex = 0;
-  clearPhoto('inv-img-preview','inv-img-placeholder','del-inv-img');
+  let img = document.getElementById('inv-img-preview');
+  if (img) { img.removeAttribute('src'); img.src = ''; img.style.display = 'none'; }
+  let ph = document.getElementById('inv-img-placeholder');
+  if (ph) ph.style.display = 'block';
+  let btn = document.getElementById('del-inv-img');
+  if (btn) btn.classList.remove('visible');
+  let modal = document.getElementById('modal-add-inv');
+  if (modal) modal.querySelectorAll('input[type=file]').forEach(function(f){ f.value = ''; });
 }
 
 function clearJobForm() {
