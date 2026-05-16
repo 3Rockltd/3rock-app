@@ -472,19 +472,27 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div class="stat-card amber" onclick="goToTab('inventory')">
           <div class="stat-val" id="stat-lowstock">0</div>
           <div class="stat-lbl">Low Stock</div>
-          <div class="stat-sub">items critical</div>
+          <div class="stat-sub">consumables</div>
         </div>
+      </div>
+      <!-- Equipment condition summary row (director/manager only) -->
+      <div id="equipment-condition-row" style="display:none;margin-bottom:18px">
+        <div class="section-title">Equipment Status</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="eq-condition-summary"></div>
       </div>
       <div id="director-metrics-section" style="display:none">
         <div class="section-title">Today's Task Progress</div>
         <div id="dash-task-progress" class="card"></div>
-        <div class="section-title">Staff & Jobs Overview</div>
+        <div class="section-title">Operations Overview</div>
         <div class="card">
           <div class="card-title">Staff Status</div>
           <div id="staff-bars"></div>
           <div class="divider"></div>
           <div class="card-title">Today's Jobs</div>
           <div id="job-bars"></div>
+          <div class="divider"></div>
+          <div class="card-title">Open Incidents & Requests</div>
+          <div id="dash-incidents-summary"></div>
         </div>
       </div>
       <div class="section-title">Quick Actions</div>
@@ -724,8 +732,10 @@ textarea.form-control{resize:vertical;min-height:56px}
     <!-- EQUIPMENT FIELDS -->
     <div id="inv-equipment-fields" style="display:none">
       <div class="form-row">
+        <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-eq-qty" min="0" placeholder="0"></div>
         <div class="form-group"><label class="form-label">Asset / Serial No.</label><input type="text" class="form-control" id="inv-serial" placeholder="e.g. EQ-001"></div>
-        <div class="form-group"><label class="form-label">Condition</label>
+      </div>
+      <div class="form-group"><label class="form-label">Condition</label>
           <select class="form-control" id="inv-condition">
             <option value="New">🟢 New</option>
             <option value="Good">🟢 Good</option>
@@ -757,6 +767,12 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div class="modal-body">
     <div id="inv-detail-info"></div>
     <div id="inv-qty-ctrl" style="margin:15px 0"></div>
+    <!-- Variants section (stock items only) -->
+    <div id="inv-variants-section" style="display:none">
+      <div class="section-sep">Variants <span id="variant-total-badge" style="font-weight:400;font-size:11px;color:var(--text-muted)"></span></div>
+      <div id="inv-variants-list"></div>
+      <button class="btn btn-outline btn-sm" id="add-variant-btn" onclick="openAddVariantModal()" style="width:100%;margin-top:8px;justify-content:center">+ Add Variant</button>
+    </div>
     <!-- Stock item sections -->
     <div id="inv-stock-detail-section">
       <div class="section-sep">Daily Usage Logs</div><div id="inv-usage-logs"></div>
@@ -774,6 +790,41 @@ textarea.form-control{resize:vertical;min-height:56px}
       <button class="btn btn-outline btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button>
     </div>
   </div></div>
+</div>
+
+<!-- ADD / EDIT VARIANT MODAL -->
+<div class="modal-overlay center-ov" id="modal-add-variant" style="display:none" onclick="overlayClick(event,'modal-add-variant')">
+  <div class="modal center-m">
+    <div class="modal-header"><span class="modal-title" id="variant-modal-title">Add Variant</span><button class="modal-close" onclick="closeModal('modal-add-variant')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group" style="background:var(--off-white);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary)">
+        📦 <strong id="variant-parent-name"></strong>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Variant Label *</label>
+        <input type="text" class="form-control" id="variant-label" placeholder="e.g. Red, Blue, Large, 5L…">
+        <div class="field-error" id="err-variant-label">Variant label is required</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input type="number" class="form-control" id="variant-qty" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reorder Level</label>
+          <input type="number" class="form-control" id="variant-reorder" min="0" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <input type="text" class="form-control" id="variant-notes" placeholder="e.g. For outdoor use only…">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-add-variant')">Cancel</button>
+        <button class="btn btn-primary" id="save-variant-btn" onclick="saveVariant()">Add Variant</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- CONDITION UPDATE MODAL (equipment only) -->
@@ -1498,8 +1549,11 @@ function renderDashboard() {
   if (currentUser && currentUser.role === 'cleaner') { renderCleanerDashboard(); return; }
   const onShift = state.staff.filter(s => s.status === 'On Shift').length;
   const todayJobs = state.jobs.filter(j => j.date === todayStr());
-  const lowStock = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder));
+  // Low stock excludes equipment (equipment has no reorder level)
+  const lowStock = state.inventory.filter(i => i.category !== 'Equipment' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder));
+  const equipment = state.inventory.filter(i => i.category === 'Equipment');
   const se = id => document.getElementById(id);
+
   if (se('stat-onshift')) se('stat-onshift').textContent = onShift;
   if (se('stat-staff-sub')) se('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
   if (se('stat-jobs-today')) se('stat-jobs-today').textContent = todayJobs.length;
@@ -1509,6 +1563,8 @@ function renderDashboard() {
   if (se('kpi-onshift')) se('kpi-onshift').textContent = onShift;
   if (se('kpi-month')) se('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0,7))).length;
   if (se('kpi-done')) se('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
+
+  // Low stock banner — consumables/chemicals/PPE only
   const banner = se('low-stock-banner');
   if (banner) {
     if (lowStock.length) {
@@ -1516,23 +1572,65 @@ function renderDashboard() {
       se('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom||'units'})`).join(', ');
     } else banner.style.display = 'none';
   }
+
+  // Equipment condition summary row
+  const eqRow = se('equipment-condition-row');
+  const eqSum = se('eq-condition-summary');
+  if (eqRow && eqSum && equipment.length) {
+    eqRow.style.display = 'block';
+    const condCounts = {};
+    equipment.forEach(e => { const c = e.condition||'Good'; condCounts[c] = (condCounts[c]||0) + 1; });
+    const order = ['New','Good','Fair','Needs Maintenance','Damaged','Decommissioned'];
+    eqSum.innerHTML = order.filter(c => condCounts[c]).map(c => {
+      const cs = conditionStyle(c);
+      return `<div style="background:${cs.bg};border-radius:var(--r-md);padding:10px;text-align:center;cursor:pointer" onclick="goToTab('inventory')">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:${cs.color}">${condCounts[c]}</div>
+        <div style="font-size:10px;font-weight:700;color:${cs.color};text-transform:uppercase;letter-spacing:.4px">${cs.icon} ${c}</div>
+      </div>`;
+    }).join('');
+  } else if (eqRow) eqRow.style.display = 'none';
+
   if (se('director-metrics-section') && se('director-metrics-section').style.display !== 'none') {
     const off = state.staff.filter(s => s.status === 'Off Shift').length;
     const leave = state.staff.filter(s => s.status === 'On Leave').length;
     const t = state.staff.length || 1;
-    if (se('staff-bars')) se('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
+    if (se('staff-bars')) se('staff-bars').innerHTML =
+      actBar('On Shift', onShift, t, 'var(--green)') +
+      actBar('Off Shift', off, t, 'var(--text-muted)') +
+      actBar('On Leave', leave, t, 'var(--amber)');
+
     const sTot = todayJobs.length || 1;
-    if (se('job-bars')) se('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
+    if (se('job-bars')) se('job-bars').innerHTML =
+      actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') +
+      actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') +
+      actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
+
+    // Open incidents & requests summary
+    const incSum = se('dash-incidents-summary');
+    if (incSum) {
+      const openInc = state.incidents.filter(i => i.status === 'Open' || i.status === 'Under Review').length;
+      const pendingReq = state.supplyRequests.filter(r => r.status === 'Pending').length;
+      if (openInc || pendingReq) {
+        incSum.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${openInc ? `<div style="background:#fee2e2;border-radius:var(--r-md);padding:8px 14px;cursor:pointer" onclick="goToTab('incidents')"><span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#dc2626">${openInc}</span><div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase">Open Incidents</div></div>` : ''}
+          ${pendingReq ? `<div style="background:#fef3c7;border-radius:var(--r-md);padding:8px 14px;cursor:pointer" onclick="goToTab('incidents')"><span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#d97706">${pendingReq}</span><div style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase">Pending Requests</div></div>` : ''}
+        </div>`;
+      } else {
+        incSum.innerHTML = `<div style="font-size:12px;color:var(--green);font-weight:600">✅ All clear — no open incidents or pending requests</div>`;
+      }
+    }
+
     const todayLogs = state.taskLogs.filter(l => l.date === todayStr());
     const totalTasks = state.tasks.length;
     const pct = totalTasks ? Math.round(todayLogs.length / totalTasks * 100) : 0;
     const shiftBreakdown = ['Morning','Noon','Night'].map(sh => {
-      const shTasks = state.tasks.filter(t => t.shift === sh || t.shift === 'All');
-      const shDone = todayLogs.filter(l => l.shift === sh).length;
+      const shTasks = state.tasks.filter(t => t.assignedshift === sh || t.assignedshift === 'All');
+      const shDone = todayLogs.filter(l => l.shift === sh && (l.status === 'completed' || l.status === 'locked')).length;
       return `<div class="prog-item"><div class="prog-val">${shDone}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
     }).join('');
     if (se('dash-task-progress')) se('dash-task-progress').innerHTML = `<div class="card-title">Tasks Today — ${pct}% Complete</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%"></div></div><div class="progress-summary" style="margin:0">${shiftBreakdown}</div>`;
   }
+
   const listEl = se('today-jobs-list');
   if (listEl) {
     if (!todayJobs.length) listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
@@ -1866,14 +1964,20 @@ function renderInventory() {
       (i.name.toLowerCase().includes(q) || (i.serial||'').toLowerCase().includes(q)));
   } else if (isDamaged) {
     list = state.damageReports || [];
+  } else if (invFilter === 'all') {
+    // All tab shows everything including equipment
+    list = state.inventory.filter(i =>
+      i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q));
   } else {
+    // Category filter — exclude equipment from non-equipment category tabs
     list = state.inventory.filter(i => i.category !== 'Equipment' &&
       (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) &&
-      (invFilter === 'all' || i.category === invFilter));
+      i.category === invFilter);
   }
 
   const eqCount = state.inventory.filter(i => i.category === 'Equipment').length;
-  const lowCount = state.inventory.filter(i => i.category !== 'Equipment' && Number(i.qty) <= Number(i.reorder)).length;
+  // Low stock only counts non-equipment items with a reorder level set
+  const lowCount = state.inventory.filter(i => i.category !== 'Equipment' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder)).length;
   const cntEl = document.getElementById('inv-count-lbl');
   const lowEl = document.getElementById('inv-low-lbl');
   if (cntEl) cntEl.textContent = `${state.inventory.length} items · ${eqCount} equipment`;
@@ -1881,16 +1985,6 @@ function renderInventory() {
 
   const grid = document.getElementById('inventory-grid');
   if (!grid) return;
-
-  if (isEqTab) {
-    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment added yet</div></div>'; grid.className = 'inv-grid'; return; }
-    grid.className = 'inv-grid';
-    grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => equipmentCardHtml(item)).join('');
-    grid._fullList = list;
-    const lm = document.getElementById('inv-load-more');
-    if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
-    return;
-  }
 
   if (isDamaged) {
     if (!state.damageReports.length) {
@@ -1911,7 +2005,10 @@ function renderInventory() {
   }
 
   if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; }
-  grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => invCardHtml(item)).join('');
+  // Render each item with correct card type
+  grid.innerHTML = list.slice(0, PAGE_SIZE).map(item =>
+    item.category === 'Equipment' ? equipmentCardHtml(item) : invCardHtml(item)
+  ).join('');
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
   grid._fullList = list;
@@ -1923,14 +2020,19 @@ function equipmentCardHtml(item) {
   const cs = conditionStyle(cond);
   const condHistory = Array.isArray(item.conditionhistory) ? item.conditionhistory : [];
   const lastUpdate = condHistory.length ? condHistory[condHistory.length - 1] : null;
+  const qty = item.qty != null ? item.qty : '—';
+  const imgHtml = item.img && item.img.startsWith('data:')
+    ? `<div class="inv-img" style="cursor:pointer" onclick="event.stopPropagation();viewImage('${item.img}','${esc(item.name)}')"><img src="${item.img}" alt=""></div>`
+    : `<div class="inv-img">🔧</div>`;
   return `<div class="inv-card" onclick="openInvDetail('${esc(item.id)}')">
-    <div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '🔧'}</div>
+    ${imgHtml}
     <div class="inv-body">
       <div class="inv-name">${esc(item.name)}</div>
       <div class="inv-cat">Equipment${item.serial ? ' · ' + esc(item.serial) : ''}</div>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:${cs.bg};color:${cs.color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:8px 0">${cs.icon} ${esc(cond)}</div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:${cs.bg};color:${cs.color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:6px 0">${cs.icon} ${esc(cond)}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:2px">Qty: ${qty}</div>
       ${item.assignedto ? `<div style="font-size:10px;color:var(--text-muted)">📍 ${esc(item.assignedto)}</div>` : ''}
-      ${lastUpdate ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Last updated: ${esc(lastUpdate.date)}</div>` : ''}
+      ${lastUpdate ? `<div style="font-size:10px;color:var(--text-muted);margin-top:3px">Updated: ${esc(lastUpdate.date)}</div>` : ''}
     </div>
   </div>`;
 }
@@ -1939,7 +2041,10 @@ function invCardHtml(item) {
   const pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
   const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
   const dmgCount = (state.damageReports || []).filter(r => r.invid === item.id).length;
-  return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${esc(item.id)}')"><div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '📦'}</div><div class="inv-body"><div class="inv-name">${esc(item.name)}</div><div class="inv-cat">${esc(item.category)}</div>${dmgCount ? `<div class="pill pill-damaged" style="margin:4px 0">⚠ ${dmgCount} damage report${dmgCount>1?'s':''}</div>` : ''}<div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${esc(item.uom||'')}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty)<=Number(item.reorder)?'<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW</div>':''}</div></div>`;
+  const imgHtml = item.img && item.img.startsWith('data:')
+    ? `<div class="inv-img" style="cursor:pointer" onclick="event.stopPropagation();viewImage('${item.img}','${esc(item.name)}')"><img src="${item.img}" alt=""></div>`
+    : `<div class="inv-img">📦</div>`;
+  return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${esc(item.id)}')">${imgHtml}<div class="inv-body"><div class="inv-name">${esc(item.name)}</div><div class="inv-cat">${esc(item.category)}</div>${dmgCount ? `<div class="pill pill-damaged" style="margin:4px 0">⚠ ${dmgCount} damage report${dmgCount>1?'s':''}</div>` : ''}<div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${esc(item.uom||'')}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty)<=Number(item.reorder)&&Number(item.reorder)>0?'<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW</div>':''}</div></div>`;
 }
 
 function loadMoreInv() {
@@ -1949,13 +2054,14 @@ function loadMoreInv() {
   const isEqTab = invFilter === '__equipment__';
   const isDamaged = invFilter === '__damaged__';
   const page = list.slice(invPage * PAGE_SIZE, (invPage+1) * PAGE_SIZE);
-  if (isEqTab) grid.innerHTML += page.map(item => equipmentCardHtml(item)).join('');
-  else if (isDamaged) {
+  if (isDamaged) {
     grid.innerHTML += page.map(r => {
       const invItem = state.inventory.find(i => i.id === r.invid) || {};
       return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${esc(invItem.name||r.itemname||'Unknown')}</div><div class="damage-date">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div><div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`;
     }).join('');
-  } else grid.innerHTML += page.map(item => invCardHtml(item)).join('');
+  } else {
+    grid.innerHTML += page.map(item => item.category === 'Equipment' ? equipmentCardHtml(item) : invCardHtml(item)).join('');
+  }
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > (invPage+1) * PAGE_SIZE ? 'block' : 'none';
 }
@@ -1981,6 +2087,7 @@ async function saveInventory() {
     if (isEq) {
       item = {
         id: uid(), name: nameVal, category: cat,
+        qty: parseInt(document.getElementById('inv-eq-qty').value)||0,
         serial: document.getElementById('inv-serial').value.trim(),
         condition: document.getElementById('inv-condition').value,
         purchasedate: document.getElementById('inv-purchase-date').value,
@@ -2027,6 +2134,7 @@ function openInvDetail(id) {
     const cs = conditionStyle(cond);
     document.getElementById('inv-detail-info').innerHTML = `
       <div style="display:inline-flex;align-items:center;gap:6px;background:${cs.bg};color:${cs.color};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px">${cs.icon} ${esc(cond)}</div>
+      ${item.img && item.img.startsWith('data:') ? `<div style="margin-bottom:10px"><img src="${item.img}" onclick="viewImage('${item.img}','${esc(item.name)}')" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border)" alt="📷 Tap to view"></div>` : ''}
       ${detRow('Category', 'Equipment')}
       ${detRow('Asset / Serial', item.serial||'—')}
       ${detRow('Assigned To', item.assignedto||'—')}
@@ -2034,7 +2142,10 @@ function openInvDetail(id) {
       ${detRow('Last Serviced', item.lastserviced||'—')}
       ${detRow('Supplier', item.supplier||'—')}
       ${item.conditionnotes?`<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>`:''}`;
-    document.getElementById('inv-qty-ctrl').innerHTML = '';
+    // Qty control for equipment
+    const qtyCtrl = document.getElementById('inv-qty-ctrl');
+    if (canEdit()) qtyCtrl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Quantity</div><div style="display:flex;align-items:center;gap:10px"><button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty||0}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button></div>`;
+    else qtyCtrl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Quantity</div><span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty||0}</span>`;
     // Show condition history
     const hist = item.conditionhistory || [];
     const histHtml = hist.length
@@ -2064,6 +2175,7 @@ function openInvDetail(id) {
     const pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder)*2||1) * 100));
     const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
     document.getElementById('inv-detail-info').innerHTML = `
+      ${item.img && item.img.startsWith('data:') ? `<div style="margin-bottom:10px"><img src="${item.img}" onclick="viewImage('${item.img}','${esc(item.name)}')" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border)" alt="📷 Tap to view"></div>` : ''}
       <div class="detail-row"><span class="dk">Category</span><span class="dv">${esc(item.category)}</span></div>
       <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${esc(item.uom||'units')}</strong></span></div>
       <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${esc(item.uom||'units')}</span></div>
@@ -3485,7 +3597,7 @@ function clearStaffForm() {
 
 function clearInvForm() {
   ['inv-name','inv-qty','inv-reorder','inv-supplier','inv-supplier-contact',
-   'inv-serial','inv-assigned-to','inv-condition-notes','inv-eq-supplier','inv-eq-supplier-contact'].forEach(id => {
+   'inv-serial','inv-eq-qty','inv-assigned-to','inv-condition-notes','inv-eq-supplier','inv-eq-supplier-contact'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('inv-cat').selectedIndex = 0;
