@@ -522,10 +522,10 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div class="tabs">
         <button class="tab active" onclick="filterInv('all',this)">All</button>
         <button class="tab" onclick="filterInv('Chemicals',this)">Chemicals</button>
-        <button class="tab" onclick="filterInv('Equipment',this)">Equipment</button>
+        <button class="tab" onclick="filterInv('__equipment__',this)">🔧 Equipment</button>
         <button class="tab" onclick="filterInv('PPE',this)">PPE</button>
         <button class="tab" onclick="filterInv('Consumables',this)">Consumables</button>
-        <button class="tab" onclick="filterInv('__damaged__',this)">⚠ Damaged</button>
+        <button class="tab" onclick="filterInv('__damaged__',this)">⚠ Damaged Stock</button>
       </div>
       <div id="inventory-grid" class="inv-grid"></div>
       <button class="load-more-btn" id="inv-load-more" style="display:none" onclick="loadMoreInv()">Load more items</button>
@@ -698,22 +698,55 @@ textarea.form-control{resize:vertical;min-height:56px}
 
 <!-- INVENTORY MODAL -->
 <div class="modal-overlay" id="modal-add-inv" style="display:none" onclick="overlayClick(event,'modal-add-inv')">
-  <div class="modal"><div class="modal-header"><span class="modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
+  <div class="modal"><div class="modal-header"><span class="modal-title" id="add-inv-modal-title">Add Inventory Item</span><button class="modal-close" onclick="closeModal('modal-add-inv')">✕</button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">Product Image</label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder','del-inv-img')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div><button type="button" class="photo-delete-btn" id="del-inv-img" onclick="clearPhoto('inv-img-preview','inv-img-placeholder','del-inv-img')" title="Remove image">✕</button></div></div>
+    <div class="form-group"><label class="form-label">Product / Equipment Image</label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inv-img-preview','inv-img-placeholder','del-inv-img')"><img src="" class="photo-preview-rect" id="inv-img-preview" style="display:none"><div id="inv-img-placeholder">📷 Tap to add image</div></div><button type="button" class="photo-delete-btn" id="del-inv-img" onclick="clearPhoto('inv-img-preview','inv-img-placeholder','del-inv-img')" title="Remove image">✕</button></div></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="inv-name"><div class="field-error" id="err-inv-name">Name is required</div></div>
-      <div class="form-group"><label class="form-label">Category *</label><select class="form-control" id="inv-cat"><option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Category *</label>
+        <select class="form-control" id="inv-cat" onchange="toggleInvCategoryFields()">
+          <option>Chemicals</option><option>Equipment</option><option>PPE</option><option>Consumables</option><option>Other</option>
+        </select>
+      </div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div>
-      <div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option></select></div>
+    <!-- STOCK FIELDS (Chemicals, PPE, Consumables, Other) -->
+    <div id="inv-stock-fields">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-control" id="inv-qty" min="0"></div>
+        <div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div>
+        <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-supplier-contact" placeholder="Phone/Email"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Reorder Level</label><input type="number" class="form-control" id="inv-reorder" min="0"></div>
-      <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-supplier"></div>
+    <!-- EQUIPMENT FIELDS -->
+    <div id="inv-equipment-fields" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Asset / Serial No.</label><input type="text" class="form-control" id="inv-serial" placeholder="e.g. EQ-001"></div>
+        <div class="form-group"><label class="form-label">Condition</label>
+          <select class="form-control" id="inv-condition">
+            <option value="New">🟢 New</option>
+            <option value="Good">🟢 Good</option>
+            <option value="Fair">🟡 Fair</option>
+            <option value="Needs Maintenance">🟠 Needs Maintenance</option>
+            <option value="Damaged">🔴 Damaged</option>
+            <option value="Decommissioned">⚫ Decommissioned</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-control" id="inv-purchase-date"></div>
+        <div class="form-group"><label class="form-label">Last Serviced</label><input type="date" class="form-control" id="inv-last-serviced"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Assigned To</label><input type="text" class="form-control" id="inv-assigned-to" placeholder="e.g. Floor 3 Washrooms, Ama Mensah…"></div>
+      <div class="form-group"><label class="form-label">Condition Notes</label><textarea class="form-control" id="inv-condition-notes" rows="2" placeholder="e.g. Handle cracked, motor running slow…"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="inv-eq-supplier"></div>
+        <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-eq-supplier-contact" placeholder="Phone/Email"></div>
+      </div>
     </div>
-    <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="inv-supplier-contact" placeholder="Phone/Email"></div>
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-inv')">Cancel</button><button class="btn btn-primary" onclick="saveInventory()">Add Item</button></div>
   </div></div>
 </div>
@@ -721,15 +754,52 @@ textarea.form-control{resize:vertical;min-height:56px}
 <!-- INVENTORY DETAIL MODAL -->
 <div class="modal-overlay center-ov" id="modal-inv-detail" style="display:none" onclick="overlayClick(event,'modal-inv-detail')">
   <div class="modal center-m"><div class="modal-header"><span class="modal-title" id="inv-detail-title">Inventory Item</span><button class="modal-close" onclick="closeModal('modal-inv-detail')">✕</button></div>
-  <div class="modal-body"><div id="inv-detail-info"></div><div id="inv-qty-ctrl" style="margin:15px 0"></div>
-  <div class="section-sep">Daily Usage Logs</div><div id="inv-usage-logs"></div>
-  <div class="section-sep" style="border-color:var(--danger)">Damage Reports</div><div id="inv-damage-logs"></div>
-  <div class="form-actions">
-    <button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button>
-    <button class="btn btn-primary" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Usage</button>
-    <button class="btn btn-danger btn-sm" id="report-damage-btn" onclick="openDamageModal()">⚠ Report Damage</button>
-    <button class="btn btn-outline btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button>
-  </div></div></div>
+  <div class="modal-body">
+    <div id="inv-detail-info"></div>
+    <div id="inv-qty-ctrl" style="margin:15px 0"></div>
+    <!-- Stock item sections -->
+    <div id="inv-stock-detail-section">
+      <div class="section-sep">Daily Usage Logs</div><div id="inv-usage-logs"></div>
+      <div class="section-sep" style="border-color:var(--danger)">Damage Reports</div><div id="inv-damage-logs"></div>
+    </div>
+    <!-- Equipment sections -->
+    <div id="inv-equipment-detail-section" style="display:none">
+      <div class="section-sep">Condition History</div><div id="inv-condition-history"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button>
+      <button class="btn btn-primary btn-sm" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Usage</button>
+      <button class="btn btn-amber btn-sm" id="update-condition-btn" onclick="openConditionUpdateModal()" style="display:none">🔧 Update Condition</button>
+      <button class="btn btn-danger btn-sm" id="report-damage-btn" onclick="openDamageModal()">⚠ Report Damage</button>
+      <button class="btn btn-outline btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- CONDITION UPDATE MODAL (equipment only) -->
+<div class="modal-overlay center-ov" id="modal-condition-update" style="display:none" onclick="overlayClick(event,'modal-condition-update')">
+  <div class="modal center-m"><div class="modal-header" style="background:#0369a1"><span class="modal-title">🔧 Update Equipment Condition</span><button class="modal-close" onclick="closeModal('modal-condition-update')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Equipment</label><input type="text" class="form-control" id="cond-item-name" readonly style="background:#e8edf7"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">New Condition *</label>
+        <select class="form-control" id="cond-new-status">
+          <option value="New">🟢 New</option>
+          <option value="Good">🟢 Good</option>
+          <option value="Fair">🟡 Fair</option>
+          <option value="Needs Maintenance">🟠 Needs Maintenance</option>
+          <option value="Damaged">🔴 Damaged</option>
+          <option value="Decommissioned">⚫ Decommissioned</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control" id="cond-date"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Last Serviced Date <span style="font-weight:400;color:var(--text-muted)">(if applicable)</span></label><input type="date" class="form-control" id="cond-serviced-date"></div>
+    <div class="form-group"><label class="form-label">Assigned To</label><input type="text" class="form-control" id="cond-assigned-to" placeholder="Zone or staff member"></div>
+    <div class="form-group"><label class="form-label">Notes *</label><textarea class="form-control" id="cond-notes" rows="3" placeholder="Describe what was done or what changed…"></textarea><div class="field-error" id="err-cond-notes">Notes are required</div></div>
+    <div class="form-group"><label class="form-label">Photo <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'cond-photo-preview','cond-photo-placeholder','del-cond-photo')"><img src="" class="photo-preview-rect" id="cond-photo-preview" style="display:none"><div id="cond-photo-placeholder">📷 Tap to add photo</div></div><button type="button" class="photo-delete-btn" id="del-cond-photo" onclick="clearPhoto('cond-photo-preview','cond-photo-placeholder','del-cond-photo')" title="Remove">✕</button></div></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-condition-update')">Cancel</button><button class="btn btn-primary" style="background:#0369a1" onclick="saveConditionUpdate()">Save Condition Update</button></div>
+  </div></div>
 </div>
 
 <!-- LOG USAGE MODAL -->
@@ -1755,25 +1825,74 @@ function addRow(doc,k,v,y,shade){doc.setFillColor(shade?247:255,shade?249:255,sh
 // ================================================================
 // INVENTORY MANAGEMENT
 // ================================================================
+const EQUIPMENT_CONDITIONS = {
+  'New': { color: '#16a34a', bg: '#dcfce7', icon: '🟢' },
+  'Good': { color: '#16a34a', bg: '#dcfce7', icon: '🟢' },
+  'Fair': { color: '#d97706', bg: '#fef3c7', icon: '🟡' },
+  'Needs Maintenance': { color: '#ea580c', bg: '#ffedd5', icon: '🟠' },
+  'Damaged': { color: '#dc2626', bg: '#fee2e2', icon: '🔴' },
+  'Decommissioned': { color: '#6b7280', bg: '#f3f4f6', icon: '⚫' }
+};
+
+function conditionStyle(cond) {
+  return EQUIPMENT_CONDITIONS[cond] || { color: '#6b7280', bg: '#f3f4f6', icon: '⚪' };
+}
+
+function isEquipment(item) { return item.category === 'Equipment'; }
+
+function toggleInvCategoryFields() {
+  const cat = document.getElementById('inv-cat')?.value;
+  const stockFields = document.getElementById('inv-stock-fields');
+  const eqFields = document.getElementById('inv-equipment-fields');
+  if (!stockFields || !eqFields) return;
+  if (cat === 'Equipment') {
+    stockFields.style.display = 'none';
+    eqFields.style.display = 'block';
+  } else {
+    stockFields.style.display = 'block';
+    eqFields.style.display = 'none';
+  }
+}
+
 function renderInventory() {
   invPage = 0;
   const q = (document.getElementById('inv-search') || {value:''}).value.toLowerCase();
+  const isEqTab = invFilter === '__equipment__';
   const isDamaged = invFilter === '__damaged__';
   let list;
-  if (isDamaged) {
+
+  if (isEqTab) {
+    list = state.inventory.filter(i => i.category === 'Equipment' &&
+      (i.name.toLowerCase().includes(q) || (i.serial||'').toLowerCase().includes(q)));
+  } else if (isDamaged) {
     list = state.damageReports || [];
   } else {
-    list = state.inventory.filter(i => (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) && (invFilter === 'all' || i.category === invFilter));
+    list = state.inventory.filter(i => i.category !== 'Equipment' &&
+      (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) &&
+      (invFilter === 'all' || i.category === invFilter));
   }
-  const lowCount = state.inventory.filter(i => Number(i.qty) <= Number(i.reorder)).length;
+
+  const eqCount = state.inventory.filter(i => i.category === 'Equipment').length;
+  const lowCount = state.inventory.filter(i => i.category !== 'Equipment' && Number(i.qty) <= Number(i.reorder)).length;
   const cntEl = document.getElementById('inv-count-lbl');
   const lowEl = document.getElementById('inv-low-lbl');
-  if (cntEl) cntEl.textContent = `${state.inventory.length} items`;
+  if (cntEl) cntEl.textContent = `${state.inventory.length} items · ${eqCount} equipment`;
   if (lowEl) lowEl.textContent = `${lowCount} low stock`;
+
   const grid = document.getElementById('inventory-grid');
   if (!grid) return;
+
+  if (isEqTab) {
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment added yet</div></div>'; grid.className = 'inv-grid'; return; }
+    grid.className = 'inv-grid';
+    grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => equipmentCardHtml(item)).join('');
+    grid._fullList = list;
+    const lm = document.getElementById('inv-load-more');
+    if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
+    return;
+  }
+
   if (isDamaged) {
-    // Load damage reports lazily
     if (!state.damageReports.length) {
       loadDamageReports().then(() => renderInventory());
       grid.innerHTML = '<div class="empty-state"><div class="empty-text">Loading...</div></div>';
@@ -1790,13 +1909,30 @@ function renderInventory() {
     grid._fullList = list;
     return;
   }
+
   if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; }
-  const page = list.slice(0, PAGE_SIZE);
-  grid.innerHTML = page.map(item => invCardHtml(item)).join('');
+  grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => invCardHtml(item)).join('');
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
   grid._fullList = list;
   grid.className = 'inv-grid';
+}
+
+function equipmentCardHtml(item) {
+  const cond = item.condition || 'Good';
+  const cs = conditionStyle(cond);
+  const condHistory = Array.isArray(item.conditionhistory) ? item.conditionhistory : [];
+  const lastUpdate = condHistory.length ? condHistory[condHistory.length - 1] : null;
+  return `<div class="inv-card" onclick="openInvDetail('${esc(item.id)}')">
+    <div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '🔧'}</div>
+    <div class="inv-body">
+      <div class="inv-name">${esc(item.name)}</div>
+      <div class="inv-cat">Equipment${item.serial ? ' · ' + esc(item.serial) : ''}</div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:${cs.bg};color:${cs.color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:8px 0">${cs.icon} ${esc(cond)}</div>
+      ${item.assignedto ? `<div style="font-size:10px;color:var(--text-muted)">📍 ${esc(item.assignedto)}</div>` : ''}
+      ${lastUpdate ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Last updated: ${esc(lastUpdate.date)}</div>` : ''}
+    </div>
+  </div>`;
 }
 
 function invCardHtml(item) {
@@ -1810,16 +1946,16 @@ function loadMoreInv() {
   invPage++;
   const grid = document.getElementById('inventory-grid');
   const list = grid._fullList || [];
+  const isEqTab = invFilter === '__equipment__';
   const isDamaged = invFilter === '__damaged__';
   const page = list.slice(invPage * PAGE_SIZE, (invPage+1) * PAGE_SIZE);
-  if (isDamaged) {
+  if (isEqTab) grid.innerHTML += page.map(item => equipmentCardHtml(item)).join('');
+  else if (isDamaged) {
     grid.innerHTML += page.map(r => {
       const invItem = state.inventory.find(i => i.id === r.invid) || {};
       return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${esc(invItem.name||r.itemname||'Unknown')}</div><div class="damage-date">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div><div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`;
     }).join('');
-  } else {
-    grid.innerHTML += page.map(item => invCardHtml(item)).join('');
-  }
+  } else grid.innerHTML += page.map(item => invCardHtml(item)).join('');
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > (invPage+1) * PAGE_SIZE ? 'block' : 'none';
 }
@@ -1835,26 +1971,44 @@ async function saveInventory() {
   if (!canEdit()) return;
   const nameVal = document.getElementById('inv-name').value.trim();
   if (!validateField('inv-name', 'err-inv-name', v => v.trim().length > 0)) return;
-  showLoading('Adding inventory item…');
+  const cat = document.getElementById('inv-cat').value;
+  const isEq = cat === 'Equipment';
+  showLoading('Adding item…');
   try {
     const rawImg = document.getElementById('inv-img-preview').src || '';
     const img = await compressImage(rawImg, 400, 0.65);
-    const item = {
-      id: uid(), name: nameVal,
-      category: document.getElementById('inv-cat').value,
-      qty: parseInt(document.getElementById('inv-qty').value)||0,
-      uom: document.getElementById('inv-uom').value,
-      reorder: parseInt(document.getElementById('inv-reorder').value)||0,
-      supplier: document.getElementById('inv-supplier').value.trim(),
-      suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
-      img, usagelog: [], damagereports: []
-    };
+    let item;
+    if (isEq) {
+      item = {
+        id: uid(), name: nameVal, category: cat,
+        serial: document.getElementById('inv-serial').value.trim(),
+        condition: document.getElementById('inv-condition').value,
+        purchasedate: document.getElementById('inv-purchase-date').value,
+        lastserviced: document.getElementById('inv-last-serviced').value,
+        assignedto: document.getElementById('inv-assigned-to').value.trim(),
+        conditionnotes: document.getElementById('inv-condition-notes').value.trim(),
+        supplier: document.getElementById('inv-eq-supplier').value.trim(),
+        suppliercontact: document.getElementById('inv-eq-supplier-contact').value.trim(),
+        conditionhistory: [], img
+      };
+    } else {
+      item = {
+        id: uid(), name: nameVal, category: cat,
+        qty: parseInt(document.getElementById('inv-qty').value)||0,
+        uom: document.getElementById('inv-uom').value,
+        reorder: parseInt(document.getElementById('inv-reorder').value)||0,
+        supplier: document.getElementById('inv-supplier').value.trim(),
+        suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
+        usagelog: [], img
+      };
+    }
     await dbInsert('inventory', item);
-    item.usageLog = [];
+    if (!isEq) item.usageLog = [];
+    if (isEq) item.conditionhistory = item.conditionhistory || [];
     state.inventory.push(item);
     closeModal('modal-add-inv');
     renderInventory(); renderDashboard();
-    toast('Inventory item added', 'success');
+    toast(`${isEq ? 'Equipment' : 'Item'} added`, 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
@@ -1863,35 +2017,78 @@ function openInvDetail(id) {
   const item = state.inventory.find(x => x.id === id);
   if (!item) return;
   currentInvId = id;
-  if (!Array.isArray(item.usageLog)) item.usageLog = item.usagelog || [];
+  const isEq = isEquipment(item);
+  if (!isEq && !Array.isArray(item.usageLog)) item.usageLog = item.usagelog || [];
+  if (isEq && !Array.isArray(item.conditionhistory)) item.conditionhistory = [];
   document.getElementById('inv-detail-title').textContent = item.name;
-  const pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder)*2||1) * 100));
-  const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
-  document.getElementById('inv-detail-info').innerHTML = `
-    <div class="detail-row"><span class="dk">Category</span><span class="dv">${esc(item.category)}</span></div>
-    <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${esc(item.uom||'units')}</strong></span></div>
-    <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${esc(item.uom||'units')}</span></div>
-    <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${esc(item.supplier||'—')}</span></div>
-    <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${esc(item.suppliercontact||item.supplierContact||'—')}</span></div>
-    <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
-  const qtyCtrl = document.getElementById('inv-qty-ctrl');
-  if (canEdit()) qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
-  else qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${esc(item.uom||'units')}</span>`;
-  const logsHtml = item.usageLog && item.usageLog.length > 0
-    ? item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">Used: <strong>${log.qty} ${esc(item.uom||'units')}</strong>${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)} at ${esc((log.loggedAt||log.loggedat||'').slice(0,16))}</span></div></div>`).join('')
-    : '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div></div>';
-  document.getElementById('inv-usage-logs').innerHTML = logsHtml;
-  const dmgs = (state.damageReports||[]).filter(r => r.invid === id);
-  const dmgHtml = dmgs.length > 0
-    ? dmgs.map(r => `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.qty?`<div style="font-size:11px;color:#991b1b">Qty damaged: ${r.qty}</div>`:''}${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`).join('')
-    : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No damage reports for this item</div></div>';
-  document.getElementById('inv-damage-logs').innerHTML = dmgHtml;
-  const lb = document.getElementById('log-usage-btn');
-  const rb = document.getElementById('report-damage-btn');
-  const db = document.getElementById('delete-inv-btn');
-  if (lb) lb.style.display = canEdit() ? 'inline-flex' : 'none';
-  if (rb) rb.style.display = canEdit() ? 'inline-flex' : 'none';
-  if (db) db.style.display = canEdit() ? 'inline-flex' : 'none';
+
+  if (isEq) {
+    const cond = item.condition || 'Good';
+    const cs = conditionStyle(cond);
+    document.getElementById('inv-detail-info').innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:${cs.bg};color:${cs.color};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px">${cs.icon} ${esc(cond)}</div>
+      ${detRow('Category', 'Equipment')}
+      ${detRow('Asset / Serial', item.serial||'—')}
+      ${detRow('Assigned To', item.assignedto||'—')}
+      ${detRow('Purchase Date', item.purchasedate||'—')}
+      ${detRow('Last Serviced', item.lastserviced||'—')}
+      ${detRow('Supplier', item.supplier||'—')}
+      ${item.conditionnotes?`<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>`:''}`;
+    document.getElementById('inv-qty-ctrl').innerHTML = '';
+    // Show condition history
+    const hist = item.conditionhistory || [];
+    const histHtml = hist.length
+      ? hist.slice().reverse().map(h => {
+          const hcs = conditionStyle(h.condition||'Good');
+          return `<div class="log-entry" style="border-left-color:${hcs.color}">
+            <div class="log-date" style="display:flex;align-items:center;gap:6px">
+              <span style="background:${hcs.bg};color:${hcs.color};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${hcs.icon} ${esc(h.condition)}</span>
+              <span style="font-size:11px;color:var(--text-muted)">${esc(h.date)}</span>
+            </div>
+            <div class="log-details">${esc(h.notes)}${h.serviceddate?`<br>🔧 Serviced: ${esc(h.serviceddate)}`:''}${h.assignedto?`<br>📍 ${esc(h.assignedto)}`:''}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:3px">by ${esc(h.updatedby)} · ${esc((h.createdat||'').slice(0,16))}</div>
+            ${h.photo&&h.photo.startsWith('data:')?`<img src="${h.photo}" class="damage-img-thumb" style="margin-top:6px" onclick="viewImage('${h.photo}','Condition Photo')" alt="">` : ''}
+          </div>`;
+        }).join('')
+      : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No condition history yet</div></div>';
+    document.getElementById('inv-condition-history').innerHTML = histHtml;
+    // Show/hide correct sections
+    document.getElementById('inv-stock-detail-section').style.display = 'none';
+    document.getElementById('inv-equipment-detail-section').style.display = 'block';
+    // Buttons
+    const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = 'none';
+    const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = 'none';
+    const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = canEdit() ? 'inline-flex' : 'none';
+    const dib = document.getElementById('delete-inv-btn'); if (dib) dib.style.display = canEdit() ? 'inline-flex' : 'none';
+  } else {
+    const pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder)*2||1) * 100));
+    const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
+    document.getElementById('inv-detail-info').innerHTML = `
+      <div class="detail-row"><span class="dk">Category</span><span class="dv">${esc(item.category)}</span></div>
+      <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${esc(item.uom||'units')}</strong></span></div>
+      <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${esc(item.uom||'units')}</span></div>
+      <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${esc(item.supplier||'—')}</span></div>
+      <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${esc(item.suppliercontact||item.supplierContact||'—')}</span></div>
+      <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
+    const qtyCtrl = document.getElementById('inv-qty-ctrl');
+    if (canEdit()) qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
+    else qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${esc(item.uom||'units')}</span>`;
+    const logsHtml = item.usageLog && item.usageLog.length > 0
+      ? item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">Used: <strong>${log.qty} ${esc(item.uom||'units')}</strong>${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`).join('')
+      : '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div></div>';
+    document.getElementById('inv-usage-logs').innerHTML = logsHtml;
+    const dmgs = (state.damageReports||[]).filter(r => r.invid === id);
+    const dmgHtml = dmgs.length > 0
+      ? dmgs.map(r => `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.qty?`<div style="font-size:11px;color:#991b1b">Qty damaged: ${r.qty}</div>`:''}${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`).join('')
+      : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No damage reports for this item</div></div>';
+    document.getElementById('inv-damage-logs').innerHTML = dmgHtml;
+    document.getElementById('inv-stock-detail-section').style.display = 'block';
+    document.getElementById('inv-equipment-detail-section').style.display = 'none';
+    const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = canEdit() ? 'inline-flex' : 'none';
+    const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = canEdit() ? 'inline-flex' : 'none';
+    const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = 'none';
+    const dib = document.getElementById('delete-inv-btn'); if (dib) dib.style.display = canEdit() ? 'inline-flex' : 'none';
+  }
   openModal('modal-inv-detail');
 }
 
@@ -1943,6 +2140,65 @@ async function saveUsageLog() {
     closeModal('modal-log-usage'); openInvDetail(currentInvId); renderInventory(); renderDashboard();
     toast('Usage logged', 'success');
   } catch(e) { item.usageLog.pop(); toast('Save failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+function openConditionUpdateModal() {
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  closeModal('modal-inv-detail');
+  openModal('modal-condition-update');
+  document.getElementById('cond-item-name').value = item.name;
+  document.getElementById('cond-new-status').value = item.condition || 'Good';
+  document.getElementById('cond-date').value = todayStr();
+  document.getElementById('cond-serviced-date').value = '';
+  document.getElementById('cond-assigned-to').value = item.assignedto || '';
+  document.getElementById('cond-notes').value = '';
+  clearPhoto('cond-photo-preview','cond-photo-placeholder','del-cond-photo');
+  clearFieldError('cond-notes','err-cond-notes');
+}
+
+async function saveConditionUpdate() {
+  if (!canEdit()) return;
+  const notes = document.getElementById('cond-notes').value.trim();
+  if (!validateField('cond-notes','err-cond-notes', v => v.trim().length > 0)) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  const newCondition = document.getElementById('cond-new-status').value;
+  const servicedDate = document.getElementById('cond-serviced-date').value;
+  const assignedTo = document.getElementById('cond-assigned-to').value.trim();
+  const rawPhoto = document.getElementById('cond-photo-preview').src || '';
+  const photo = await compressImage(rawPhoto, 600, 0.7);
+  if (!Array.isArray(item.conditionhistory)) item.conditionhistory = [];
+  const entry = {
+    id: uid(),
+    condition: newCondition,
+    date: document.getElementById('cond-date').value || todayStr(),
+    notes,
+    serviceddate: servicedDate || null,
+    assignedto: assignedTo || null,
+    photo,
+    updatedby: currentUser.name,
+    createdat: new Date().toISOString()
+  };
+  item.conditionhistory.push(entry);
+  showLoading('Saving condition update…');
+  try {
+    await dbUpdate('inventory', item.id, {
+      condition: newCondition,
+      lastserviced: servicedDate || item.lastserviced,
+      assignedto: assignedTo || item.assignedto,
+      conditionnotes: notes,
+      conditionhistory: item.conditionhistory
+    });
+    item.condition = newCondition;
+    if (servicedDate) item.lastserviced = servicedDate;
+    if (assignedTo) item.assignedto = assignedTo;
+    closeModal('modal-condition-update');
+    openInvDetail(currentInvId);
+    renderInventory();
+    toast('Condition updated', 'success');
+  } catch(e) { item.conditionhistory.pop(); toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
 
@@ -3228,17 +3484,22 @@ function clearStaffForm() {
 }
 
 function clearInvForm() {
-  ['inv-name','inv-qty','inv-reorder','inv-supplier','inv-supplier-contact'].forEach(id => {
+  ['inv-name','inv-qty','inv-reorder','inv-supplier','inv-supplier-contact',
+   'inv-serial','inv-assigned-to','inv-condition-notes','inv-eq-supplier','inv-eq-supplier-contact'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('inv-cat').selectedIndex = 0;
   document.getElementById('inv-uom').selectedIndex = 0;
+  document.getElementById('inv-condition').value = 'New';
+  const pd = document.getElementById('inv-purchase-date'); if (pd) pd.value = '';
+  const ls = document.getElementById('inv-last-serviced'); if (ls) ls.value = '';
+  // Reset to stock fields view
+  const sf = document.getElementById('inv-stock-fields'); if (sf) sf.style.display = 'block';
+  const ef = document.getElementById('inv-equipment-fields'); if (ef) ef.style.display = 'none';
   const img = document.getElementById('inv-img-preview');
   if (img) { img.removeAttribute('src'); img.src=''; img.style.display='none'; }
-  const ph = document.getElementById('inv-img-placeholder');
-  if (ph) ph.style.display='block';
-  const btn = document.getElementById('del-inv-img');
-  if (btn) btn.classList.remove('visible');
+  const ph = document.getElementById('inv-img-placeholder'); if (ph) ph.style.display='block';
+  const btn = document.getElementById('del-inv-img'); if (btn) btn.classList.remove('visible');
   clearFieldError('inv-name','err-inv-name');
   const modal = document.getElementById('modal-add-inv');
   if (modal) modal.querySelectorAll('input[type=file]').forEach(f => { f.value=''; });
