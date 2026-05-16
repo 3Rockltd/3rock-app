@@ -2196,6 +2196,8 @@ function openInvDetail(id) {
     document.getElementById('inv-damage-logs').innerHTML = dmgHtml;
     document.getElementById('inv-stock-detail-section').style.display = 'block';
     document.getElementById('inv-equipment-detail-section').style.display = 'none';
+    // Variants
+    renderVariantsSection(item);
     const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = canEdit() ? 'inline-flex' : 'none';
     const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = canEdit() ? 'inline-flex' : 'none';
     const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = 'none';
@@ -2208,7 +2210,11 @@ async function adjustQty(delta) {
   if (!canEdit()) return;
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
-  const n = item.qty + delta;
+  // If item has variants, don't allow direct qty edit — manage via variants
+  if (Array.isArray(item.variants) && item.variants.length > 0) {
+    toast('This item has variants — adjust qty on each variant instead', 'info'); return;
+  }
+  const n = (item.qty||0) + delta;
   if (n < 0) { toast('Cannot go below zero', 'error'); return; }
   showLoading('Updating stock…');
   try {
@@ -2216,6 +2222,182 @@ async function adjustQty(delta) {
     item.qty = n;
     openInvDetail(currentInvId); renderInventory(); renderDashboard();
   } catch(e) { toast('Update failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+// ================================================================
+// VARIANTS — sub-items under a parent stock entry
+// Stored as JSONB array on inventory row: item.variants = []
+// Each variant: { id, label, qty, reorder, notes, createdat }
+// Parent qty is always kept in sync as the sum of variant qtys
+// ================================================================
+let _editingVariantId = null;
+
+function renderVariantsSection(item) {
+  if (!item || isEquipment(item)) return;
+  if (!Array.isArray(item.variants)) item.variants = [];
+  const section = document.getElementById('inv-variants-section');
+  const listEl = document.getElementById('inv-variants-list');
+  const badge = document.getElementById('variant-total-badge');
+  const addBtn = document.getElementById('add-variant-btn');
+  if (!section || !listEl) return;
+  section.style.display = 'block';
+  if (addBtn) addBtn.style.display = canEdit() ? 'block' : 'none';
+  const variants = item.variants;
+  const totalQty = variants.reduce((s, v) => s + (Number(v.qty)||0), 0);
+  if (badge) badge.textContent = variants.length
+    ? `· ${variants.length} variant${variants.length > 1 ? 's' : ''} · total: ${totalQty} ${esc(item.uom||'units')}`
+    : '';
+  if (!variants.length) {
+    listEl.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:6px 0 10px">
+      No variants yet. Use <strong>+ Add Variant</strong> to split this item by colour, size or type
+      (e.g. Red × 2, Blue × 1). The parent quantity will update automatically.
+    </div>`;
+    return;
+  }
+  listEl.innerHTML = variants.map(v => {
+    const pct = Number(v.reorder) > 0 ? Math.min(100, Math.round(Number(v.qty) / (Number(v.reorder)*2) * 100)) : 100;
+    const fillCls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
+    const isLow = Number(v.reorder) > 0 && Number(v.qty) <= Number(v.reorder);
+    return `<div style="background:var(--off-white);border:1.5px solid ${isLow?'#fca5a5':'var(--border-light)'};border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--navy);flex:1">${esc(v.label)}</span>
+        ${isLow ? '<span class="pill" style="background:#fef2f2;color:#dc2626;font-size:9px;padding:2px 7px">⚠ LOW</span>' : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${canEdit() ? `
+          <button class="btn btn-outline btn-sm" onclick="adjustVariantQty('${esc(v.id)}',-1)" style="padding:4px 10px;font-size:13px">−</button>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--navy);min-width:32px;text-align:center">${v.qty}</span>
+          <button class="btn btn-primary btn-sm" onclick="adjustVariantQty('${esc(v.id)}',1)" style="padding:4px 10px;font-size:13px">+</button>
+          <span style="font-size:11px;color:var(--text-muted)">${esc(item.uom||'units')}</span>
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn btn-outline btn-sm" onclick="openEditVariant('${esc(v.id)}')" title="Edit">✏️</button>
+            <button class="btn btn-outline btn-sm" onclick="deleteVariant('${esc(v.id)}')" title="Delete" style="color:var(--danger)">✕</button>
+          </div>` :
+          `<span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--navy)">${v.qty} ${esc(item.uom||'units')}</span>`
+        }
+      </div>
+      ${Number(v.reorder) > 0 ? `
+        <div class="stock-bar" style="margin:8px 0 3px"><div class="stock-fill ${fillCls}" style="width:${pct}%"></div></div>
+        <div style="font-size:10px;color:var(--text-muted)">Reorder level: ${v.reorder} ${esc(item.uom||'units')}</div>` : ''}
+      ${v.notes ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:5px;font-style:italic">📝 ${esc(v.notes)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openAddVariantModal() {
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  _editingVariantId = null;
+  document.getElementById('variant-modal-title').textContent = 'Add Variant';
+  document.getElementById('variant-parent-name').textContent = item.name;
+  document.getElementById('variant-label').value = '';
+  document.getElementById('variant-qty').value = '';
+  document.getElementById('variant-reorder').value = '';
+  document.getElementById('variant-notes').value = '';
+  document.getElementById('save-variant-btn').textContent = 'Add Variant';
+  clearFieldError('variant-label','err-variant-label');
+  closeModal('modal-inv-detail');
+  openModal('modal-add-variant');
+}
+
+function openEditVariant(variantId) {
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  const v = (item.variants||[]).find(x => x.id === variantId);
+  if (!v) return;
+  _editingVariantId = variantId;
+  document.getElementById('variant-modal-title').textContent = 'Edit Variant';
+  document.getElementById('variant-parent-name').textContent = item.name;
+  document.getElementById('variant-label').value = v.label || '';
+  document.getElementById('variant-qty').value = v.qty ?? '';
+  document.getElementById('variant-reorder').value = v.reorder ?? '';
+  document.getElementById('variant-notes').value = v.notes || '';
+  document.getElementById('save-variant-btn').textContent = 'Save Changes';
+  clearFieldError('variant-label','err-variant-label');
+  closeModal('modal-inv-detail');
+  openModal('modal-add-variant');
+}
+
+async function saveVariant() {
+  if (!canEdit()) return;
+  const label = document.getElementById('variant-label').value.trim();
+  if (!validateField('variant-label','err-variant-label', v => v.trim().length > 0)) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  if (!Array.isArray(item.variants)) item.variants = [];
+  showLoading(_editingVariantId ? 'Updating variant…' : 'Adding variant…');
+  try {
+    if (_editingVariantId) {
+      const idx = item.variants.findIndex(v => v.id === _editingVariantId);
+      if (idx >= 0) {
+        item.variants[idx] = { ...item.variants[idx], label,
+          qty: parseInt(document.getElementById('variant-qty').value)||0,
+          reorder: parseInt(document.getElementById('variant-reorder').value)||0,
+          notes: document.getElementById('variant-notes').value.trim()
+        };
+      }
+    } else {
+      // Prevent duplicate labels
+      if (item.variants.some(v => v.label.toLowerCase() === label.toLowerCase())) {
+        toast(`A "${label}" variant already exists for this item`, 'error');
+        hideLoading(); return;
+      }
+      item.variants.push({ id: uid(), label,
+        qty: parseInt(document.getElementById('variant-qty').value)||0,
+        reorder: parseInt(document.getElementById('variant-reorder').value)||0,
+        notes: document.getElementById('variant-notes').value.trim(),
+        createdat: new Date().toISOString()
+      });
+    }
+    // Keep parent qty in sync as sum of all variant qtys
+    const totalQty = item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0);
+    await dbUpdate('inventory', item.id, { variants: item.variants, qty: totalQty });
+    item.qty = totalQty;
+    closeModal('modal-add-variant');
+    openInvDetail(currentInvId);
+    renderInventory(); renderDashboard();
+    toast(_editingVariantId ? 'Variant updated' : 'Variant added', 'success');
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function adjustVariantQty(variantId, delta) {
+  if (!canEdit()) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item || !Array.isArray(item.variants)) return;
+  const v = item.variants.find(x => x.id === variantId);
+  if (!v) return;
+  const newQty = (Number(v.qty)||0) + delta;
+  if (newQty < 0) { toast('Cannot go below zero', 'error'); return; }
+  v.qty = newQty;
+  const totalQty = item.variants.reduce((s,x) => s + (Number(x.qty)||0), 0);
+  showLoading('Updating…');
+  try {
+    await dbUpdate('inventory', item.id, { variants: item.variants, qty: totalQty });
+    item.qty = totalQty;
+    openInvDetail(currentInvId); renderInventory(); renderDashboard();
+  } catch(e) { v.qty -= delta; toast('Update failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function deleteVariant(variantId) {
+  if (!canEdit()) return;
+  const confirmed = await showConfirm('Delete Variant',
+    'This will permanently remove this variant. The parent total quantity will update automatically.',
+    'Delete', 'btn-danger');
+  if (!confirmed) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item || !Array.isArray(item.variants)) return;
+  item.variants = item.variants.filter(v => v.id !== variantId);
+  const totalQty = item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0);
+  showLoading('Removing variant…');
+  try {
+    await dbUpdate('inventory', item.id, { variants: item.variants, qty: totalQty });
+    item.qty = totalQty;
+    openInvDetail(currentInvId); renderInventory(); renderDashboard();
+    toast('Variant removed', 'success');
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
 
