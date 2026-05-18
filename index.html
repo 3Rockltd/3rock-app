@@ -372,7 +372,28 @@ textarea.form-control{resize:vertical;min-height:56px}
 .resolution-box .res-text{color:var(--text-secondary)}
 .resolution-box .res-by{font-size:10px;color:var(--text-muted);margin-top:4px}
 
-/* RESPONSIVE */
+/* OFFLINE SYNC */
+.sync-banner{background:linear-gradient(135deg,#1e3a5f,#0a1628);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;color:#fff}
+.sync-banner-icon{font-size:24px;flex-shrink:0}
+.sync-banner-text{flex:1}
+.sync-banner-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700}
+.sync-banner-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.sync-btn{background:var(--gold);color:var(--navy);border:none;border-radius:var(--r-md);padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;cursor:pointer;flex-shrink:0;letter-spacing:.3px}
+.sync-btn:disabled{opacity:.5;pointer-events:none}
+.offline-pill{background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;letter-spacing:.4px;text-transform:uppercase;margin-left:6px}
+.online-pill{background:#22c55e;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;letter-spacing:.4px;text-transform:uppercase;margin-left:6px}
+
+/* VARIANTS */
+.variant-list{margin-top:8px;border-top:1px solid var(--border-light);padding-top:8px}
+.variant-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--off-white);border-radius:var(--r-sm);margin-bottom:4px;font-size:11px;cursor:pointer;transition:background .2s}
+.variant-row:hover{background:var(--surface)}
+.variant-label{font-weight:600;color:var(--navy)}
+.variant-meta{color:var(--text-muted)}
+.variant-badge{background:var(--navy);color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.variant-pill-good{background:#dcfce7;color:#166534}
+.variant-pill-fair{background:#fef3c7;color:#92400e}
+.parent-total{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--navy)}
+
 @media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-row{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 @media(min-width:600px){.qa-grid{grid-template-columns:repeat(4,1fr)}.main-content{padding:20px 18px 86px}}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -451,7 +472,7 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div class="kpi-item"><div class="kpi-num" id="kpi-staff">0</div><div class="kpi-lbl">Total Staff</div></div>
           <div class="kpi-item"><div class="kpi-num" id="kpi-onshift">0</div><div class="kpi-lbl">On Shift</div></div>
           <div class="kpi-item"><div class="kpi-num" id="kpi-month">0</div><div class="kpi-lbl">Jobs/Month</div></div>
-          <div class="kpi-item"><div class="kpi-num" id="kpi-done">0</div><div class="kpi-lbl">Completed</div></div>
+          <div class="kpi-item"><div class="kpi-num" id="kpi-task-pct">0%</div><div class="kpi-lbl">Tasks Done</div></div>
         </div>
       </div>
       <div class="alert-banner" id="low-stock-banner" style="display:none">
@@ -472,27 +493,19 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div class="stat-card amber" onclick="goToTab('inventory')">
           <div class="stat-val" id="stat-lowstock">0</div>
           <div class="stat-lbl">Low Stock</div>
-          <div class="stat-sub">consumables</div>
+          <div class="stat-sub">items critical</div>
         </div>
-      </div>
-      <!-- Equipment condition summary row (director/manager only) -->
-      <div id="equipment-condition-row" style="display:none;margin-bottom:18px">
-        <div class="section-title">Equipment Status</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="eq-condition-summary"></div>
       </div>
       <div id="director-metrics-section" style="display:none">
         <div class="section-title">Today's Task Progress</div>
         <div id="dash-task-progress" class="card"></div>
-        <div class="section-title">Operations Overview</div>
+        <div class="section-title">Staff & Jobs Overview</div>
         <div class="card">
           <div class="card-title">Staff Status</div>
           <div id="staff-bars"></div>
           <div class="divider"></div>
           <div class="card-title">Today's Jobs</div>
           <div id="job-bars"></div>
-          <div class="divider"></div>
-          <div class="card-title">Open Incidents & Requests</div>
-          <div id="dash-incidents-summary"></div>
         </div>
       </div>
       <div class="section-title">Quick Actions</div>
@@ -732,10 +745,10 @@ textarea.form-control{resize:vertical;min-height:56px}
     <!-- EQUIPMENT FIELDS -->
     <div id="inv-equipment-fields" style="display:none">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-eq-qty" min="0" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-control" id="inv-eq-qty" min="1" value="1" placeholder="e.g. 2"></div>
         <div class="form-group"><label class="form-label">Asset / Serial No.</label><input type="text" class="form-control" id="inv-serial" placeholder="e.g. EQ-001"></div>
       </div>
-      <div class="form-group"><label class="form-label">Condition</label>
+        <div class="form-group"><label class="form-label">Condition</label>
           <select class="form-control" id="inv-condition">
             <option value="New">🟢 New</option>
             <option value="Good">🟢 Good</option>
@@ -770,85 +783,21 @@ textarea.form-control{resize:vertical;min-height:56px}
     <!-- Stock item sections -->
     <div id="inv-stock-detail-section">
       <div class="section-sep">Daily Usage Logs</div><div id="inv-usage-logs"></div>
+      <div class="section-sep" style="border-color:var(--danger)">Damage Reports</div><div id="inv-damage-logs"></div>
     </div>
     <!-- Equipment sections -->
     <div id="inv-equipment-detail-section" style="display:none">
-      <!-- Variants/Units section (equipment only) -->
-      <div id="inv-variants-section">
-        <div class="section-sep">Units / Variants <span id="variant-total-badge" style="font-weight:400;font-size:11px;color:var(--text-muted)"></span></div>
-        <div id="inv-variants-list"></div>
-        <button class="btn btn-outline btn-sm" id="add-variant-btn" onclick="openAddVariantModal()" style="width:100%;margin-top:8px;justify-content:center">+ Add Unit / Variant</button>
-      </div>
+      <div id="inv-variants-section"></div>
       <div class="section-sep">Condition History</div><div id="inv-condition-history"></div>
     </div>
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-inv-detail')">Close</button>
       <button class="btn btn-primary btn-sm" id="log-usage-btn" onclick="openLogUsageModal()">📝 Log Usage</button>
       <button class="btn btn-amber btn-sm" id="update-condition-btn" onclick="openConditionUpdateModal()" style="display:none">🔧 Update Condition</button>
+      <button class="btn btn-danger btn-sm" id="report-damage-btn" onclick="openDamageModal()">⚠ Report Damage</button>
       <button class="btn btn-outline btn-sm" id="delete-inv-btn" onclick="deleteCurrentInv()">Delete</button>
     </div>
   </div></div>
-</div>
-
-<!-- ADD / EDIT VARIANT MODAL -->
-<div class="modal-overlay center-ov" id="modal-add-variant" style="display:none" onclick="overlayClick(event,'modal-add-variant')">
-  <div class="modal center-m">
-    <div class="modal-header"><span class="modal-title" id="variant-modal-title">Add Variant</span><button class="modal-close" onclick="closeModal('modal-add-variant')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-group" style="background:var(--off-white);border-radius:var(--r-md);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary)">
-        📦 <strong id="variant-parent-name"></strong>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Variant Label *</label>
-        <input type="text" class="form-control" id="variant-label" placeholder="e.g. Unit A, Orange Bucket, Machine #2…">
-        <div class="field-error" id="err-variant-label">Variant label is required</div>
-      </div>
-      <!-- Equipment variant fields -->
-      <div id="variant-equipment-fields">
-        <div class="form-group"><label class="form-label">Condition</label>
-          <select class="form-control" id="variant-condition">
-            <option value="New">🟢 New</option>
-            <option value="Good">🟢 Good</option>
-            <option value="Fair">🟡 Fair</option>
-            <option value="Needs Maintenance">🟠 Needs Maintenance</option>
-            <option value="Damaged">🔴 Damaged</option>
-            <option value="Decommissioned">⚫ Decommissioned</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Photo <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
-          <div class="photo-upload-wrap">
-            <div class="photo-upload-box">
-              <input type="file" accept="image/*" onchange="previewPhoto(event,'variant-img-preview','variant-img-placeholder','del-variant-img')">
-              <img src="" class="photo-preview-rect" id="variant-img-preview" style="display:none">
-              <div id="variant-img-placeholder">📷 Tap to add photo</div>
-            </div>
-            <button type="button" class="photo-delete-btn" id="del-variant-img" onclick="clearPhoto('variant-img-preview','variant-img-placeholder','del-variant-img')" title="Remove image">✕</button>
-          </div>
-        </div>
-      </div>
-      <!-- Stock variant fields (qty/reorder — hidden for equipment) -->
-      <div id="variant-stock-fields">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Quantity</label>
-            <input type="number" class="form-control" id="variant-qty" min="0" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Reorder Level</label>
-            <input type="number" class="form-control" id="variant-reorder" min="0" placeholder="0">
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
-        <input type="text" class="form-control" id="variant-notes" placeholder="e.g. Handle cracked, stored in Block B…">
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-add-variant')">Cancel</button>
-        <button class="btn btn-primary" id="save-variant-btn" onclick="saveVariant()">Add Variant</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- CONDITION UPDATE MODAL (equipment only) -->
@@ -1099,6 +1048,81 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div class="modal-body"><div id="attendance-list"></div></div></div>
 </div>
 
+<!-- VARIANT MODAL -->
+<div class="modal-overlay center-ov" id="modal-add-variant" style="display:none" onclick="overlayClick(event,'modal-add-variant')">
+  <div class="modal center-m">
+    <div class="modal-header" style="background:#0369a1"><span class="modal-title" id="variant-modal-title">Add Variant</span><button class="modal-close" onclick="closeModal('modal-add-variant')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Parent Equipment</label><input type="text" class="form-control" id="variant-parent-name" readonly style="background:#e8edf7"></div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Variant Name * <span style="font-weight:400;color:var(--text-muted)">(e.g. Red, Unit 2, 20L)</span></label>
+          <input type="text" class="form-control" id="variant-name" placeholder="e.g. Red, Large, Unit 2">
+          <div class="field-error" id="err-variant-name">Variant name is required</div>
+        </div>
+        <div class="form-group"><label class="form-label">Quantity</label>
+          <input type="number" class="form-control" id="variant-qty" min="0" value="1">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Condition</label>
+          <select class="form-control" id="variant-condition">
+            <option value="">— Select —</option>
+            <option value="New">🟢 New</option>
+            <option value="Good">🟢 Good</option>
+            <option value="Fair">🟡 Fair</option>
+            <option value="Needs Maintenance">🟠 Needs Maintenance</option>
+            <option value="Damaged">🔴 Damaged</option>
+            <option value="Decommissioned">⚫ Decommissioned</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Asset / Serial No.</label>
+          <input type="text" class="form-control" id="variant-serial" placeholder="e.g. EQ-001-A">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Assigned To</label>
+          <input type="text" class="form-control" id="variant-assigned" placeholder="Zone or staff member">
+        </div>
+        <div class="form-group"><label class="form-label">Purchase Date</label>
+          <input type="date" class="form-control" id="variant-purchase-date">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Last Serviced</label>
+          <input type="date" class="form-control" id="variant-last-serviced">
+        </div>
+        <div class="form-group"><label class="form-label">Supplier</label>
+          <input type="text" class="form-control" id="variant-supplier" placeholder="Supplier name">
+        </div>
+      </div>
+
+      <div class="form-group"><label class="form-label">Notes</label>
+        <textarea class="form-control" id="variant-notes" rows="2" placeholder="Any additional notes about this variant…"></textarea>
+      </div>
+
+      <div class="form-group"><label class="form-label">Photo <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <div class="photo-upload-wrap">
+          <div class="photo-upload-box">
+            <input type="file" accept="image/*" onchange="previewPhoto(event,'variant-photo-preview','variant-photo-placeholder','del-variant-photo')">
+            <img src="" class="photo-preview-rect" id="variant-photo-preview" style="display:none">
+            <div id="variant-photo-placeholder">📷 Tap to add photo</div>
+          </div>
+          <button type="button" class="photo-delete-btn" id="del-variant-photo" onclick="clearPhoto('variant-photo-preview','variant-photo-placeholder','del-variant-photo')" title="Remove">✕</button>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-add-variant')">Cancel</button>
+        <button class="btn btn-primary" id="save-variant-btn" onclick="saveVariant()" style="background:#0369a1">Save Variant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ================================================================
 // SUPABASE CONFIG
@@ -1245,6 +1269,120 @@ async function dbDelete(table, id) {
 }
 
 // ================================================================
+// OFFLINE QUEUE — localStorage-backed write queue for cleaners
+// ================================================================
+const QUEUE_KEY = '3rock_offline_queue';
+
+function isOnline() { return navigator.onLine; }
+
+function getQueue() {
+  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; }
+}
+
+function saveQueue(q) {
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch(e) { console.warn('localStorage full', e); }
+}
+
+function queueWrite(type, table, data) {
+  const q = getQueue();
+  q.push({ id: uid(), type, table, data, queuedAt: new Date().toISOString() });
+  saveQueue(q);
+  updateSyncBanner();
+}
+
+function updateSyncBanner() {
+  const q = getQueue();
+  const banner = document.getElementById('offline-sync-banner');
+  if (!banner) return;
+  if (q.length === 0) {
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'flex';
+    const subEl = document.getElementById('sync-banner-sub');
+    if (subEl) subEl.textContent = `${q.length} action${q.length>1?'s':''} waiting to sync · recorded locally`;
+  }
+}
+
+async function syncOfflineQueue() {
+  const q = getQueue();
+  if (!q.length) { toast('Nothing to sync', 'info'); return; }
+  if (!isOnline()) { toast('Still offline — connect to the internet first', 'error'); return; }
+  const btn = document.getElementById('sync-now-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+  showLoading(`Syncing ${q.length} records…`);
+  let failed = [];
+  for (const op of q) {
+    try {
+      if (op.type === 'insert') {
+        const { error } = await supabaseClient.from(op.table).insert(op.data);
+        if (error) throw error;
+      } else if (op.type === 'update') {
+        const { error } = await supabaseClient.from(op.table).update(op.data.changes).eq('id', op.data.id);
+        if (error) throw error;
+      } else if (op.type === 'delete') {
+        const { error } = await supabaseClient.from(op.table).delete().eq('id', op.data.id);
+        if (error) throw error;
+      }
+    } catch(e) {
+      console.error('Sync failed for op', op, e);
+      failed.push(op);
+    }
+  }
+  saveQueue(failed);
+  hideLoading();
+  if (btn) { btn.disabled = false; btn.textContent = 'Sync Now ☁️'; }
+  if (failed.length === 0) {
+    toast(`All ${q.length} records synced to cloud ✅`, 'success', 4000);
+    updateSyncBanner();
+  } else {
+    toast(`${q.length - failed.length} synced, ${failed.length} failed — try again`, 'error', 5000);
+    updateSyncBanner();
+  }
+}
+
+// Offline-aware versions of db helpers for cleaner writes
+async function dbInsertOffline(table, row) {
+  if (currentUser && currentUser.role === 'cleaner' && !isOnline()) {
+    queueWrite('insert', table, row);
+    setSyncDot('error'); // show as offline
+    return row; // return the row so calling code can continue
+  }
+  return dbInsert(table, row);
+}
+
+async function dbUpdateOffline(table, id, changes) {
+  if (currentUser && currentUser.role === 'cleaner' && !isOnline()) {
+    queueWrite('update', table, { id, changes });
+    setSyncDot('error');
+    return { id, ...changes };
+  }
+  return dbUpdate(table, id, changes);
+}
+
+async function dbDeleteOffline(table, id) {
+  if (currentUser && currentUser.role === 'cleaner' && !isOnline()) {
+    queueWrite('delete', table, { id });
+    setSyncDot('error');
+    return;
+  }
+  return dbDelete(table, id);
+}
+
+// Listen for online/offline changes
+window.addEventListener('online', () => {
+  setSyncDot('synced');
+  updateSyncBanner();
+  if (currentUser && currentUser.role === 'cleaner') {
+    const q = getQueue();
+    if (q.length) toast(`Back online! ${q.length} record${q.length>1?'s':''} ready to sync.`, 'info', 4000);
+  }
+});
+window.addEventListener('offline', () => {
+  setSyncDot('error');
+  if (currentUser && currentUser.role === 'cleaner') toast('Gone offline — logs will be saved locally', 'info', 3000);
+});
+
+// ================================================================
 // LAZY / SMART DATA LOADING
 // ================================================================
 async function loadInitialData() {
@@ -1257,11 +1395,11 @@ async function loadInitialData() {
     const [staffRes, invRes, jobsRes, tasksRes, zonesRes, taskLogsRes, attendRes] = await Promise.all([
       supabaseClient.from('staff').select('*'),
       supabaseClient.from('inventory').select('*'),
-      supabaseClient.from('jobs').select('*').gte('date', monthStart), // current month only
+      supabaseClient.from('jobs').select('*').gte('date', monthStart),
       supabaseClient.from('tasks').select('*'),
       supabaseClient.from('zones').select('*'),
-      supabaseClient.from('tasklogs').select('*').eq('date', today),   // today only
-      supabaseClient.from('attendance').select('*').eq('date', today)  // today only
+      supabaseClient.from('tasklogs').select('*').eq('date', today),
+      supabaseClient.from('attendance').select('*').eq('date', today)
     ]);
 
     if (!staffRes.error) state.staff = staffRes.data || [];
@@ -1278,10 +1416,31 @@ async function loadInitialData() {
     if (!taskLogsRes.error) state.taskLogs = taskLogsRes.data || [];
     if (!attendRes.error) state.attendance = attendRes.data || [];
 
+    // Cache tasks & zones for offline use
+    if (state.tasks.length) { try { localStorage.setItem('3rock_tasks_cache', JSON.stringify(state.tasks)); } catch{} }
+    if (state.zones.length) { try { localStorage.setItem('3rock_zones_cache', JSON.stringify(state.zones)); } catch{} }
+
     setSyncDot('synced');
   } catch(e) {
     setSyncDot('error');
-    toast('Could not load data. Check your connection.', 'error');
+    // For cleaners offline: load cached tasks so they can still work
+    if (currentUser && currentUser.role === 'cleaner') {
+      try {
+        const cachedTasks = localStorage.getItem('3rock_tasks_cache');
+        const cachedZones = localStorage.getItem('3rock_zones_cache');
+        if (cachedTasks) state.tasks = JSON.parse(cachedTasks);
+        if (cachedZones) state.zones = JSON.parse(cachedZones);
+        // Load today's local task logs from queue
+        const q = getQueue();
+        const localLogs = q.filter(op => op.table === 'tasklogs' && op.type === 'insert').map(op => op.data);
+        state.taskLogs = localLogs;
+        toast('Offline mode — using cached tasks', 'info', 4000);
+      } catch(ce) {
+        toast('Could not load data. Check your connection.', 'error');
+      }
+    } else {
+      toast('Could not load data. Check your connection.', 'error');
+    }
   } finally {
     hideLoading();
   }
@@ -1573,11 +1732,8 @@ function renderDashboard() {
   if (currentUser && currentUser.role === 'cleaner') { renderCleanerDashboard(); return; }
   const onShift = state.staff.filter(s => s.status === 'On Shift').length;
   const todayJobs = state.jobs.filter(j => j.date === todayStr());
-  // Low stock excludes equipment (equipment has no reorder level)
-  const lowStock = state.inventory.filter(i => i.category !== 'Equipment' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder));
-  const equipment = state.inventory.filter(i => i.category === 'Equipment');
+  const lowStock = state.inventory.filter(i => i.category !== 'Equipment' && i.reorder != null && i.reorder !== '' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder));
   const se = id => document.getElementById(id);
-
   if (se('stat-onshift')) se('stat-onshift').textContent = onShift;
   if (se('stat-staff-sub')) se('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
   if (se('stat-jobs-today')) se('stat-jobs-today').textContent = todayJobs.length;
@@ -1586,9 +1742,12 @@ function renderDashboard() {
   if (se('kpi-staff')) se('kpi-staff').textContent = state.staff.length;
   if (se('kpi-onshift')) se('kpi-onshift').textContent = onShift;
   if (se('kpi-month')) se('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0,7))).length;
-  if (se('kpi-done')) se('kpi-done').textContent = state.jobs.filter(j => j.status === 'Done').length;
-
-  // Low stock banner — consumables/chemicals/PPE only
+  if (se('kpi-task-pct')) {
+    const todayLogsAll = state.taskLogs.filter(l => l.date === todayStr());
+    const totalTasks = state.tasks.length;
+    const taskPct = totalTasks ? Math.round(todayLogsAll.length / totalTasks * 100) : 0;
+    se('kpi-task-pct').textContent = taskPct + '%';
+  }
   const banner = se('low-stock-banner');
   if (banner) {
     if (lowStock.length) {
@@ -1596,65 +1755,23 @@ function renderDashboard() {
       se('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom||'units'})`).join(', ');
     } else banner.style.display = 'none';
   }
-
-  // Equipment condition summary row
-  const eqRow = se('equipment-condition-row');
-  const eqSum = se('eq-condition-summary');
-  if (eqRow && eqSum && equipment.length) {
-    eqRow.style.display = 'block';
-    const condCounts = {};
-    equipment.forEach(e => { const c = e.condition||'Good'; condCounts[c] = (condCounts[c]||0) + 1; });
-    const order = ['New','Good','Fair','Needs Maintenance','Damaged','Decommissioned'];
-    eqSum.innerHTML = order.filter(c => condCounts[c]).map(c => {
-      const cs = conditionStyle(c);
-      return `<div style="background:${cs.bg};border-radius:var(--r-md);padding:10px;text-align:center;cursor:pointer" onclick="goToTab('inventory')">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:${cs.color}">${condCounts[c]}</div>
-        <div style="font-size:10px;font-weight:700;color:${cs.color};text-transform:uppercase;letter-spacing:.4px">${cs.icon} ${c}</div>
-      </div>`;
-    }).join('');
-  } else if (eqRow) eqRow.style.display = 'none';
-
   if (se('director-metrics-section') && se('director-metrics-section').style.display !== 'none') {
     const off = state.staff.filter(s => s.status === 'Off Shift').length;
     const leave = state.staff.filter(s => s.status === 'On Leave').length;
     const t = state.staff.length || 1;
-    if (se('staff-bars')) se('staff-bars').innerHTML =
-      actBar('On Shift', onShift, t, 'var(--green)') +
-      actBar('Off Shift', off, t, 'var(--text-muted)') +
-      actBar('On Leave', leave, t, 'var(--amber)');
-
+    if (se('staff-bars')) se('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
     const sTot = todayJobs.length || 1;
-    if (se('job-bars')) se('job-bars').innerHTML =
-      actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') +
-      actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') +
-      actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
-
-    // Open incidents & requests summary
-    const incSum = se('dash-incidents-summary');
-    if (incSum) {
-      const openInc = state.incidents.filter(i => i.status === 'Open' || i.status === 'Under Review').length;
-      const pendingReq = state.supplyRequests.filter(r => r.status === 'Pending').length;
-      if (openInc || pendingReq) {
-        incSum.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap">
-          ${openInc ? `<div style="background:#fee2e2;border-radius:var(--r-md);padding:8px 14px;cursor:pointer" onclick="goToTab('incidents')"><span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#dc2626">${openInc}</span><div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase">Open Incidents</div></div>` : ''}
-          ${pendingReq ? `<div style="background:#fef3c7;border-radius:var(--r-md);padding:8px 14px;cursor:pointer" onclick="goToTab('incidents')"><span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#d97706">${pendingReq}</span><div style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase">Pending Requests</div></div>` : ''}
-        </div>`;
-      } else {
-        incSum.innerHTML = `<div style="font-size:12px;color:var(--green);font-weight:600">✅ All clear — no open incidents or pending requests</div>`;
-      }
-    }
-
+    if (se('job-bars')) se('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
     const todayLogs = state.taskLogs.filter(l => l.date === todayStr());
     const totalTasks = state.tasks.length;
     const pct = totalTasks ? Math.round(todayLogs.length / totalTasks * 100) : 0;
     const shiftBreakdown = ['Morning','Noon','Night'].map(sh => {
-      const shTasks = state.tasks.filter(t => t.assignedshift === sh || t.assignedshift === 'All');
-      const shDone = todayLogs.filter(l => l.shift === sh && (l.status === 'completed' || l.status === 'locked')).length;
+      const shTasks = state.tasks.filter(t => t.shift === sh || t.shift === 'All');
+      const shDone = todayLogs.filter(l => l.shift === sh).length;
       return `<div class="prog-item"><div class="prog-val">${shDone}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
     }).join('');
     if (se('dash-task-progress')) se('dash-task-progress').innerHTML = `<div class="card-title">Tasks Today — ${pct}% Complete</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%"></div></div><div class="progress-summary" style="margin:0">${shiftBreakdown}</div>`;
   }
-
   const listEl = se('today-jobs-list');
   if (listEl) {
     if (!todayJobs.length) listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs today</div></div>`;
@@ -1673,13 +1790,27 @@ function renderCleanerDashboard() {
   const shiftCls = myShift === 'Morning' ? 'shift-morning' : myShift === 'Noon' ? 'shift-noon' : 'shift-night';
   const dashEl = se('screen-dashboard');
   if (!dashEl) return;
+  const q = getQueue();
+  const onlineStatus = isOnline()
+    ? `<span class="online-pill">● ONLINE</span>`
+    : `<span class="offline-pill">● OFFLINE</span>`;
+  const syncBannerHtml = `
+    <div id="offline-sync-banner" style="display:${q.length ? 'flex' : 'none'}" class="sync-banner">
+      <div class="sync-banner-icon">📤</div>
+      <div class="sync-banner-text">
+        <div class="sync-banner-title">Unsynced Records</div>
+        <div class="sync-banner-sub" id="sync-banner-sub">${q.length} action${q.length!==1?'s':''} waiting to sync</div>
+      </div>
+      <button class="sync-btn" id="sync-now-btn" onclick="syncOfflineQueue()">Sync Now ☁️</button>
+    </div>`;
   dashEl.innerHTML = `
     <div class="cleaner-welcome">
-      <div class="cleaner-name-big">${esc(currentUser.name)}</div>
+      <div class="cleaner-name-big">${esc(currentUser.name)} ${onlineStatus}</div>
       <div><span class="cleaner-shift-badge ${shiftCls}">${esc(myShift)} Shift</span></div>
       <div style="margin-top:12px;font-size:13px;color:rgba(255,255,255,.7)">${done} of ${myTasks.length} tasks done today</div>
       <div class="prog-bar-wrap" style="margin-top:8px"><div class="prog-bar" style="width:${pct}%;background:${pct>=80?'#4ade80':'#fbbf24'}"></div></div>
     </div>
+    ${syncBannerHtml}
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-outline btn-sm" onclick="openModal('modal-incident')">🚨 Report Incident</button>
       <button class="btn btn-outline btn-sm" style="border-color:#0369a1;color:#0369a1" onclick="openMyRequestsModal()">📦 My Requests</button>
@@ -1988,20 +2119,14 @@ function renderInventory() {
       (i.name.toLowerCase().includes(q) || (i.serial||'').toLowerCase().includes(q)));
   } else if (isDamaged) {
     list = state.damageReports || [];
-  } else if (invFilter === 'all') {
-    // All tab shows everything including equipment
-    list = state.inventory.filter(i =>
-      i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q));
   } else {
-    // Category filter — exclude equipment from non-equipment category tabs
-    list = state.inventory.filter(i => i.category !== 'Equipment' &&
+    list = state.inventory.filter(i =>
       (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) &&
-      i.category === invFilter);
+      (invFilter === 'all' || i.category === invFilter));
   }
 
   const eqCount = state.inventory.filter(i => i.category === 'Equipment').length;
-  // Low stock only counts non-equipment items with a reorder level set
-  const lowCount = state.inventory.filter(i => i.category !== 'Equipment' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder)).length;
+  const lowCount = state.inventory.filter(i => i.category !== 'Equipment' && i.reorder != null && i.reorder !== '' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder)).length;
   const cntEl = document.getElementById('inv-count-lbl');
   const lowEl = document.getElementById('inv-low-lbl');
   if (cntEl) cntEl.textContent = `${state.inventory.length} items · ${eqCount} equipment`;
@@ -2009,6 +2134,16 @@ function renderInventory() {
 
   const grid = document.getElementById('inventory-grid');
   if (!grid) return;
+
+  if (isEqTab) {
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment added yet</div></div>'; grid.className = 'inv-grid'; return; }
+    grid.className = 'inv-grid';
+    grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => equipmentCardHtml(item)).join('');
+    grid._fullList = list;
+    const lm = document.getElementById('inv-load-more');
+    if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
+    return;
+  }
 
   if (isDamaged) {
     if (!state.damageReports.length) {
@@ -2029,10 +2164,7 @@ function renderInventory() {
   }
 
   if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-text">No items</div></div>'; return; }
-  // Render each item with correct card type
-  grid.innerHTML = list.slice(0, PAGE_SIZE).map(item =>
-    item.category === 'Equipment' ? equipmentCardHtml(item) : invCardHtml(item)
-  ).join('');
+  grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => invCardHtml(item)).join('');
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
   grid._fullList = list;
@@ -2040,35 +2172,61 @@ function renderInventory() {
 }
 
 function equipmentCardHtml(item) {
+  const hasVariants = Array.isArray(item.variants) && item.variants.length > 0;
   const cond = item.condition || 'Good';
   const cs = conditionStyle(cond);
   const condHistory = Array.isArray(item.conditionhistory) ? item.conditionhistory : [];
   const lastUpdate = condHistory.length ? condHistory[condHistory.length - 1] : null;
-  const qty = item.qty != null ? item.qty : '—';
-  const imgHtml = item.img && item.img.startsWith('data:')
-    ? `<div class="inv-img" style="cursor:pointer" onclick="event.stopPropagation();viewImage('${item.img}','${esc(item.name)}')"><img src="${item.img}" alt=""></div>`
-    : `<div class="inv-img">🔧</div>`;
+  const qty = hasVariants ? item.variants.reduce((s,v) => s + (v.qty||0), 0) : (item.qty != null ? item.qty : '—');
+
+  let variantSnippet = '';
+  if (hasVariants) {
+    variantSnippet = `<div class="variant-list" style="margin-top:6px">${
+      item.variants.slice(0,3).map(v => {
+        const vcs = v.condition ? conditionStyle(v.condition) : null;
+        return `<div class="variant-row" style="padding:4px 8px">
+          ${v.img ? `<img src="${v.img}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;flex-shrink:0" alt="">` : ''}
+          <span class="variant-label" style="flex:1">${esc(v.name)}</span>
+          ${vcs ? `<span style="background:${vcs.bg};color:${vcs.color};padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700">${esc(v.condition)}</span>` : ''}
+          <span class="variant-meta" style="margin-left:4px">×${v.qty||0}</span>
+        </div>`;
+      }).join('')}
+      ${item.variants.length > 3 ? `<div style="font-size:10px;color:var(--text-muted);padding:3px 8px">+${item.variants.length - 3} more</div>` : ''}
+    </div>`;
+  }
+
   return `<div class="inv-card" onclick="openInvDetail('${esc(item.id)}')">
-    ${imgHtml}
+    <div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '🔧'}</div>
     <div class="inv-body">
       <div class="inv-name">${esc(item.name)}</div>
-      <div class="inv-cat">Equipment${item.serial ? ' · ' + esc(item.serial) : ''}</div>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:${cs.bg};color:${cs.color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:6px 0">${cs.icon} ${esc(cond)}</div>
-      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:2px">Qty: ${qty}</div>
+      <div class="inv-cat">Equipment${item.serial ? ' · ' + esc(item.serial) : ''}${hasVariants ? ` · <span style="color:var(--navy);font-weight:700">${item.variants.length} variants</span>` : ''}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:6px 0 2px">
+        <div style="display:inline-flex;align-items:center;gap:5px;background:${cs.bg};color:${cs.color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${cs.icon} ${esc(cond)}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--navy)">${hasVariants ? 'Total: ' : 'Qty: '}${qty}</div>
+      </div>
       ${item.assignedto ? `<div style="font-size:10px;color:var(--text-muted)">📍 ${esc(item.assignedto)}</div>` : ''}
-      ${lastUpdate ? `<div style="font-size:10px;color:var(--text-muted);margin-top:3px">Updated: ${esc(lastUpdate.date)}</div>` : ''}
+      ${hasVariants ? variantSnippet : (lastUpdate ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Last updated: ${esc(lastUpdate.date)}</div>` : '')}
     </div>
   </div>`;
 }
 
 function invCardHtml(item) {
-  const pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder) * 2 || 1) * 100));
+  const reorderQty = Number(item.reorder) || 0;
+  const pct = Math.min(100, Math.round(Number(item.qty) / (reorderQty * 2 || 1) * 100));
   const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
   const dmgCount = (state.damageReports || []).filter(r => r.invid === item.id).length;
-  const imgHtml = item.img && item.img.startsWith('data:')
-    ? `<div class="inv-img" style="cursor:pointer" onclick="event.stopPropagation();viewImage('${item.img}','${esc(item.name)}')"><img src="${item.img}" alt=""></div>`
-    : `<div class="inv-img">📦</div>`;
-  return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${esc(item.id)}')">${imgHtml}<div class="inv-body"><div class="inv-name">${esc(item.name)}</div><div class="inv-cat">${esc(item.category)}</div>${dmgCount ? `<div class="pill pill-damaged" style="margin:4px 0">⚠ ${dmgCount} damage report${dmgCount>1?'s':''}</div>` : ''}<div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div><div class="stock-info"><span>Qty: ${item.qty} ${esc(item.uom||'')}</span><span>Reorder: ${item.reorder}</span></div>${Number(item.qty)<=Number(item.reorder)&&Number(item.reorder)>0?'<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW</div>':''}</div></div>`;
+  const isLow = reorderQty > 0 && Number(item.qty) <= reorderQty;
+  return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${esc(item.id)}')">
+    <div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '📦'}</div>
+    <div class="inv-body">
+      <div class="inv-name">${esc(item.name)}</div>
+      <div class="inv-cat">${esc(item.category)}</div>
+      ${dmgCount ? `<div class="pill pill-damaged" style="margin:4px 0">⚠ ${dmgCount} damage report${dmgCount>1?'s':''}</div>` : ''}
+      <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
+      <div class="stock-info"><span>Qty: ${item.qty} ${esc(item.uom||'')}</span><span>Reorder: ${item.reorder}</span></div>
+      ${isLow ? '<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW</div>' : ''}
+    </div>
+  </div>`;
 }
 
 function loadMoreInv() {
@@ -2078,14 +2236,13 @@ function loadMoreInv() {
   const isEqTab = invFilter === '__equipment__';
   const isDamaged = invFilter === '__damaged__';
   const page = list.slice(invPage * PAGE_SIZE, (invPage+1) * PAGE_SIZE);
-  if (isDamaged) {
+  if (isEqTab) grid.innerHTML += page.map(item => equipmentCardHtml(item)).join('');
+  else if (isDamaged) {
     grid.innerHTML += page.map(r => {
       const invItem = state.inventory.find(i => i.id === r.invid) || {};
       return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${esc(invItem.name||r.itemname||'Unknown')}</div><div class="damage-date">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div><div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`;
     }).join('');
-  } else {
-    grid.innerHTML += page.map(item => item.category === 'Equipment' ? equipmentCardHtml(item) : invCardHtml(item)).join('');
-  }
+  } else grid.innerHTML += page.map(item => invCardHtml(item)).join('');
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > (invPage+1) * PAGE_SIZE ? 'block' : 'none';
 }
@@ -2111,7 +2268,7 @@ async function saveInventory() {
     if (isEq) {
       item = {
         id: uid(), name: nameVal, category: cat,
-        qty: parseInt(document.getElementById('inv-eq-qty').value)||0,
+        qty: parseInt(document.getElementById('inv-eq-qty').value)||1,
         serial: document.getElementById('inv-serial').value.trim(),
         condition: document.getElementById('inv-condition').value,
         purchasedate: document.getElementById('inv-purchase-date').value,
@@ -2158,18 +2315,16 @@ function openInvDetail(id) {
     const cs = conditionStyle(cond);
     document.getElementById('inv-detail-info').innerHTML = `
       <div style="display:inline-flex;align-items:center;gap:6px;background:${cs.bg};color:${cs.color};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px">${cs.icon} ${esc(cond)}</div>
-      ${item.img && item.img.startsWith('data:') ? `<div style="margin-bottom:10px"><img src="${item.img}" onclick="viewImage('${item.img}','${esc(item.name)}')" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border)" alt="📷 Tap to view"></div>` : ''}
       ${detRow('Category', 'Equipment')}
+      ${detRow('Quantity', (item.qty != null ? item.qty : '—'))}
       ${detRow('Asset / Serial', item.serial||'—')}
       ${detRow('Assigned To', item.assignedto||'—')}
       ${detRow('Purchase Date', item.purchasedate||'—')}
       ${detRow('Last Serviced', item.lastserviced||'—')}
       ${detRow('Supplier', item.supplier||'—')}
+      ${item.img && item.img.startsWith('data:') ? `<div class="detail-row clickable" onclick="viewImage('${item.img}','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view</span></div>` : ''}
       ${item.conditionnotes?`<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>`:''}`;
-    // Qty control for equipment
-    const qtyCtrl = document.getElementById('inv-qty-ctrl');
-    if (canEdit()) qtyCtrl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Quantity</div><div style="display:flex;align-items:center;gap:10px"><button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty||0}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button></div>`;
-    else qtyCtrl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Quantity</div><span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty||0}</span>`;
+    document.getElementById('inv-qty-ctrl').innerHTML = canEdit() ? `<div style="display:flex;align-items:center;gap:10px;margin:10px 0"><button class="btn btn-outline btn-sm" onclick="adjustEqQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty != null ? item.qty : 0}</span><button class="btn btn-primary btn-sm" onclick="adjustEqQty(1)">+ Add</button></div>` : '';
     // Show condition history
     const hist = item.conditionhistory || [];
     const histHtml = hist.length
@@ -2187,25 +2342,57 @@ function openInvDetail(id) {
         }).join('')
       : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No condition history yet</div></div>';
     document.getElementById('inv-condition-history').innerHTML = histHtml;
+    // Variants section for equipment
+    const variantsSection = document.getElementById('inv-variants-section');
+    if (variantsSection) {
+      const variants = Array.isArray(item.variants) ? item.variants : [];
+      const varHtml = variants.length
+        ? variants.map(v => {
+            const vcs = v.condition ? conditionStyle(v.condition) : null;
+            const imgThumb = v.img ? `<img src="${v.img}" onclick="viewImage('${v.img}','${esc(item.name)} — ${esc(v.name)}')" style="width:44px;height:44px;border-radius:8px;object-fit:cover;cursor:pointer;flex-shrink:0" alt="">` : `<div style="width:44px;height:44px;border-radius:8px;background:var(--off-white);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔧</div>`;
+            return `<div class="variant-row" style="margin-bottom:8px;padding:10px;align-items:flex-start;gap:10px">
+              ${imgThumb}
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
+                  <div class="variant-label" style="font-size:13px">${esc(item.name)} — ${esc(v.name)}</div>
+                  ${vcs ? `<span style="background:${vcs.bg};color:${vcs.color};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0">${vcs.icon} ${esc(v.condition)}</span>` : ''}
+                </div>
+                <div class="variant-meta" style="margin-top:3px;font-size:11px">
+                  Qty: <strong>${v.qty != null ? v.qty : '—'}</strong>
+                  ${v.serial ? ` · S/N: ${esc(v.serial)}` : ''}
+                  ${v.assignedto ? ` · 📍 ${esc(v.assignedto)}` : ''}
+                </div>
+                ${v.purchasedate || v.lastserviced ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px">${v.purchasedate ? `Bought: ${esc(v.purchasedate)}` : ''}${v.purchasedate && v.lastserviced ? ' · ' : ''}${v.lastserviced ? `Serviced: ${esc(v.lastserviced)}` : ''}</div>` : ''}
+                ${v.supplier ? `<div style="font-size:10px;color:var(--text-muted)">Supplier: ${esc(v.supplier)}</div>` : ''}
+                ${v.notes ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;font-style:italic">📝 ${esc(v.notes)}</div>` : ''}
+              </div>
+              ${canEdit() ? `<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+                <button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px" onclick="openEditVariantModal('${esc(item.id)}','${esc(v.id)}')">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="deleteVariant('${esc(item.id)}','${esc(v.id)}')">✕ Del</button>
+              </div>` : ''}
+            </div>`;
+          }).join('')
+        : `<div style="font-size:12px;color:var(--text-muted);padding:10px 0">No variants yet. Tap "+ Add Variant" to add sub-units (e.g. Unit 1 — Red, Unit 2 — Blue).</div>`;
+      variantsSection.innerHTML = `<div class="section-sep">Variants <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--text-muted)">(same equipment, different unit/colour/size)</span></div>${varHtml}${canEdit() ? `<button class="btn btn-outline btn-sm" style="margin:6px 0 14px" onclick="openAddVariantModal('${esc(item.id)}')">+ Add Variant</button>` : ''}`;
+    }
     // Show/hide correct sections
     document.getElementById('inv-stock-detail-section').style.display = 'none';
     document.getElementById('inv-equipment-detail-section').style.display = 'block';
-    // Render equipment variants/units
-    renderVariantsSection(item);
     // Buttons
     const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = 'none';
+    const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = 'none';
     const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = canEdit() ? 'inline-flex' : 'none';
     const dib = document.getElementById('delete-inv-btn'); if (dib) dib.style.display = canEdit() ? 'inline-flex' : 'none';
   } else {
     const pct = Math.min(100, Math.round(Number(item.qty) / (Number(item.reorder)*2||1) * 100));
     const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
     document.getElementById('inv-detail-info').innerHTML = `
-      ${item.img && item.img.startsWith('data:') ? `<div style="margin-bottom:10px"><img src="${item.img}" onclick="viewImage('${item.img}','${esc(item.name)}')" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border)" alt="📷 Tap to view"></div>` : ''}
       <div class="detail-row"><span class="dk">Category</span><span class="dv">${esc(item.category)}</span></div>
       <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${esc(item.uom||'units')}</strong></span></div>
       <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${esc(item.uom||'units')}</span></div>
       <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${esc(item.supplier||'—')}</span></div>
       <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${esc(item.suppliercontact||item.supplierContact||'—')}</span></div>
+      ${item.img && item.img.startsWith('data:') ? `<div class="detail-row clickable" onclick="viewImage('${item.img}','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view</span></div>` : ''}
       <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
     const qtyCtrl = document.getElementById('inv-qty-ctrl');
     if (canEdit()) qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
@@ -2214,10 +2401,15 @@ function openInvDetail(id) {
       ? item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">Used: <strong>${log.qty} ${esc(item.uom||'units')}</strong>${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`).join('')
       : '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div></div>';
     document.getElementById('inv-usage-logs').innerHTML = logsHtml;
+    const dmgs = (state.damageReports||[]).filter(r => r.invid === id);
+    const dmgHtml = dmgs.length > 0
+      ? dmgs.map(r => `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.qty?`<div style="font-size:11px;color:#991b1b">Qty damaged: ${r.qty}</div>`:''}${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`).join('')
+      : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No damage reports for this item</div></div>';
+    document.getElementById('inv-damage-logs').innerHTML = dmgHtml;
     document.getElementById('inv-stock-detail-section').style.display = 'block';
     document.getElementById('inv-equipment-detail-section').style.display = 'none';
-    // No variants for stock items
     const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = canEdit() ? 'inline-flex' : 'none';
+    const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = canEdit() ? 'inline-flex' : 'none';
     const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = 'none';
     const dib = document.getElementById('delete-inv-btn'); if (dib) dib.style.display = canEdit() ? 'inline-flex' : 'none';
   }
@@ -2228,11 +2420,7 @@ async function adjustQty(delta) {
   if (!canEdit()) return;
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
-  // If item has variants, don't allow direct qty edit — manage via variants
-  if (Array.isArray(item.variants) && item.variants.length > 0) {
-    toast('This item has variants — adjust qty on each variant instead', 'info'); return;
-  }
-  const n = (item.qty||0) + delta;
+  const n = item.qty + delta;
   if (n < 0) { toast('Cannot go below zero', 'error'); return; }
   showLoading('Updating stock…');
   try {
@@ -2243,210 +2431,22 @@ async function adjustQty(delta) {
   finally { hideLoading(); }
 }
 
-// ================================================================
-// VARIANTS — sub-items under a parent stock entry
-// Stored as JSONB array on inventory row: item.variants = []
-// Each variant: { id, label, qty, reorder, notes, createdat }
-// Parent qty is always kept in sync as the sum of variant qtys
-// ================================================================
-let _editingVariantId = null;
-
-function renderVariantsSection(item) {
-  if (!item || !isEquipment(item)) return;
-  if (!Array.isArray(item.variants)) item.variants = [];
-  const listEl = document.getElementById('inv-variants-list');
-  const badge = document.getElementById('variant-total-badge');
-  const addBtn = document.getElementById('add-variant-btn');
-  if (!listEl) return;
-  if (addBtn) addBtn.style.display = canEdit() ? 'block' : 'none';
-  const variants = item.variants;
-  if (badge) badge.textContent = variants.length
-    ? `· ${variants.length} unit${variants.length > 1 ? 's' : ''}`
-    : '';
-  if (!variants.length) {
-    listEl.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:6px 0 10px">
-      No units recorded yet. Use <strong>+ Add Unit / Variant</strong> to track each individual piece
-      (e.g. "Machine #1 — New", "Machine #2 — Fair"). Each unit can have its own image and condition.
-    </div>`;
-    return;
-  }
-  listEl.innerHTML = variants.map(v => {
-    const vcs = conditionStyle(v.condition || 'Good');
-    const imgThumb = v.img && v.img.startsWith('data:')
-      ? `<img src="${v.img}" onclick="event.stopPropagation();viewImage('${v.img}','${esc(v.label)}')" style="width:54px;height:54px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--border-light);cursor:pointer;flex-shrink:0" alt="">`
-      : `<div style="width:54px;height:54px;background:var(--surface);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔧</div>`;
-    return `<div style="background:var(--off-white);border:1.5px solid var(--border-light);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px">
-      <div style="display:flex;gap:10px;align-items:flex-start">
-        ${imgThumb}
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700;color:var(--navy);flex:1">${esc(v.label)}</span>
-            <span style="background:${vcs.bg};color:${vcs.color};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap">${vcs.icon} ${esc(v.condition||'Good')}</span>
-          </div>
-          ${v.notes ? `<div style="font-size:11px;color:var(--text-secondary);font-style:italic">📝 ${esc(v.notes)}</div>` : ''}
-          ${canEdit() ? `<div style="display:flex;gap:4px;margin-top:7px">
-            <button class="btn btn-outline btn-sm" onclick="openEditVariant('${esc(v.id)}')" style="font-size:11px">✏️ Edit</button>
-            <button class="btn btn-outline btn-sm" onclick="deleteVariant('${esc(v.id)}')" style="font-size:11px;color:var(--danger)">✕ Remove</button>
-          </div>` : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function openAddVariantModal() {
-  const item = state.inventory.find(x => x.id === currentInvId);
-  if (!item) return;
-  _editingVariantId = null;
-  const isEq = isEquipment(item);
-  document.getElementById('variant-modal-title').textContent = isEq ? 'Add Unit / Variant' : 'Add Variant';
-  document.getElementById('variant-parent-name').textContent = item.name;
-  document.getElementById('variant-label').value = '';
-  document.getElementById('variant-notes').value = '';
-  // Toggle field groups
-  const eqFields = document.getElementById('variant-equipment-fields');
-  const stockFields = document.getElementById('variant-stock-fields');
-  if (eqFields) eqFields.style.display = isEq ? 'block' : 'none';
-  if (stockFields) stockFields.style.display = isEq ? 'none' : 'block';
-  if (isEq) {
-    document.getElementById('variant-condition').value = 'Good';
-    clearPhoto('variant-img-preview','variant-img-placeholder','del-variant-img');
-  } else {
-    document.getElementById('variant-qty').value = '';
-    document.getElementById('variant-reorder').value = '';
-  }
-  document.getElementById('save-variant-btn').textContent = isEq ? 'Add Unit' : 'Add Variant';
-  clearFieldError('variant-label','err-variant-label');
-  closeModal('modal-inv-detail');
-  openModal('modal-add-variant');
-}
-
-function openEditVariant(variantId) {
-  const item = state.inventory.find(x => x.id === currentInvId);
-  if (!item) return;
-  const v = (item.variants||[]).find(x => x.id === variantId);
-  if (!v) return;
-  _editingVariantId = variantId;
-  const isEq = isEquipment(item);
-  document.getElementById('variant-modal-title').textContent = isEq ? 'Edit Unit / Variant' : 'Edit Variant';
-  document.getElementById('variant-parent-name').textContent = item.name;
-  document.getElementById('variant-label').value = v.label || '';
-  document.getElementById('variant-notes').value = v.notes || '';
-  // Toggle field groups
-  const eqFields = document.getElementById('variant-equipment-fields');
-  const stockFields = document.getElementById('variant-stock-fields');
-  if (eqFields) eqFields.style.display = isEq ? 'block' : 'none';
-  if (stockFields) stockFields.style.display = isEq ? 'none' : 'block';
-  if (isEq) {
-    document.getElementById('variant-condition').value = v.condition || 'Good';
-    // Restore existing image if present
-    clearPhoto('variant-img-preview','variant-img-placeholder','del-variant-img');
-    if (v.img && v.img.startsWith('data:')) {
-      const img = document.getElementById('variant-img-preview');
-      const ph = document.getElementById('variant-img-placeholder');
-      const db = document.getElementById('del-variant-img');
-      if (img) { img.src = v.img; img.style.display = 'block'; }
-      if (ph) ph.style.display = 'none';
-      if (db) db.classList.add('visible');
-    }
-  } else {
-    document.getElementById('variant-qty').value = v.qty ?? '';
-    document.getElementById('variant-reorder').value = v.reorder ?? '';
-  }
-  document.getElementById('save-variant-btn').textContent = 'Save Changes';
-  clearFieldError('variant-label','err-variant-label');
-  closeModal('modal-inv-detail');
-  openModal('modal-add-variant');
-}
-
-async function saveVariant() {
-  if (!canEdit()) return;
-  const label = document.getElementById('variant-label').value.trim();
-  if (!validateField('variant-label','err-variant-label', v => v.trim().length > 0)) return;
-  const item = state.inventory.find(x => x.id === currentInvId);
-  if (!item) return;
-  if (!Array.isArray(item.variants)) item.variants = [];
-  const isEq = isEquipment(item);
-  showLoading(_editingVariantId ? 'Updating…' : 'Adding…');
-  try {
-    let img = null;
-    if (isEq) {
-      const rawImg = document.getElementById('variant-img-preview').src || '';
-      img = await compressImage(rawImg, 400, 0.65);
-    }
-    const condition = isEq ? document.getElementById('variant-condition').value : undefined;
-    const qty = !isEq ? (parseInt(document.getElementById('variant-qty').value)||0) : undefined;
-    const reorder = !isEq ? (parseInt(document.getElementById('variant-reorder').value)||0) : undefined;
-    const notes = document.getElementById('variant-notes').value.trim();
-    if (_editingVariantId) {
-      const idx = item.variants.findIndex(v => v.id === _editingVariantId);
-      if (idx >= 0) {
-        item.variants[idx] = { ...item.variants[idx], label, notes,
-          ...(isEq ? { condition, img: img || item.variants[idx].img } : { qty, reorder })
-        };
-      }
-    } else {
-      if (item.variants.some(v => v.label.toLowerCase() === label.toLowerCase())) {
-        toast(`A "${label}" variant already exists for this item`, 'error');
-        hideLoading(); return;
-      }
-      item.variants.push({ id: uid(), label, notes, createdat: new Date().toISOString(),
-        ...(isEq ? { condition, img } : { qty, reorder })
-      });
-    }
-    // For stock items, keep parent qty as sum of variants. For equipment, qty = number of tracked units.
-    const updateData = isEq
-      ? { variants: item.variants, qty: item.variants.length }
-      : { variants: item.variants, qty: item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0) };
-    await dbUpdate('inventory', item.id, updateData);
-    item.qty = updateData.qty;
-    closeModal('modal-add-variant');
-    openInvDetail(currentInvId);
-    renderInventory(); renderDashboard();
-    toast(_editingVariantId ? 'Unit updated' : 'Unit added', 'success');
-  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
-  finally { hideLoading(); }
-}
-
-async function adjustVariantQty(variantId, delta) {
+async function adjustEqQty(delta) {
   if (!canEdit()) return;
   const item = state.inventory.find(x => x.id === currentInvId);
-  if (!item || !Array.isArray(item.variants)) return;
-  const v = item.variants.find(x => x.id === variantId);
-  if (!v) return;
-  const newQty = (Number(v.qty)||0) + delta;
-  if (newQty < 0) { toast('Cannot go below zero', 'error'); return; }
-  v.qty = newQty;
-  const totalQty = item.variants.reduce((s,x) => s + (Number(x.qty)||0), 0);
-  showLoading('Updating…');
+  if (!item) return;
+  const n = (item.qty || 0) + delta;
+  if (n < 0) { toast('Cannot go below zero', 'error'); return; }
+  showLoading('Updating quantity…');
   try {
-    await dbUpdate('inventory', item.id, { variants: item.variants, qty: totalQty });
-    item.qty = totalQty;
+    await dbUpdate('inventory', item.id, { qty: n });
+    item.qty = n;
     openInvDetail(currentInvId); renderInventory(); renderDashboard();
-  } catch(e) { v.qty -= delta; toast('Update failed: ' + e.message, 'error'); }
+    toast('Quantity updated', 'success');
+  } catch(e) { toast('Update failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
 
-async function deleteVariant(variantId) {
-  if (!canEdit()) return;
-  const confirmed = await showConfirm('Remove Unit',
-    'This will permanently remove this unit/variant from the equipment record.',
-    'Remove', 'btn-danger');
-  if (!confirmed) return;
-  const item = state.inventory.find(x => x.id === currentInvId);
-  if (!item || !Array.isArray(item.variants)) return;
-  item.variants = item.variants.filter(v => v.id !== variantId);
-  const isEq = isEquipment(item);
-  const newQty = isEq ? item.variants.length : item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0);
-  showLoading('Removing…');
-  try {
-    await dbUpdate('inventory', item.id, { variants: item.variants, qty: newQty });
-    item.qty = newQty;
-    openInvDetail(currentInvId); renderInventory(); renderDashboard();
-    toast('Unit removed', 'success');
-  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
-  finally { hideLoading(); }
-}
 
 function openLogUsageModal() {
   const item = state.inventory.find(x => x.id === currentInvId);
@@ -3276,29 +3276,30 @@ async function submitTaskAction(action) {
   try {
     if (action === 'undo') {
       if (existing >= 0) {
-        await dbDelete('tasklogs', state.taskLogs[existing].id);
+        await dbDeleteOffline('tasklogs', state.taskLogs[existing].id);
         state.taskLogs.splice(existing, 1);
       }
       toast('Task entry removed', 'info');
     } else {
       // Remove old entry first if exists
       if (existing >= 0) {
-        await dbDelete('tasklogs', state.taskLogs[existing].id);
+        await dbDeleteOffline('tasklogs', state.taskLogs[existing].id);
         state.taskLogs.splice(existing, 1);
       }
       const now = new Date();
       const lockNote = action === 'locked' ? (document.getElementById('lock-note-input')?.value.trim() || '') : '';
       const log = {
         id: uid(), taskid: taskId, date: todayStr(), shift,
-        status: action, // 'completed' or 'locked'
+        status: action,
         completedby: currentUser.name,
         lockednote: lockNote,
         time: now.toTimeString().slice(0, 5),
         createdat: now.toISOString()
       };
-      await dbInsert('tasklogs', log);
+      await dbInsertOffline('tasklogs', log);
       state.taskLogs.push(log);
-      toast(action === 'completed' ? 'Task completed ✅' : 'Space locked 🔒 — counted as handled', 'success');
+      const offlineNote = (!isOnline()) ? ' (saved offline)' : '';
+      toast(action === 'completed' ? `Task completed ✅${offlineNote}` : `Space locked 🔒${offlineNote}`, 'success');
     }
     renderTasks(); renderDashboard();
   } catch(e) { toast('Update failed: ' + e.message, 'error'); }
@@ -3469,10 +3470,10 @@ async function saveIncident() {
       resolvedat: null,
       resolutionnotes: null
     };
-    await dbInsert('incidents', inc);
+    await dbInsertOffline('incidents', inc);
     state.incidents.unshift(inc);
     closeModal('modal-incident');
-    toast('Incident reported', 'success');
+    toast('Incident reported' + (!isOnline() ? ' (saved offline)' : ''), 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
@@ -3626,10 +3627,10 @@ async function saveSupplyRequest() {
       createdat: new Date().toISOString(),
       managernote: null, approvedby: null, approvedat: null
     };
-    await dbInsert('supplyrequests', req);
+    await dbInsertOffline('supplyrequests', req);
     state.supplyRequests.unshift(req);
     closeModal('modal-supply-req');
-    toast('Supply request submitted', 'success');
+    toast('Supply request submitted' + (!isOnline() ? ' (saved offline)' : ''), 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
@@ -3826,7 +3827,7 @@ function clearStaffForm() {
 
 function clearInvForm() {
   ['inv-name','inv-qty','inv-reorder','inv-supplier','inv-supplier-contact',
-   'inv-serial','inv-eq-qty','inv-assigned-to','inv-condition-notes','inv-eq-supplier','inv-eq-supplier-contact'].forEach(id => {
+   'inv-serial','inv-assigned-to','inv-condition-notes','inv-eq-supplier','inv-eq-supplier-contact','inv-eq-qty'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('inv-cat').selectedIndex = 0;
@@ -3883,10 +3884,137 @@ function clearPhoto(previewId, placeholderId, deleteBtnId) {
 }
 
 function viewImage(imageSrc, title) {
-  if (!imageSrc || !imageSrc.startsWith('data:')) { toast('No image available', 'error'); return; }
+  if (!imageSrc || (!imageSrc.startsWith('data:') && !imageSrc.startsWith('http') && !imageSrc.startsWith('/'))) { toast('No image available', 'error'); return; }
   document.getElementById('image-modal-title').textContent = title;
   document.getElementById('image-view-img').src = imageSrc;
   openModal('modal-image-view');
+}
+
+// ================================================================
+// VARIANTS SYSTEM
+// ================================================================
+let editingVariantId = null;
+
+function openAddVariantModal(invId) {
+  const item = state.inventory.find(x => x.id === invId);
+  if (!item) return;
+  currentInvId = invId;
+  editingVariantId = null;
+  document.getElementById('variant-modal-title').textContent = 'Add Variant — ' + item.name;
+  document.getElementById('variant-parent-name').value = item.name;
+  document.getElementById('variant-name').value = '';
+  document.getElementById('variant-qty').value = '1';
+  document.getElementById('variant-condition').value = '';
+  document.getElementById('variant-serial').value = '';
+  document.getElementById('variant-assigned').value = '';
+  document.getElementById('variant-purchase-date').value = '';
+  document.getElementById('variant-last-serviced').value = '';
+  document.getElementById('variant-supplier').value = '';
+  document.getElementById('variant-notes').value = '';
+  clearPhoto('variant-photo-preview','variant-photo-placeholder','del-variant-photo');
+  document.getElementById('save-variant-btn').textContent = 'Save Variant';
+  clearFieldError('variant-name','err-variant-name');
+  closeModal('modal-inv-detail');
+  openModal('modal-add-variant');
+}
+
+function openEditVariantModal(invId, variantId) {
+  const item = state.inventory.find(x => x.id === invId);
+  if (!item) return;
+  const variant = (item.variants||[]).find(v => v.id === variantId);
+  if (!variant) return;
+  currentInvId = invId;
+  editingVariantId = variantId;
+  document.getElementById('variant-modal-title').textContent = 'Edit Variant — ' + item.name;
+  document.getElementById('variant-parent-name').value = item.name;
+  document.getElementById('variant-name').value = variant.name || '';
+  document.getElementById('variant-qty').value = variant.qty != null ? variant.qty : 1;
+  document.getElementById('variant-condition').value = variant.condition || '';
+  document.getElementById('variant-serial').value = variant.serial || '';
+  document.getElementById('variant-assigned').value = variant.assignedto || '';
+  document.getElementById('variant-purchase-date').value = variant.purchasedate || '';
+  document.getElementById('variant-last-serviced').value = variant.lastserviced || '';
+  document.getElementById('variant-supplier').value = variant.supplier || '';
+  document.getElementById('variant-notes').value = variant.notes || '';
+  // Populate photo if exists
+  const prev = document.getElementById('variant-photo-preview');
+  const ph = document.getElementById('variant-photo-placeholder');
+  const del = document.getElementById('del-variant-photo');
+  if (variant.img) {
+    prev.src = variant.img; prev.style.display = 'block';
+    if (ph) ph.style.display = 'none';
+    if (del) del.style.display = 'inline-flex';
+  } else {
+    clearPhoto('variant-photo-preview','variant-photo-placeholder','del-variant-photo');
+  }
+  document.getElementById('save-variant-btn').textContent = 'Save Changes';
+  clearFieldError('variant-name','err-variant-name');
+  closeModal('modal-inv-detail');
+  openModal('modal-add-variant');
+}
+
+async function saveVariant() {
+  if (!canEdit()) return;
+  const nameVal = document.getElementById('variant-name').value.trim();
+  if (!validateField('variant-name','err-variant-name', v => v.trim().length > 0)) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  if (!Array.isArray(item.variants)) item.variants = [];
+
+  // Compress photo if present
+  const prevEl = document.getElementById('variant-photo-preview');
+  const rawImg = prevEl && prevEl.style.display !== 'none' ? prevEl.src : '';
+  const imgData = rawImg && rawImg.startsWith('data:') ? await compressImage(rawImg, 600, 0.7) : (rawImg || '');
+
+  const variantData = {
+    id: editingVariantId || uid(),
+    name: nameVal,
+    qty: parseInt(document.getElementById('variant-qty').value) || 0,
+    condition: document.getElementById('variant-condition').value,
+    serial: document.getElementById('variant-serial').value.trim(),
+    assignedto: document.getElementById('variant-assigned').value.trim(),
+    purchasedate: document.getElementById('variant-purchase-date').value,
+    lastserviced: document.getElementById('variant-last-serviced').value,
+    supplier: document.getElementById('variant-supplier').value.trim(),
+    notes: document.getElementById('variant-notes').value.trim(),
+    img: imgData,
+    updatedby: currentUser.name,
+    updatedat: new Date().toISOString()
+  };
+
+  if (editingVariantId) {
+    const idx = item.variants.findIndex(v => v.id === editingVariantId);
+    if (idx >= 0) item.variants[idx] = variantData;
+  } else {
+    item.variants.push(variantData);
+  }
+  showLoading('Saving variant…');
+  try {
+    await dbUpdate('inventory', item.id, { variants: item.variants });
+    closeModal('modal-add-variant');
+    openInvDetail(currentInvId);
+    renderInventory();
+    toast(editingVariantId ? 'Variant updated ✅' : 'Variant added ✅', 'success');
+  } catch(e) {
+    if (!editingVariantId) item.variants.pop();
+    toast('Save failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function deleteVariant(invId, variantId) {
+  const confirmed = await showConfirm('Delete Variant', 'This will permanently remove this variant.', 'Delete', 'btn-danger');
+  if (!confirmed) return;
+  const item = state.inventory.find(x => x.id === invId);
+  if (!item || !Array.isArray(item.variants)) return;
+  item.variants = item.variants.filter(v => v.id !== variantId);
+  showLoading('Deleting variant…');
+  try {
+    await dbUpdate('inventory', item.id, { variants: item.variants });
+    openInvDetail(invId);
+    renderInventory();
+    toast('Variant removed', 'success');
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
 }
 </script>
 </body>
