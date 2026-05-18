@@ -223,6 +223,7 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.72);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
 .modal-overlay.center-ov{align-items:center;justify-content:center}
+/* #modal-image-view z-index is set dynamically via viewImage() to stay above all modals */
 .modal{background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-height:92vh;overflow-y:auto;max-width:620px}
 .modal.center-m{border-radius:var(--r-xl);max-width:520px;width:calc(100% - 28px);margin:0 auto}
 .modal-header{background:var(--navy);padding:18px 20px;border-radius:var(--r-xl) var(--r-xl) 0 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
@@ -710,11 +711,6 @@ textarea.form-control{resize:vertical;min-height:56px}
     <button class="btn btn-amber btn-sm" onclick="openEditStaff()" id="prof-edit-btn">✏️ Edit</button>
     <button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()" id="prof-delete-btn">Remove</button>
   </div></div></div>
-</div>
-
-<!-- IMAGE VIEW MODAL -->
-<div class="modal-overlay center-ov" id="modal-image-view" style="display:none" onclick="overlayClick(event,'modal-image-view')">
-  <div class="modal center-m" style="max-width:90vw"><div class="modal-header"><span class="modal-title" id="image-modal-title">Image</span><button class="modal-close" onclick="closeModal('modal-image-view')">✕</button></div><div class="modal-body image-modal-content"><img id="image-view-img" src="" style="width:100%;height:auto;border-radius:var(--r-md)"></div></div>
 </div>
 
 <!-- INVENTORY MODAL -->
@@ -1982,8 +1978,12 @@ function openStaffProfile(id) {
   const statusHtml = canEdit()
     ? `<div style="margin:12px 0"><label class="form-label">Update Status</label><select class="form-control" id="prof-status-sel" onchange="updateStaffStatus(this.value)"><option ${s.status==='On Shift'?'selected':''}>On Shift</option><option ${s.status==='Off Shift'?'selected':''}>Off Shift</option><option ${s.status==='On Leave'?'selected':''}>On Leave</option></select></div>` : '';
   let ghanaImagesHtml = '';
-  if (s.ghanafront && s.ghanafront.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${s.ghanafront}','Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
-  if (s.ghanaback && s.ghanaback.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row clickable" onclick="viewImage('${s.ghanaback}','Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
+  if (s.ghanafront && s.ghanafront.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('staff-ghana-front-store','Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
+  if (s.ghanaback && s.ghanaback.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('staff-ghana-back-store','Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
+  // Store Ghana card images safely
+  const setStore = (id, src) => { let el = document.getElementById(id); if (!el) { el = document.createElement('img'); el.id = id; el.style.display = 'none'; document.body.appendChild(el); } el.setAttribute('data-src', src || ''); };
+  setStore('staff-ghana-front-store', s.ghanafront || '');
+  setStore('staff-ghana-back-store', s.ghanaback || '');
   document.getElementById('prof-details').innerHTML = `
     ${statusHtml}
     <div class="section-sep">Personal</div>
@@ -2155,7 +2155,7 @@ function renderInventory() {
     grid.className = 'inv-grid';
     grid.innerHTML = list.slice(0, PAGE_SIZE).map(r => {
       const invItem = state.inventory.find(i => i.id === r.invid) || {};
-      return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${esc(invItem.name||r.itemname||'Unknown Item')}</div><div class="damage-date">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`;
+      return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${esc(invItem.name||r.itemname||'Unknown Item')}</div><div class="damage-date">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" data-imgsrc="${r.photo}" class="damage-img-thumb" onclick="viewStoredImage(this,'Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`;
     }).join('');
     const lm = document.getElementById('inv-load-more');
     if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
@@ -2322,9 +2322,23 @@ function openInvDetail(id) {
       ${detRow('Purchase Date', item.purchasedate||'—')}
       ${detRow('Last Serviced', item.lastserviced||'—')}
       ${detRow('Supplier', item.supplier||'—')}
-      ${item.img && item.img.startsWith('data:') ? `<div class="detail-row clickable" onclick="viewImage('${item.img}','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view</span></div>` : ''}
+      ${item.img ? `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('detail-img-store','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view ›</span></div>` : ''}
       ${item.conditionnotes?`<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>`:''}`;
-    document.getElementById('inv-qty-ctrl').innerHTML = canEdit() ? `<div style="display:flex;align-items:center;gap:10px;margin:10px 0"><button class="btn btn-outline btn-sm" onclick="adjustEqQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty != null ? item.qty : 0}</span><button class="btn btn-primary btn-sm" onclick="adjustEqQty(1)">+ Add</button></div>` : '';
+    // Store image safely in hidden element to avoid base64-in-onclick issues
+    let imgStore = document.getElementById('detail-img-store');
+    if (!imgStore) { imgStore = document.createElement('img'); imgStore.id = 'detail-img-store'; imgStore.style.display = 'none'; document.body.appendChild(imgStore); }
+    imgStore.setAttribute('data-src', item.img || '');    const hasVars = Array.isArray(item.variants) && item.variants.length > 0;
+    const displayQty = hasVars ? item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0) : (item.qty != null ? item.qty : 0);
+    document.getElementById('inv-qty-ctrl').innerHTML = canEdit()
+      ? `<div style="display:flex;align-items:center;gap:10px;margin:10px 0">
+          ${!hasVars ? `<button class="btn btn-outline btn-sm" onclick="adjustEqQty(-1)">− Remove</button>` : ''}
+          <div style="text-align:center">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy);line-height:1">${displayQty}</div>
+            <div style="font-size:10px;color:var(--text-muted)">${hasVars ? 'total across variants' : 'units'}</div>
+          </div>
+          ${!hasVars ? `<button class="btn btn-primary btn-sm" onclick="adjustEqQty(1)">+ Add</button>` : ''}
+        </div>`
+      : `<div style="text-align:center;margin:10px 0"><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${displayQty}</div><div style="font-size:10px;color:var(--text-muted)">${hasVars ? 'total across variants' : 'units'}</div></div>`;
     // Show condition history
     const hist = item.conditionhistory || [];
     const histHtml = hist.length
@@ -2337,7 +2351,7 @@ function openInvDetail(id) {
             </div>
             <div class="log-details">${esc(h.notes)}${h.serviceddate?`<br>🔧 Serviced: ${esc(h.serviceddate)}`:''}${h.assignedto?`<br>📍 ${esc(h.assignedto)}`:''}</div>
             <div style="font-size:10px;color:var(--text-muted);margin-top:3px">by ${esc(h.updatedby)} · ${esc((h.createdat||'').slice(0,16))}</div>
-            ${h.photo&&h.photo.startsWith('data:')?`<img src="${h.photo}" class="damage-img-thumb" style="margin-top:6px" onclick="viewImage('${h.photo}','Condition Photo')" alt="">` : ''}
+            ${h.photo&&h.photo.startsWith('data:')?`<img src="${h.photo}" data-imgsrc="${h.photo}" class="damage-img-thumb" style="margin-top:6px" onclick="viewStoredImage(this,'Condition Photo')" alt="">` : ''}
           </div>`;
         }).join('')
       : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No condition history yet</div></div>';
@@ -2349,7 +2363,9 @@ function openInvDetail(id) {
       const varHtml = variants.length
         ? variants.map(v => {
             const vcs = v.condition ? conditionStyle(v.condition) : null;
-            const imgThumb = v.img ? `<img src="${v.img}" onclick="viewImage('${v.img}','${esc(item.name)} — ${esc(v.name)}')" style="width:44px;height:44px;border-radius:8px;object-fit:cover;cursor:pointer;flex-shrink:0" alt="">` : `<div style="width:44px;height:44px;border-radius:8px;background:var(--off-white);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔧</div>`;
+            const imgThumb = v.img
+              ? `<img src="${v.img}" data-imgsrc="${v.img}" data-imgtitle="${esc(item.name)} — ${esc(v.name)}" onclick="viewStoredImage(this,'${esc(item.name)} — ${esc(v.name)}')" style="width:44px;height:44px;border-radius:8px;object-fit:cover;cursor:pointer;flex-shrink:0" alt="">`
+              : `<div style="width:44px;height:44px;border-radius:8px;background:var(--off-white);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔧</div>`;
             return `<div class="variant-row" style="margin-bottom:8px;padding:10px;align-items:flex-start;gap:10px">
               ${imgThumb}
               <div style="flex:1;min-width:0">
@@ -2378,8 +2394,8 @@ function openInvDetail(id) {
     // Show/hide correct sections
     document.getElementById('inv-stock-detail-section').style.display = 'none';
     document.getElementById('inv-equipment-detail-section').style.display = 'block';
-    // Buttons
-    const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = 'none';
+    // Buttons — show usage log and condition update for equipment
+    const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = canEdit() ? 'inline-flex' : 'none';
     const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = 'none';
     const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = canEdit() ? 'inline-flex' : 'none';
     const dib = document.getElementById('delete-inv-btn'); if (dib) dib.style.display = canEdit() ? 'inline-flex' : 'none';
@@ -2392,8 +2408,12 @@ function openInvDetail(id) {
       <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorder} ${esc(item.uom||'units')}</span></div>
       <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${esc(item.supplier||'—')}</span></div>
       <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${esc(item.suppliercontact||item.supplierContact||'—')}</span></div>
-      ${item.img && item.img.startsWith('data:') ? `<div class="detail-row clickable" onclick="viewImage('${item.img}','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view</span></div>` : ''}
+      ${item.img ? `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('detail-img-store','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view ›</span></div>` : ''}
       <div class="stock-bar" style="margin:10px 0"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>`;
+    // Store image safely
+    let imgStoreS = document.getElementById('detail-img-store');
+    if (!imgStoreS) { imgStoreS = document.createElement('img'); imgStoreS.id = 'detail-img-store'; imgStoreS.style.display = 'none'; document.body.appendChild(imgStoreS); }
+    imgStoreS.setAttribute('data-src', item.img || '');
     const qtyCtrl = document.getElementById('inv-qty-ctrl');
     if (canEdit()) qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
     else qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${esc(item.uom||'units')}</span>`;
@@ -2403,7 +2423,7 @@ function openInvDetail(id) {
     document.getElementById('inv-usage-logs').innerHTML = logsHtml;
     const dmgs = (state.damageReports||[]).filter(r => r.invid === id);
     const dmgHtml = dmgs.length > 0
-      ? dmgs.map(r => `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.qty?`<div style="font-size:11px;color:#991b1b">Qty damaged: ${r.qty}</div>`:''}${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" class="damage-img-thumb" onclick="viewImage('${r.photo}','Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`).join('')
+      ? dmgs.map(r => `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.qty?`<div style="font-size:11px;color:#991b1b">Qty damaged: ${r.qty}</div>`:''}${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" data-imgsrc="${r.photo}" class="damage-img-thumb" onclick="viewStoredImage(this,'Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`).join('')
       : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No damage reports for this item</div></div>';
     document.getElementById('inv-damage-logs').innerHTML = dmgHtml;
     document.getElementById('inv-stock-detail-section').style.display = 'block';
@@ -3793,7 +3813,16 @@ function openModal(id) {
   if (id === 'modal-supply-req') { document.getElementById('req-item').value=''; document.getElementById('req-qty').value='1'; document.getElementById('req-notes').value=''; clearFieldError('req-item','err-req-item'); }
   const el = document.getElementById(id); if (el) el.style.display = 'flex';
 }
-function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (id === 'modal-image-view') {
+    el.style.cssText = 'display:none;position:fixed;inset:0;z-index:999999';
+    document.getElementById('image-view-img').src = '';
+  } else {
+    el.style.display = 'none';
+  }
+}
 function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 
 function clearStaffForm() {
@@ -3885,9 +3914,29 @@ function clearPhoto(previewId, placeholderId, deleteBtnId) {
 
 function viewImage(imageSrc, title) {
   if (!imageSrc || (!imageSrc.startsWith('data:') && !imageSrc.startsWith('http') && !imageSrc.startsWith('/'))) { toast('No image available', 'error'); return; }
-  document.getElementById('image-modal-title').textContent = title;
+  const el = document.getElementById('modal-image-view');
+  if (!el) return;
+  document.getElementById('image-modal-title').textContent = title || 'Image';
   document.getElementById('image-view-img').src = imageSrc;
-  openModal('modal-image-view');
+  // Move to very end of <body> so it sits above all other modals in DOM stacking order
+  document.body.appendChild(el);
+  el.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(10,22,40,.85);align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+}
+
+// Reads image from a stored element (hidden store ID or element with data-imgsrc)
+function viewStoredImage(elOrId, title) {
+  let src = '';
+  if (typeof elOrId === 'string') {
+    const el = document.getElementById(elOrId);
+    // Read from data-src attribute to avoid browser resolving '' to page URL
+    src = el ? (el.dataset.src || el.getAttribute('data-src') || '') : '';
+  } else if (elOrId && elOrId.dataset && elOrId.dataset.imgsrc) {
+    src = elOrId.dataset.imgsrc;
+  } else if (elOrId && elOrId.src) {
+    src = elOrId.src;
+  }
+  if (!src || src === window.location.href) { toast('No image available', 'error'); return; }
+  viewImage(src, title);
 }
 
 // ================================================================
@@ -3991,6 +4040,7 @@ async function saveVariant() {
   showLoading('Saving variant…');
   try {
     await dbUpdate('inventory', item.id, { variants: item.variants });
+    await syncParentQty(item);
     closeModal('modal-add-variant');
     openInvDetail(currentInvId);
     renderInventory();
@@ -4001,6 +4051,18 @@ async function saveVariant() {
   } finally { hideLoading(); }
 }
 
+async function syncParentQty(item) {
+  // If equipment has variants, parent qty = sum of all variant qtys
+  if (!Array.isArray(item.variants) || item.variants.length === 0) return;
+  const total = item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0);
+  if (item.qty === total) return; // already in sync
+  item.qty = total;
+  try {
+    await dbUpdate('inventory', item.id, { qty: total });
+  } catch(e) { console.warn('syncParentQty failed', e); }
+}
+
+
 async function deleteVariant(invId, variantId) {
   const confirmed = await showConfirm('Delete Variant', 'This will permanently remove this variant.', 'Delete', 'btn-danger');
   if (!confirmed) return;
@@ -4010,6 +4072,7 @@ async function deleteVariant(invId, variantId) {
   showLoading('Deleting variant…');
   try {
     await dbUpdate('inventory', item.id, { variants: item.variants });
+    await syncParentQty(item);
     openInvDetail(invId);
     renderInventory();
     toast('Variant removed', 'success');
@@ -4017,5 +4080,18 @@ async function deleteVariant(invId, variantId) {
   finally { hideLoading(); }
 }
 </script>
+<!-- IMAGE VIEW MODAL — must be last in DOM so it always stacks on top -->
+<div class="modal-overlay center-ov" id="modal-image-view" style="display:none;z-index:99999!important" onclick="if(event.target===this)closeModal('modal-image-view')">
+  <div style="background:#fff;border-radius:16px;max-width:92vw;width:100%;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)">
+    <div style="background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff" id="image-modal-title">Image</span>
+      <button onclick="closeModal('modal-image-view')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    </div>
+    <div style="padding:16px;background:#111;text-align:center">
+      <img id="image-view-img" src="" style="max-width:100%;max-height:75vh;object-fit:contain;border-radius:8px">
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
