@@ -1836,7 +1836,10 @@ function renderStaff() {
 }
 
 function staffCard(s) {
-  return `<div class="staff-card" onclick="openStaffProfile('${esc(s.id)}')"><div class="sc-header"><div class="sc-avatar">${s.photo ? `<img src="${s.photo}" alt="">` : esc(initials(s.name))}</div><div style="flex:1"><div class="sc-name">${esc(s.name)}</div><div class="sc-role">${esc(s.role)}</div></div><span class="pill ${pillClass(s.status)}">${esc(s.status)}</span></div><div class="sc-body">${detRow('Staff ID', s.staffid||s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift||'—')}</div></div>`;
+  const avatarHtml = s.photo
+    ? `<div class="sc-avatar" onclick="event.stopPropagation();viewImage('${s.photo.startsWith('data:')||s.photo.startsWith('http')||s.photo.startsWith('/') ? '' : ''}${s.photo}','${esc(s.name)}')" style="cursor:zoom-in"><img src="${s.photo}" alt=""></div>`
+    : `<div class="sc-avatar">${esc(initials(s.name))}</div>`;
+  return `<div class="staff-card" onclick="openStaffProfile('${esc(s.id)}')"><div class="sc-header">${avatarHtml}<div style="flex:1"><div class="sc-name">${esc(s.name)}</div><div class="sc-role">${esc(s.role)}</div></div><span class="pill ${pillClass(s.status)}">${esc(s.status)}</span></div><div class="sc-body">${detRow('Staff ID', s.staffid||s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift||'—')}</div></div>`;
 }
 
 function loadMoreStaff() {
@@ -1971,8 +1974,18 @@ function openStaffProfile(id) {
   if (!s) return;
   currentStaffId = id;
   const photoDiv = document.getElementById('prof-photo');
-  if (s.photo) { photoDiv.innerHTML = `<img src="${s.photo}" alt="">`; photoDiv.style.background = 'rgba(255,255,255,.1)'; }
-  else { photoDiv.textContent = initials(s.name); photoDiv.style.background = 'var(--red)'; }
+  if (s.photo) {
+    photoDiv.innerHTML = `<img src="${s.photo}" alt="">`;
+    photoDiv.style.background = 'rgba(255,255,255,.1)';
+    photoDiv.style.cursor = 'zoom-in';
+    photoDiv.title = 'Tap to view full photo';
+    photoDiv.onclick = () => viewImage(s.photo, s.name);
+  } else {
+    photoDiv.textContent = initials(s.name);
+    photoDiv.style.background = 'var(--red)';
+    photoDiv.style.cursor = 'default';
+    photoDiv.onclick = null;
+  }
   document.getElementById('prof-name').textContent = s.name;
   document.getElementById('prof-role').textContent = s.role;
   const statusHtml = canEdit()
@@ -2212,18 +2225,20 @@ function equipmentCardHtml(item) {
 
 function invCardHtml(item) {
   const reorderQty = Number(item.reorder) || 0;
-  const pct = Math.min(100, Math.round(Number(item.qty) / (reorderQty * 2 || 1) * 100));
+  const hasVariants = item.category === 'Equipment' && Array.isArray(item.variants) && item.variants.length > 0;
+  const displayQty = hasVariants ? item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0) : Number(item.qty);
+  const pct = Math.min(100, Math.round(displayQty / (reorderQty * 2 || 1) * 100));
   const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
   const dmgCount = (state.damageReports || []).filter(r => r.invid === item.id).length;
-  const isLow = reorderQty > 0 && Number(item.qty) <= reorderQty;
+  const isLow = reorderQty > 0 && displayQty <= reorderQty;
   return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${esc(item.id)}')">
     <div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '📦'}</div>
     <div class="inv-body">
       <div class="inv-name">${esc(item.name)}</div>
-      <div class="inv-cat">${esc(item.category)}</div>
+      <div class="inv-cat">${esc(item.category)}${hasVariants ? ` · <span style="color:var(--navy);font-weight:700">${item.variants.length} variants</span>` : ''}</div>
       ${dmgCount ? `<div class="pill pill-damaged" style="margin:4px 0">⚠ ${dmgCount} damage report${dmgCount>1?'s':''}</div>` : ''}
       <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
-      <div class="stock-info"><span>Qty: ${item.qty} ${esc(item.uom||'')}</span><span>Reorder: ${item.reorder}</span></div>
+      <div class="stock-info"><span>${hasVariants ? 'Total' : 'Qty'}: ${displayQty} ${esc(item.uom||'')}</span><span>Reorder: ${item.reorder}</span></div>
       ${isLow ? '<div class="pill" style="background:#fef2f2;color:#dc2626;margin-top:4px">⚠ LOW</div>' : ''}
     </div>
   </div>`;
@@ -2322,12 +2337,13 @@ function openInvDetail(id) {
       ${detRow('Purchase Date', item.purchasedate||'—')}
       ${detRow('Last Serviced', item.lastserviced||'—')}
       ${detRow('Supplier', item.supplier||'—')}
-      ${item.img ? `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('detail-img-store','${esc(item.name)}')"><span class="dk">📷 Product Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view ›</span></div>` : ''}
+      ${item.img ? `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('detail-eq-img-store','${esc(item.name)}')"><span class="dk">📷 Equipment Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view ›</span></div>` : ''}
       ${item.conditionnotes?`<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>`:''}`;
-    // Store image safely in hidden element to avoid base64-in-onclick issues
-    let imgStore = document.getElementById('detail-img-store');
-    if (!imgStore) { imgStore = document.createElement('img'); imgStore.id = 'detail-img-store'; imgStore.style.display = 'none'; document.body.appendChild(imgStore); }
-    imgStore.setAttribute('data-src', item.img || '');    const hasVars = Array.isArray(item.variants) && item.variants.length > 0;
+    // Store equipment image in a dedicated hidden element separate from the stock item store
+    let eqImgStore = document.getElementById('detail-eq-img-store');
+    if (!eqImgStore) { eqImgStore = document.createElement('img'); eqImgStore.id = 'detail-eq-img-store'; eqImgStore.style.display = 'none'; document.body.appendChild(eqImgStore); }
+    eqImgStore.setAttribute('data-src', item.img || '');
+    const hasVars = Array.isArray(item.variants) && item.variants.length > 0;
     const displayQty = hasVars ? item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0) : (item.qty != null ? item.qty : 0);
     document.getElementById('inv-qty-ctrl').innerHTML = canEdit()
       ? `<div style="display:flex;align-items:center;gap:10px;margin:10px 0">
