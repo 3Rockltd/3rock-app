@@ -664,6 +664,19 @@ textarea.form-control{resize:vertical;min-height:56px}
       </div>
       <div class="section-title">Task Completion Report</div>
       <div class="card" id="report-tasks"></div>
+      <div class="section-title">👤 Cleaner Performance Report</div>
+      <div class="card" style="padding:14px;margin-bottom:12px">
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="setCleanerReportRange('week')">This Week</button>
+          <button class="btn btn-outline btn-sm" onclick="setCleanerReportRange('month')">This Month</button>
+          <button class="btn btn-outline btn-sm" onclick="setCleanerReportRange('all')">All Time</button>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">From</label><input type="date" class="form-control" id="cr-from" onchange="renderCleanerReport()"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">To</label><input type="date" class="form-control" id="cr-to" onchange="renderCleanerReport()"></div>
+        </div>
+        <div id="report-cleaners"></div>
+      </div>
       <div class="section-title">Inventory Usage</div>
       <div class="card" id="report-inv"></div>
     </div>
@@ -978,11 +991,19 @@ textarea.form-control{resize:vertical;min-height:56px}
     </div>
     <div class="form-group">
       <label class="form-label">Frequency</label>
-      <select class="form-control" id="task-freq-select">
-        <option value="Daily">Daily</option>
+      <select class="form-control" id="task-freq-select" onchange="toggleIntervalField()">
+        <option value="Daily">Daily (once per shift)</option>
         <option value="Weekly">Weekly</option>
         <option value="Monthly">Monthly</option>
+        <option value="Hourly">Hourly</option>
+        <option value="Every 2 Hours">Every 2 Hours</option>
+        <option value="Every 4 Hours">Every 4 Hours</option>
+        <option value="Custom Interval">Custom Interval (times per shift)</option>
       </select>
+    </div>
+    <div class="form-group" id="task-interval-group" style="display:none">
+      <label class="form-label">Required completions per shift</label>
+      <input type="number" class="form-control" id="task-interval-count" min="1" max="24" placeholder="e.g. 3" value="1">
     </div>
     <div class="section-sep">Location</div>
     <div class="form-group">
@@ -1035,6 +1056,9 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="form-group"><label class="form-label">Incident Type *</label><select class="form-control" id="inc-type"><option>Accident / Injury</option><option>Client Complaint</option><option>Equipment Damage</option><option>Spill / Hazard</option><option>Security Issue</option><option>Other</option></select></div>
     <div class="form-group"><label class="form-label">Location / Area</label><input type="text" class="form-control" id="inc-location" placeholder="Where did this happen?"></div>
     <div class="form-group"><label class="form-label">Description *</label><textarea class="form-control" id="inc-desc" rows="4" placeholder="Describe what happened..."></textarea><div class="field-error" id="err-inc-desc">Description is required</div></div>
+    <div class="form-group"><label class="form-label">Photo Evidence <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+      <div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inc-photo-preview','inc-photo-placeholder','del-inc-photo')"><img src="" class="photo-preview-rect" id="inc-photo-preview" style="display:none"><div id="inc-photo-placeholder">📷 Tap to add photo</div></div><button type="button" class="photo-delete-btn" id="del-inc-photo" onclick="clearPhoto('inc-photo-preview','inc-photo-placeholder','del-inc-photo')" title="Remove photo">✕</button></div>
+    </div>
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-incident')">Cancel</button><button class="btn btn-primary" style="background:#7c3aed" onclick="saveIncident()">Submit Report</button></div>
   </div></div>
 </div>
@@ -1726,7 +1750,7 @@ async function goToTab(tab) {
     await loadIncidentsAndRequests(from, to);
     renderIncidentsScreen();
   }
-  else if (tab === 'reports') renderReports();
+  else if (tab === 'reports') { renderReports(); renderCleanerReport(); }
 }
 
 function renderAll() {
@@ -3155,22 +3179,29 @@ function renderTasks() {
 function renderManagementTasks(el) {
   const todayLogs = state.taskLogs.filter(l => l.date === todayStr());
   const totalTasks = state.tasks.length;
-  // Only count unique task IDs that have been handled (avoid double-counting multi-shift logs)
+
+  // Count handled: a task counts once regardless of how many shift-logs it has.
+  // Only include task IDs that still exist in state.tasks (deleted tasks are excluded).
+  const existingTaskIds = new Set(state.tasks.map(t => t.id));
   const handledTaskIds = new Set(
     todayLogs
-      .filter(l => l.status === 'completed' || l.status === 'locked')
+      .filter(l => (l.status === 'completed' || l.status === 'locked') && existingTaskIds.has(l.taskid))
       .map(l => l.taskid)
   );
-  const handled = handledTaskIds.size;
-  const pct = totalTasks > 0 ? Math.round(handled / totalTasks * 100) : 0;
+  const handled = Math.min(handledTaskIds.size, totalTasks); // never exceed total
+  const pct = totalTasks > 0 ? Math.min(100, Math.round(handled / totalTasks * 100)) : 0;
+
+  // Preserve cleaner filter selection across re-renders
+  const prevCleanerFilter = (document.getElementById('mgmt-filter-cleaner') || {value: ''}).value;
+
   const addButtons = canEdit() ? `
     <button class="btn btn-outline btn-sm" onclick="openZoneManager()">🏢 Manage Zones</button>
     <button class="btn btn-primary btn-sm" onclick="openAddTaskModal()">+ Add Task</button>` : '';
 
-  // Supervisor filter bar
+  // Supervisor filter bar — preserve selected value with selected attribute
   const cleanerOptions = state.staff
     .filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role))
-    .map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+    .map(s => `<option value="${esc(s.id)}" ${prevCleanerFilter === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
 
   const headerHtml = `
     <div class="task-header-bar">
@@ -3190,10 +3221,11 @@ function renderManagementTasks(el) {
       ${['Morning','Noon','Night'].map(sh=>{
         const shTasks = state.tasks.filter(t=>t.assignedshift===sh||t.assignedshift==='All');
         const shHandledIds = new Set(
-          todayLogs.filter(l=>l.shift===sh&&(l.status==='completed'||l.status==='locked')).map(l=>l.taskid)
+          todayLogs
+            .filter(l=>l.shift===sh&&(l.status==='completed'||l.status==='locked')&&existingTaskIds.has(l.taskid))
+            .map(l=>l.taskid)
         );
-        // Only count tasks that actually exist in state
-        const shHandled = shTasks.filter(t => shHandledIds.has(t.id)).length;
+        const shHandled = Math.min(shTasks.filter(t => shHandledIds.has(t.id)).length, shTasks.length);
         const bg = sh==='Morning'?'#fef3c7':sh==='Noon'?'#dbeafe':'#ede9fe';
         const col = sh==='Morning'?'#92400e':sh==='Noon'?'#1e40af':'#4c1d95';
         return `<div class="prog-item" style="background:${bg};border-radius:8px;padding:8px"><div class="prog-val" style="color:${col}">${shHandled}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
@@ -3212,7 +3244,8 @@ function renderManagementTasks(el) {
   const shiftHtml = `<div class="shift-tabs">${['Morning','Noon','Night','All'].map(sh=>`<button class="shift-tab ${activeShift===sh?`active ${sh.toLowerCase()}`:''}}" onclick="setShift('${sh}')">${sh}</button>`).join('')}</div>`;
 
   const shiftFilter = activeShift === 'All' ? null : activeShift;
-  const cleanerFilter = (document.getElementById('mgmt-filter-cleaner')||{value:''}).value;
+  // Use the preserved value (read before innerHTML is replaced)
+  const cleanerFilter = prevCleanerFilter;
 
   let filteredTasks = state.tasks.filter(t => {
     if (shiftFilter && t.assignedshift !== shiftFilter && t.assignedshift !== 'All') return false;
@@ -3297,6 +3330,34 @@ function renderCleanerTasks(el) {
 }
 
 function cleanerTaskItemHtml(task, shift, isPersonal) {
+  const isIntervalTask = ['Hourly','Every 2 Hours','Every 4 Hours','Custom Interval'].includes(task.frequency);
+  if (isIntervalTask) {
+    // Count ALL logs today for this task (multiple allowed)
+    const allLogs = state.taskLogs.filter(l => l.taskid === task.id && l.date === todayStr() && l.shift === shift);
+    const doneCount = allLogs.length;
+    const required = task.requiredcount || 1;
+    const isComplete = doneCount >= required;
+    const lastLog = allLogs.sort((a,b) => (b.time||'').localeCompare(a.time||''))[0];
+    const zonePath = task.zoneid ? getZonePath(task.zoneid) : '';
+    const pct = Math.min(100, Math.round(doneCount / required * 100));
+    return `<div class="task-item ${isComplete?'done':''}" onclick="openIntervalTaskSheet('${esc(task.id)}','${esc(shift)}')">
+      <div class="task-checkbox" style="${isComplete?'background:var(--green);border-color:var(--green);color:#fff':''}">
+        ${isComplete?'✓':doneCount>0?doneCount:''}
+      </div>
+      <div style="flex:1">
+        <div class="task-name">${esc(task.name)}</div>
+        ${zonePath?`<div class="task-by">📍 ${esc(zonePath)}</div>`:''}
+        <div class="task-by">
+          <span style="font-size:10px;color:var(--text-muted)">⏱ ${esc(task.frequency)} · ${doneCount}/${required} done</span>
+          ${lastLog?`<span style="font-size:10px;color:var(--text-muted)"> · last at ${esc(lastLog.time||'?')}</span>`:''}
+        </div>
+        <div style="height:4px;background:var(--surface);border-radius:2px;margin-top:5px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${isComplete?'var(--green)':'var(--amber)'};border-radius:2px;transition:width .3s"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  // Standard (once-per-shift) task
   const log = getTaskLog(task.id, shift);
   const isCompleted = log && log.status === 'completed';
   const isLocked = log && log.status === 'locked';
@@ -3431,7 +3492,7 @@ function mgmtTaskItemHtml(task, shiftFilter, todayLogs) {
   const assignedStaff = task.assignedstaffid ? (state.staff.find(s=>s.id===task.assignedstaffid)||{name:'?'}).name : null;
   const shiftLabel = task.assignedshift || 'All';
   return `<div class="task-item ${isCompleted?'done':isLocked?'locked-task':''}" style="${canEdit()?'':'cursor:default'}">
-    <div class="task-checkbox" style="${isLocked?'background:#94a3b8;border-color:#94a3b8;color:#fff':''}">
+    <div class="task-checkbox" onclick="${canEdit()?`toggleTask('${esc(task.id)}','${esc(shiftLabel)}')`:''}">
       ${isCompleted?'✓':isLocked?'🔒':''}
     </div>
     <div style="flex:1">
@@ -3443,7 +3504,10 @@ function mgmtTaskItemHtml(task, shiftFilter, todayLogs) {
         ${isLocked?`<span style="color:#94a3b8;font-size:10px"> · 🔒 Locked — ${esc(log.completedby)}${log.lockednote?' "'+esc(log.lockednote)+'"':''}</span>`:''}
       </div>
     </div>
-    ${canEdit()?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();deleteTask('${esc(task.id)}')">✕</button>`:''}
+    <div style="display:flex;gap:4px;align-items:center">
+      ${canEdit() && isHandled ? `<button class="btn btn-outline btn-sm" style="font-size:10px;padding:3px 8px;color:var(--amber);border-color:var(--amber)" onclick="event.stopPropagation();supervisorUncheck('${esc(task.id)}','${esc(shiftLabel)}')" title="Uncheck this task">↩ Undo</button>` : ''}
+      ${canEdit()?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();deleteTask('${esc(task.id)}')">✕</button>`:''}
+    </div>
   </div>`;
 }
 
@@ -3533,6 +3597,56 @@ async function toggleTask(taskId, shift) {
   openTaskActionSheet(taskId, shift);
 }
 
+async function openIntervalTaskSheet(taskId, shift) {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const allLogs = state.taskLogs.filter(l => l.taskid === taskId && l.date === todayStr() && l.shift === shift);
+  const doneCount = allLogs.length;
+  const required = task.requiredcount || 1;
+  const isComplete = doneCount >= required;
+  const confirmed = await showConfirm(
+    `${esc(task.name)}`,
+    `${doneCount}/${required} completed today.\n${isComplete ? '✅ All done!' : `Tap OK to log another completion (${required - doneCount} remaining).`}`,
+    isComplete ? 'Log Extra' : '✅ Log Completion',
+    'btn-primary'
+  );
+  if (!confirmed) return;
+  showLoading('Logging…');
+  try {
+    const now = new Date();
+    const log = {
+      id: uid(), taskid: taskId, date: todayStr(), shift,
+      status: 'completed',
+      completedby: currentUser.name,
+      lockednote: '',
+      time: now.toTimeString().slice(0,5),
+      createdat: now.toISOString()
+    };
+    await dbInsertOffline('tasklogs', log);
+    state.taskLogs.push(log);
+    const newCount = doneCount + 1;
+    toast(newCount >= required ? `✅ All ${required} completions logged!` : `Logged ${newCount}/${required}`, 'success');
+    renderTasks(); renderDashboard();
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function uncheckTask(taskId, shift) {
+  if (!canEdit()) return;
+  const confirmed = await showConfirm('Uncheck Task', 'Remove this task completion entry? The cleaner will need to re-do it.', 'Uncheck', 'btn-amber');
+  if (!confirmed) return;
+  const existing = state.taskLogs.findIndex(l => l.taskid === taskId && l.date === todayStr() && l.shift === shift);
+  if (existing < 0) { toast('No log found for this task today', 'info'); return; }
+  showLoading('Unchecking task…');
+  try {
+    await dbDelete('tasklogs', state.taskLogs[existing].id);
+    state.taskLogs.splice(existing, 1);
+    renderTasks(); renderDashboard();
+    toast('Task unchecked — cleaner can re-log it', 'info');
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
 function setShift(sh) { activeShift = sh; renderTasks(); }
 
 // ================================================================
@@ -3542,6 +3656,10 @@ function openAddTaskModal() {
   document.getElementById('task-name-input').value = '';
   document.getElementById('task-shift-select').value = 'Morning';
   document.getElementById('task-freq-select').value = 'Daily';
+  const ig = document.getElementById('task-interval-group');
+  if (ig) ig.style.display = 'none';
+  const ic = document.getElementById('task-interval-count');
+  if (ic) ic.value = '1';
   // Populate staff dropdown
   const staffSel = document.getElementById('task-staff-select');
   const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
@@ -3550,6 +3668,23 @@ function openAddTaskModal() {
   // Populate floor dropdown
   populateTaskFloors();
   openModal('modal-add-task');
+}
+
+function toggleIntervalField() {
+  const freq = document.getElementById('task-freq-select')?.value;
+  const group = document.getElementById('task-interval-group');
+  if (!group) return;
+  const intervalFreqs = ['Hourly','Every 2 Hours','Every 4 Hours','Custom Interval'];
+  if (intervalFreqs.includes(freq)) {
+    group.style.display = 'block';
+    // Auto-set sensible defaults
+    const defaults = {'Hourly':8,'Every 2 Hours':4,'Every 4 Hours':2,'Custom Interval':1};
+    if (!document.getElementById('task-interval-count').value || document.getElementById('task-interval-count').value === '1') {
+      document.getElementById('task-interval-count').value = defaults[freq] || 1;
+    }
+  } else {
+    group.style.display = 'none';
+  }
 }
 
 function populateTaskFloors() {
@@ -3586,6 +3721,9 @@ async function saveTask() {
   const rtId = document.getElementById('task-rt-select')?.value;
   const floorId = document.getElementById('task-floor-select')?.value;
   const zoneId = roomId || rtId || floorId || null;
+  const freq = document.getElementById('task-freq-select').value;
+  const intervalFreqs = ['Hourly','Every 2 Hours','Every 4 Hours','Custom Interval'];
+  const requiredCount = intervalFreqs.includes(freq) ? (parseInt(document.getElementById('task-interval-count')?.value)||1) : 1;
   const staffId = document.getElementById('task-staff-select')?.value || null;
   showLoading('Adding task…');
   try {
@@ -3593,7 +3731,8 @@ async function saveTask() {
       id: uid(), name,
       assignedshift: document.getElementById('task-shift-select').value,
       assignedstaffid: staffId || null,
-      frequency: document.getElementById('task-freq-select').value,
+      frequency: freq,
+      requiredcount: requiredCount,
       zoneid: zoneId
     };
     await dbInsert('tasks', task);
@@ -3678,20 +3817,23 @@ async function saveIncident() {
   if (!validateField('inc-desc', 'err-inc-desc', v => v.trim().length > 0)) return;
   showLoading('Submitting incident…');
   try {
+    const rawPhoto = document.getElementById('inc-photo-preview')?.src || '';
+    const photo = rawPhoto.startsWith('data:') ? await compressImage(rawPhoto, 600, 0.7) : '';
+    // Only send columns that exist in the Supabase incidents table
     const inc = {
       id: uid(),
       type: document.getElementById('inc-type').value,
-      location: document.getElementById('inc-location').value,
+      location: document.getElementById('inc-location').value.trim(),
       description: desc,
       reportedby: currentUser.name,
       date: todayStr(),
       createdat: new Date().toISOString(),
       status: 'Open',
-      resolvedby: null,
-      resolvedat: null,
-      resolutionnotes: null
+      photo: photo || null
     };
     await dbInsertOffline('incidents', inc);
+    // Store resolution fields locally only (not sent to DB on create)
+    inc.resolvedby = null; inc.resolvedat = null; inc.resolutionnotes = null;
     state.incidents.unshift(inc);
     closeModal('modal-incident');
     toast('Incident reported' + (!isOnline() ? ' (saved offline)' : ''), 'success');
@@ -3772,6 +3914,7 @@ function openIncidentDetail(id) {
     ${detRow('Date', i.date)}${detRow('Location', i.location||'—')}${detRow('Reported By', i.reportedby)}
     <div class="section-sep">Description</div>
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.6">${esc(i.description)}</p>
+    ${i.photo && i.photo.startsWith('data:') ? `<img src="${i.photo}" data-imgsrc="${i.photo}" onclick="viewStoredImage(this,'Incident Photo')" class="damage-img-thumb" style="margin-top:10px;cursor:pointer" alt="incident photo">` : ''}
     ${i.resolvedby ? `<div class="resolution-box"><div class="res-label">Resolution</div><div class="res-text">${esc(i.resolutionnotes||'No notes')}</div><div class="res-by">— ${esc(i.resolvedby)} · ${esc((i.resolvedat||'').slice(0,10))}</div></div>` : ''}`;
   const mgmtActions = document.getElementById('incident-mgmt-actions');
   if (canManageIncidents() && (i.status !== 'Resolved' && i.status !== 'Dismissed')) {
@@ -4031,6 +4174,74 @@ function setReportRange(r) {
   renderReports();
 }
 
+function setCleanerReportRange(r) {
+  const now = new Date(); const fmt = d => d.toISOString().split('T')[0];
+  if (r === 'week') { const w = new Date(now); w.setDate(w.getDate()-7); document.getElementById('cr-from').value = fmt(w); document.getElementById('cr-to').value = fmt(now); }
+  else if (r === 'month') { document.getElementById('cr-from').value = fmt(now).slice(0,7)+'-01'; document.getElementById('cr-to').value = fmt(now); }
+  else { document.getElementById('cr-from').value=''; document.getElementById('cr-to').value=''; }
+  renderCleanerReport();
+}
+
+async function renderCleanerReport() {
+  const el = document.getElementById('report-cleaners');
+  if (!el) return;
+  const from = document.getElementById('cr-from')?.value || '';
+  const to = document.getElementById('cr-to')?.value || '';
+  el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px">Loading…</div>';
+  try {
+    const logs = from || to ? await loadTaskLogsForRange(from, to) : state.taskLogs;
+    const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
+    if (!cleaners.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px">No cleaners enrolled</div>'; return; }
+    const intervalFreqs = ['Hourly','Every 2 Hours','Every 4 Hours','Custom Interval'];
+    // Build rows per cleaner
+    const rows = cleaners.map(cleaner => {
+      // Logs attributed to this cleaner by name
+      const myLogs = logs.filter(l => l.completedby === cleaner.name);
+      // Tasks assigned to this cleaner or whole-shift
+      const myShift = cleaner.shift || 'Morning';
+      const assignedTasks = state.tasks.filter(t =>
+        t.assignedstaffid === cleaner.id ||
+        (!t.assignedstaffid && (t.assignedshift === myShift || t.assignedshift === 'All'))
+      );
+      // Count unique days worked in range
+      const daysWorked = new Set(myLogs.map(l => l.date)).size;
+      // For standard tasks: count unique (taskid+date) completions; for interval tasks: count raw logs
+      const standardTasks = assignedTasks.filter(t => !intervalFreqs.includes(t.frequency));
+      const intervalTasks = assignedTasks.filter(t => intervalFreqs.includes(t.frequency));
+      const standardDone = new Set(myLogs.filter(l => standardTasks.some(t=>t.id===l.taskid)).map(l=>l.taskid+'_'+l.date)).size;
+      const totalStandardExpected = standardTasks.length * Math.max(1, daysWorked);
+      const intervalDone = myLogs.filter(l => intervalTasks.some(t=>t.id===l.taskid)).length;
+      const totalIntervalExpected = intervalTasks.reduce((s,t) => s + (t.requiredcount||1), 0) * Math.max(1, daysWorked);
+      const totalDone = standardDone + intervalDone;
+      const totalExpected = totalStandardExpected + totalIntervalExpected;
+      const pct = totalExpected > 0 ? Math.min(100, Math.round(totalDone / totalExpected * 100)) : 0;
+      const barCol = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--danger)';
+      const photo = cleaner.photo ? `<img src="${cleaner.photo}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${esc(initials(cleaner.name))}</div>`;
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          ${photo}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13px;color:var(--text-primary)">${esc(cleaner.name)}</div>
+            <div style="font-size:10px;color:var(--text-muted)">${esc(cleaner.role)} · ${esc(myShift)} shift · ${daysWorked} day${daysWorked!==1?'s':''} logged</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:${barCol}">${pct}%</div>
+            <div style="font-size:9px;color:var(--text-muted)">${totalDone}/${totalExpected}</div>
+          </div>
+        </div>
+        <div style="height:6px;background:var(--surface);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barCol};border-radius:3px;transition:width .4s"></div>
+        </div>
+        ${intervalTasks.length ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px">⏱ ${intervalDone} interval completions (${intervalTasks.map(t=>esc(t.name)).join(', ')})</div>` : ''}
+      </div>`;
+    }).join('');
+    const rangeLabel = (from && to) ? `${from} → ${to}` : from ? `From ${from}` : to ? `Up to ${to}` : 'All time';
+    el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">📅 ${rangeLabel} · ${cleaners.length} cleaner${cleaners.length!==1?'s':''}</div>${rows}`;
+  } catch(e) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--danger);padding:8px">Could not load report: ${esc(e.message)}</div>`;
+  }
+}
+
 // ================================================================
 // MODAL CONTROLS
 // ================================================================
@@ -4038,7 +4249,7 @@ function openModal(id) {
   if (id === 'modal-add-staff' && !editingStaffId) clearStaffForm();
   if (id === 'modal-add-inv') clearInvForm();
   if (id === 'modal-add-job') { clearJobForm(); populateJobStaffSelect(); }
-  if (id === 'modal-incident') { document.getElementById('inc-desc').value = ''; document.getElementById('inc-location').value = ''; clearFieldError('inc-desc','err-inc-desc'); }
+  if (id === 'modal-incident') { document.getElementById('inc-desc').value = ''; document.getElementById('inc-location').value = ''; clearFieldError('inc-desc','err-inc-desc'); clearPhoto('inc-photo-preview','inc-photo-placeholder','del-inc-photo'); }
   if (id === 'modal-supply-req') { document.getElementById('req-item').value=''; document.getElementById('req-qty').value='1'; document.getElementById('req-notes').value=''; clearFieldError('req-item','err-req-item'); }
   const el = document.getElementById(id); if (el) el.style.display = 'flex';
 }
