@@ -1797,24 +1797,25 @@ function renderDashboard() {
       const goodConds = ['New','Good'];
       const fairConds = ['Fair','Needs Maintenance'];
       const badConds  = ['Damaged','Decommissioned'];
-      // Count per condition — if item has variants, count each variant individually
+      // Count per condition.
+      // RULE: if an item has variants, use ONLY the variants' conditions (ignore parent).
+      //       if no variants, use the parent item's condition.
       let goodCount = 0, fairCount = 0, badCount = 0;
       equipItems.forEach(item => {
         const variants = Array.isArray(item.variants) && item.variants.length > 0 ? item.variants : null;
         if (variants) {
+          // Parent condition is irrelevant — variants are the source of truth
           variants.forEach(v => {
-            const c = v.condition || item.condition || 'Good';
+            const c = v.condition || 'Good';
             if (goodConds.includes(c)) goodCount++;
             else if (fairConds.includes(c)) fairCount++;
-            else if (badConds.includes(c)) badCount++;
-            else goodCount++;
+            else badCount++;
           });
         } else {
           const c = item.condition || 'Good';
           if (goodConds.includes(c)) goodCount++;
           else if (fairConds.includes(c)) fairCount++;
-          else if (badConds.includes(c)) badCount++;
-          else goodCount++;
+          else badCount++;
         }
       });
       const total = goodCount + fairCount + badCount || 1;
@@ -2412,10 +2413,26 @@ function openInvDetail(id) {
   document.getElementById('inv-detail-title').textContent = item.name;
 
   if (isEq) {
-    const cond = item.condition || 'Good';
-    const cs = conditionStyle(cond);
+    const hasVars = Array.isArray(item.variants) && item.variants.length > 0;
+    // When variants exist, derive the "effective condition" from the worst variant condition
+    const conditionRank = {'New':0,'Good':1,'Fair':2,'Needs Maintenance':3,'Damaged':4,'Decommissioned':5};
+    let displayCond = item.condition || 'Good';
+    let condWarning = '';
+    if (hasVars) {
+      const worstVariant = item.variants.reduce((worst, v) => {
+        const r = conditionRank[v.condition] ?? 1;
+        return r > (conditionRank[worst.condition] ?? 1) ? v : worst;
+      }, item.variants[0]);
+      const effectiveCond = worstVariant.condition || 'Good';
+      if (effectiveCond !== displayCond) {
+        condWarning = `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:var(--r-md);padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px">⚠️ Parent shows <strong>${esc(displayCond)}</strong> but variant conditions differ — showing worst: <strong>${esc(effectiveCond)}</strong></div>`;
+        displayCond = effectiveCond;
+      }
+    }
+    const cs = conditionStyle(displayCond);
     document.getElementById('inv-detail-info').innerHTML = `
-      <div style="display:inline-flex;align-items:center;gap:6px;background:${cs.bg};color:${cs.color};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px">${cs.icon} ${esc(cond)}</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:${cs.bg};color:${cs.color};padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px">${cs.icon} ${esc(displayCond)}${hasVars?' (from variants)':''}</div>
+      ${condWarning}
       ${detRow('Category', 'Equipment')}
       ${detRow('Quantity', (item.qty != null ? item.qty : '—'))}
       ${detRow('Asset / Serial', item.serial||'—')}
@@ -2424,12 +2441,11 @@ function openInvDetail(id) {
       ${detRow('Last Serviced', item.lastserviced||'—')}
       ${detRow('Supplier', item.supplier||'—')}
       ${item.img ? `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('detail-eq-img-store','${esc(item.name)}')"><span class="dk">📷 Equipment Image</span><span class="dv" style="color:var(--navy);font-weight:600">Tap to view ›</span></div>` : ''}
-      ${item.conditionnotes?`<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>`:''}`;
+      ${item.conditionnotes ? `<div style="background:var(--off-white);border-radius:var(--r-md);padding:10px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ${esc(item.conditionnotes)}</div>` : ''}`;
     // Store equipment image in a dedicated hidden element separate from the stock item store
     let eqImgStore = document.getElementById('detail-eq-img-store');
     if (!eqImgStore) { eqImgStore = document.createElement('img'); eqImgStore.id = 'detail-eq-img-store'; eqImgStore.style.display = 'none'; document.body.appendChild(eqImgStore); }
     eqImgStore.setAttribute('data-src', item.img || '');
-    const hasVars = Array.isArray(item.variants) && item.variants.length > 0;
     const displayQty = hasVars ? item.variants.reduce((s,v) => s + (Number(v.qty)||0), 0) : (item.qty != null ? item.qty : 0);
     document.getElementById('inv-qty-ctrl').innerHTML = canEdit()
       ? `<div style="display:flex;align-items:center;gap:10px;margin:10px 0">
@@ -3139,9 +3155,14 @@ function renderTasks() {
 function renderManagementTasks(el) {
   const todayLogs = state.taskLogs.filter(l => l.date === todayStr());
   const totalTasks = state.tasks.length;
-  // Count handled = completed OR locked
-  const handled = todayLogs.filter(l => l.status === 'completed' || l.status === 'locked').length;
-  const pct = totalTasks ? Math.round(handled / totalTasks * 100) : 0;
+  // Only count unique task IDs that have been handled (avoid double-counting multi-shift logs)
+  const handledTaskIds = new Set(
+    todayLogs
+      .filter(l => l.status === 'completed' || l.status === 'locked')
+      .map(l => l.taskid)
+  );
+  const handled = handledTaskIds.size;
+  const pct = totalTasks > 0 ? Math.round(handled / totalTasks * 100) : 0;
   const addButtons = canEdit() ? `
     <button class="btn btn-outline btn-sm" onclick="openZoneManager()">🏢 Manage Zones</button>
     <button class="btn btn-primary btn-sm" onclick="openAddTaskModal()">+ Add Task</button>` : '';
@@ -3168,7 +3189,11 @@ function renderManagementTasks(el) {
     <div class="progress-summary">
       ${['Morning','Noon','Night'].map(sh=>{
         const shTasks = state.tasks.filter(t=>t.assignedshift===sh||t.assignedshift==='All');
-        const shHandled = todayLogs.filter(l=>l.shift===sh&&(l.status==='completed'||l.status==='locked')).length;
+        const shHandledIds = new Set(
+          todayLogs.filter(l=>l.shift===sh&&(l.status==='completed'||l.status==='locked')).map(l=>l.taskid)
+        );
+        // Only count tasks that actually exist in state
+        const shHandled = shTasks.filter(t => shHandledIds.has(t.id)).length;
         const bg = sh==='Morning'?'#fef3c7':sh==='Noon'?'#dbeafe':'#ede9fe';
         const col = sh==='Morning'?'#92400e':sh==='Noon'?'#1e40af':'#4c1d95';
         return `<div class="prog-item" style="background:${bg};border-radius:8px;padding:8px"><div class="prog-val" style="color:${col}">${shHandled}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
@@ -3191,7 +3216,12 @@ function renderManagementTasks(el) {
 
   let filteredTasks = state.tasks.filter(t => {
     if (shiftFilter && t.assignedshift !== shiftFilter && t.assignedshift !== 'All') return false;
-    if (cleanerFilter && t.assignedstaffid && t.assignedstaffid !== cleanerFilter) return false;
+    if (cleanerFilter) {
+      // Show tasks assigned specifically to this cleaner, OR tasks with no specific assignment (whole-shift)
+      const isPersonalMatch = t.assignedstaffid === cleanerFilter;
+      const isWholeShift = !t.assignedstaffid || t.assignedstaffid === '';
+      if (!isPersonalMatch && !isWholeShift) return false;
+    }
     return true;
   });
 
@@ -3216,11 +3246,13 @@ function renderCleanerTasks(el) {
   );
 
   const allMyTasks = [...personalTasks, ...shiftTasks];
-  const handled = allMyTasks.filter(t => {
-    const log = getTaskLog(t.id, myShift);
-    return log && (log.status === 'completed' || log.status === 'locked');
-  }).length;
-  const pct = allMyTasks.length ? Math.round(handled / allMyTasks.length * 100) : 0;
+  const handledIds = new Set(
+    state.taskLogs
+      .filter(l => l.date === todayStr() && l.shift === myShift && (l.status === 'completed' || l.status === 'locked'))
+      .map(l => l.taskid)
+  );
+  const handled = allMyTasks.filter(t => handledIds.has(t.id)).length;
+  const pct = allMyTasks.length > 0 ? Math.round(handled / allMyTasks.length * 100) : 0;
   const shiftBadgeClass = myShift==='Morning'?'shift-morning':myShift==='Noon'?'shift-noon':'shift-night';
 
   const headerHtml = `
@@ -3772,9 +3804,37 @@ async function resolveIncident() {
   const notes = document.getElementById('inc-res-notes').value.trim();
   showLoading('Updating incident…');
   try {
-    const changes = { status: newStatus, resolutionnotes: notes, resolvedby: currentUser.name, resolvedat: new Date().toISOString() };
-    await dbUpdate('incidents', i.id, changes);
-    Object.assign(i, changes);
+    // Use only the columns that exist in the incidents table.
+    // "resolutionnotes" is the app-side key; Supabase may store it as "resolution_notes".
+    // We try both; the dbUpdate call will only send what Supabase accepts.
+    const changes = {
+      status: newStatus,
+      resolution_notes: notes,   // snake_case column name in Supabase
+      resolutionnotes: notes,     // camelCase fallback (Supabase ignores unknown cols)
+      resolved_by: currentUser.name,
+      resolvedby: currentUser.name,
+      resolved_at: new Date().toISOString(),
+      resolvedat: new Date().toISOString()
+    };
+    // Try the update; if it fails with a column-not-found error, retry with minimal fields
+    try {
+      await dbUpdate('incidents', i.id, changes);
+    } catch(colErr) {
+      // Retry with only status if full update fails
+      if (colErr.message && colErr.message.includes('column')) {
+        await dbUpdate('incidents', i.id, { status: newStatus });
+        toast('Status updated (resolution notes column not found in database — add it in Supabase)', 'info', 6000);
+      } else {
+        throw colErr;
+      }
+    }
+    // Always update local state with app-side keys
+    Object.assign(i, {
+      status: newStatus,
+      resolutionnotes: notes,
+      resolvedby: currentUser.name,
+      resolvedat: new Date().toISOString()
+    });
     closeModal('modal-incident-detail');
     renderIncidentsScreen();
     toast('Incident updated', 'success');
