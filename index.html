@@ -234,8 +234,10 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 
 /* PROFILE MODAL HEADER */
 .profile-hdr{background:var(--navy);padding:24px 20px;text-align:center}
-.profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1)}
-.profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.profile-photo{width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.28);object-fit:cover;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:#fff;overflow:hidden;background:rgba(255,255,255,.1);position:relative}
+.profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.profile-photo.has-photo{cursor:zoom-in}
+.profile-photo.has-photo::after{content:'🔍';position:absolute;bottom:0;right:0;width:22px;height:22px;background:rgba(10,22,40,.75);border-radius:50%;font-size:11px;display:flex;align-items:center;justify-content:center;line-height:22px;text-align:center;pointer-events:none}
 .profile-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff}
 .profile-role-badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;margin-top:7px}
 
@@ -495,6 +497,32 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div class="stat-val" id="stat-lowstock">0</div>
           <div class="stat-lbl">Low Stock</div>
           <div class="stat-sub">items critical</div>
+        </div>
+      </div>
+      <!-- EQUIPMENT CONDITION BREAKDOWN -->
+      <div id="equipment-dash-section" style="display:none">
+        <div class="section-title">🔧 Equipment Status</div>
+        <div class="card" style="padding:14px;margin-bottom:18px" onclick="goToTab('inventory')" id="equipment-dash-card">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--green)" id="eq-stat-good">0</div>
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">New / Good</div>
+            </div>
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--amber)" id="eq-stat-fair">0</div>
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">Fair / Maint.</div>
+            </div>
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--danger)" id="eq-stat-damaged">0</div>
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">Damaged</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;height:6px;border-radius:4px;background:var(--surface);overflow:hidden;display:flex">
+            <div id="eq-bar-good" style="height:100%;background:var(--green);transition:width .4s"></div>
+            <div id="eq-bar-fair" style="height:100%;background:var(--amber);transition:width .4s"></div>
+            <div id="eq-bar-damaged" style="height:100%;background:var(--danger);transition:width .4s"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center" id="eq-total-lbl">0 equipment items · Tap to view</div>
         </div>
       </div>
       <div id="director-metrics-section" style="display:none">
@@ -784,6 +812,7 @@ textarea.form-control{resize:vertical;min-height:56px}
     <!-- Equipment sections -->
     <div id="inv-equipment-detail-section" style="display:none">
       <div id="inv-variants-section"></div>
+      <div class="section-sep">Usage / Deployment Logs</div><div id="inv-equipment-usage-logs"></div>
       <div class="section-sep">Condition History</div><div id="inv-condition-history"></div>
     </div>
     <div class="form-actions">
@@ -827,6 +856,14 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div class="modal center-m"><div class="modal-header"><span class="modal-title">Log Daily Inventory Usage</span><button class="modal-close" onclick="closeModal('modal-log-usage')">✕</button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="log-item-name" readonly style="background:#e8edf7"></div>
+    <!-- Variant selector — shown only for equipment with variants -->
+    <div class="form-group" id="log-variant-group" style="display:none">
+      <label class="form-label">Variant / Unit *</label>
+      <select class="form-control" id="log-variant-sel">
+        <option value="">— Select variant —</option>
+      </select>
+      <div class="field-error" id="err-log-variant">Please select a variant</div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1" placeholder="0"><div class="field-error" id="err-log-qty">Enter a valid quantity</div></div>
       <div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly style="background:#e8edf7"></div>
@@ -1751,6 +1788,47 @@ function renderDashboard() {
       se('low-stock-list').textContent = lowStock.map(i => `${i.name} (${i.qty} ${i.uom||'units'})`).join(', ');
     } else banner.style.display = 'none';
   }
+  // Equipment condition breakdown
+  const equipItems = state.inventory.filter(i => i.category === 'Equipment');
+  const eqSection = se('equipment-dash-section');
+  if (eqSection) {
+    if (equipItems.length > 0) {
+      eqSection.style.display = 'block';
+      const goodConds = ['New','Good'];
+      const fairConds = ['Fair','Needs Maintenance'];
+      const badConds  = ['Damaged','Decommissioned'];
+      // Count per condition — if item has variants, count each variant individually
+      let goodCount = 0, fairCount = 0, badCount = 0;
+      equipItems.forEach(item => {
+        const variants = Array.isArray(item.variants) && item.variants.length > 0 ? item.variants : null;
+        if (variants) {
+          variants.forEach(v => {
+            const c = v.condition || item.condition || 'Good';
+            if (goodConds.includes(c)) goodCount++;
+            else if (fairConds.includes(c)) fairCount++;
+            else if (badConds.includes(c)) badCount++;
+            else goodCount++;
+          });
+        } else {
+          const c = item.condition || 'Good';
+          if (goodConds.includes(c)) goodCount++;
+          else if (fairConds.includes(c)) fairCount++;
+          else if (badConds.includes(c)) badCount++;
+          else goodCount++;
+        }
+      });
+      const total = goodCount + fairCount + badCount || 1;
+      se('eq-stat-good').textContent = goodCount;
+      se('eq-stat-fair').textContent = fairCount;
+      se('eq-stat-damaged').textContent = badCount;
+      se('eq-bar-good').style.width = Math.round(goodCount/total*100) + '%';
+      se('eq-bar-fair').style.width = Math.round(fairCount/total*100) + '%';
+      se('eq-bar-damaged').style.width = Math.round(badCount/total*100) + '%';
+      se('eq-total-lbl').textContent = `${equipItems.length} equipment item${equipItems.length!==1?'s':''} · Tap to view`;
+    } else {
+      eqSection.style.display = 'none';
+    }
+  }
   if (se('director-metrics-section') && se('director-metrics-section').style.display !== 'none') {
     const off = state.staff.filter(s => s.status === 'Off Shift').length;
     const leave = state.staff.filter(s => s.status === 'On Leave').length;
@@ -1836,8 +1914,15 @@ function renderStaff() {
 }
 
 function staffCard(s) {
+  const photoKey = s.photo ? `staff-card-photo-${s.id}` : null;
+  if (photoKey && s.photo) {
+    // Store photo in a hidden element to safely pass large base64 to viewImage
+    let el = document.getElementById(photoKey);
+    if (!el) { el = document.createElement('img'); el.id = photoKey; el.style.display = 'none'; document.body.appendChild(el); }
+    el.setAttribute('data-src', s.photo);
+  }
   const avatarHtml = s.photo
-    ? `<div class="sc-avatar" onclick="event.stopPropagation();viewImage('${s.photo.startsWith('data:')||s.photo.startsWith('http')||s.photo.startsWith('/') ? '' : ''}${s.photo}','${esc(s.name)}')" style="cursor:zoom-in"><img src="${s.photo}" alt=""></div>`
+    ? `<div class="sc-avatar" onclick="event.stopPropagation();viewStoredImage('${photoKey}','${esc(s.name)}')" style="cursor:zoom-in"><img src="${s.photo}" alt=""></div>`
     : `<div class="sc-avatar">${esc(initials(s.name))}</div>`;
   return `<div class="staff-card" onclick="openStaffProfile('${esc(s.id)}')"><div class="sc-header">${avatarHtml}<div style="flex:1"><div class="sc-name">${esc(s.name)}</div><div class="sc-role">${esc(s.role)}</div></div><span class="pill ${pillClass(s.status)}">${esc(s.status)}</span></div><div class="sc-body">${detRow('Staff ID', s.staffid||s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift||'—')}</div></div>`;
 }
@@ -1977,12 +2062,13 @@ function openStaffProfile(id) {
   if (s.photo) {
     photoDiv.innerHTML = `<img src="${s.photo}" alt="">`;
     photoDiv.style.background = 'rgba(255,255,255,.1)';
-    photoDiv.style.cursor = 'zoom-in';
+    photoDiv.className = 'profile-photo has-photo';
     photoDiv.title = 'Tap to view full photo';
-    photoDiv.onclick = () => viewImage(s.photo, s.name);
+    photoDiv.onclick = function(e) { e.stopPropagation(); viewImage(s.photo, s.name); };
   } else {
     photoDiv.textContent = initials(s.name);
     photoDiv.style.background = 'var(--red)';
+    photoDiv.className = 'profile-photo';
     photoDiv.style.cursor = 'default';
     photoDiv.onclick = null;
   }
@@ -2372,7 +2458,14 @@ function openInvDetail(id) {
         }).join('')
       : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No condition history yet</div></div>';
     document.getElementById('inv-condition-history').innerHTML = histHtml;
-    // Variants section for equipment
+    // Equipment usage/deployment logs
+    const eqUsageEl = document.getElementById('inv-equipment-usage-logs');
+    if (eqUsageEl) {
+      const usageLogs = item.usageLog || item.usagelog || [];
+      eqUsageEl.innerHTML = usageLogs.length > 0
+        ? usageLogs.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">${log.variantName ? `<span style="font-size:10px;background:var(--surface);padding:1px 7px;border-radius:10px;font-weight:600;color:var(--navy)">${esc(log.variantName)}</span><br>` : ''}Used: <strong>${log.qty} unit${log.qty !== 1 ? 's' : ''}</strong>${log.job ? `<br>📍 ${esc(log.job)}` : ''}${log.notes ? `<br>📝 ${esc(log.notes)}` : ''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy || log.loggedby || '—')}</span></div></div>`).join('')
+        : '<div class="empty-state" style="padding:16px"><div class="empty-text" style="font-size:12px">No usage logs yet</div></div>';
+    }
     const variantsSection = document.getElementById('inv-variants-section');
     if (variantsSection) {
       const variants = Array.isArray(item.variants) ? item.variants : [];
@@ -2434,7 +2527,7 @@ function openInvDetail(id) {
     if (canEdit()) qtyCtrl.innerHTML = `<button class="btn btn-outline btn-sm" onclick="adjustQty(-1)">− Remove</button><span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin:0 10px">${item.qty}</span><button class="btn btn-primary btn-sm" onclick="adjustQty(1)">+ Add</button>`;
     else qtyCtrl.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--navy)">${item.qty} ${esc(item.uom||'units')}</span>`;
     const logsHtml = item.usageLog && item.usageLog.length > 0
-      ? item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">Used: <strong>${log.qty} ${esc(item.uom||'units')}</strong>${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`).join('')
+      ? item.usageLog.slice().reverse().map(log => `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">${log.variantName ? `<span style="font-size:10px;background:var(--surface);padding:1px 7px;border-radius:10px;font-weight:600;color:var(--navy)">${esc(log.variantName)}</span><br>` : ''}Used: <strong>${log.qty} ${esc(item.uom||'units')}</strong>${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`).join('')
       : '<div class="empty-state" style="padding:20px"><div class="empty-text">No usage logs yet</div></div>';
     document.getElementById('inv-usage-logs').innerHTML = logsHtml;
     const dmgs = (state.damageReports||[]).filter(r => r.invid === id);
@@ -2495,6 +2588,20 @@ function openLogUsageModal() {
   document.getElementById('log-date').value = todayStr();
   document.getElementById('log-job').value = '';
   document.getElementById('log-notes').value = '';
+  // Show variant selector for equipment with variants
+  const hasVariants = item.category === 'Equipment' && Array.isArray(item.variants) && item.variants.length > 0;
+  const varGroup = document.getElementById('log-variant-group');
+  const varSel = document.getElementById('log-variant-sel');
+  if (hasVariants) {
+    varSel.innerHTML = '<option value="">— Select variant —</option>' +
+      item.variants.map(v => `<option value="${esc(v.id)}">${esc(item.name)} — ${esc(v.name)}${v.condition ? ' (' + esc(v.condition) + ')' : ''} · Qty: ${v.qty != null ? v.qty : 0}</option>`).join('');
+    varGroup.style.display = 'block';
+    // Update unit to 'units' for equipment
+    document.getElementById('log-unit').value = 'units';
+  } else {
+    varSel.innerHTML = '<option value="">— Select variant —</option>';
+    varGroup.style.display = 'none';
+  }
 }
 
 async function saveUsageLog() {
@@ -2505,6 +2612,52 @@ async function saveUsageLog() {
   if (!date) { toast('Select a date', 'error'); return; }
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
+
+  // Handle variant-based equipment usage
+  const hasVariants = item.category === 'Equipment' && Array.isArray(item.variants) && item.variants.length > 0;
+  if (hasVariants) {
+    const variantId = document.getElementById('log-variant-sel').value;
+    if (!variantId) {
+      const errEl = document.getElementById('err-log-variant');
+      if (errEl) { errEl.style.display = 'block'; }
+      toast('Please select a variant', 'error');
+      return;
+    }
+    const variant = item.variants.find(v => v.id === variantId);
+    if (!variant) { toast('Variant not found', 'error'); return; }
+    const varQty = Number(variant.qty) || 0;
+    if (qty > varQty) { toast(`Only ${varQty} units of "${variant.name}" available`, 'error'); return; }
+    // Deduct from variant qty
+    variant.qty = varQty - qty;
+    // Sync parent qty = sum of all variants
+    item.qty = item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0);
+    // Log with variant info
+    if (!Array.isArray(item.usageLog)) item.usageLog = [];
+    const newLog = {
+      id: uid(), date, qty,
+      variantId: variant.id,
+      variantName: variant.name,
+      job: document.getElementById('log-job').value,
+      notes: document.getElementById('log-notes').value,
+      loggedBy: currentUser.name,
+      loggedAt: new Date().toISOString()
+    };
+    item.usageLog.push(newLog);
+    showLoading('Logging usage…');
+    try {
+      await dbUpdate('inventory', item.id, { variants: item.variants, qty: item.qty, usagelog: item.usageLog });
+      closeModal('modal-log-usage'); openInvDetail(currentInvId); renderInventory(); renderDashboard();
+      toast(`Usage logged for "${variant.name}"`, 'success');
+    } catch(e) {
+      variant.qty = varQty; // rollback
+      item.qty = item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0);
+      item.usageLog.pop();
+      toast('Save failed: ' + e.message, 'error');
+    } finally { hideLoading(); }
+    return;
+  }
+
+  // Standard (non-variant) usage
   if (item.qty < qty) { toast(`Insufficient stock. Only ${item.qty} ${item.uom} available.`, 'error'); return; }
   if (!Array.isArray(item.usageLog)) item.usageLog = [];
   const newLog = { id: uid(), date, qty, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() };
