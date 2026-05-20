@@ -483,17 +483,17 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div><div class="alert-title">Low Stock Alert</div><div class="alert-items" id="low-stock-list"></div></div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card" onclick="goToTab('staff')">
+        <div class="stat-card" onclick="goToTab('staff','On Shift')">
           <div class="stat-val" id="stat-onshift">0</div>
           <div class="stat-lbl">On Shift</div>
           <div class="stat-sub" id="stat-staff-sub">of 0 staff</div>
         </div>
-        <div class="stat-card navy" onclick="goToTab('jobs')">
+        <div class="stat-card navy" onclick="goToTab('jobs','In Progress')">
           <div class="stat-val" id="stat-jobs-today">0</div>
           <div class="stat-lbl">Today's Jobs</div>
           <div class="stat-sub" id="stat-jobs-sub">0 in progress</div>
         </div>
-        <div class="stat-card amber" onclick="goToTabWithFilter('inventory','__lowstock__')">
+        <div class="stat-card amber" onclick="goToTab('inventory','__lowstock__')">
           <div class="stat-val" id="stat-lowstock">0</div>
           <div class="stat-lbl">Low Stock</div>
           <div class="stat-sub">items critical</div>
@@ -504,15 +504,15 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div class="section-title">🔧 Equipment Status</div>
         <div class="card" style="padding:14px;margin-bottom:18px" id="equipment-dash-card">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
-            <div style="cursor:pointer" onclick="goToTabWithFilter('inventory','__equipment__')">
+            <div style="cursor:pointer" onclick="goToTab('inventory','__eq_good__')">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--green)" id="eq-stat-good">0</div>
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">New / Good</div>
             </div>
-            <div style="cursor:pointer" onclick="goToTabWithFilter('inventory','__equipment__')">
+            <div style="cursor:pointer" onclick="goToTab('inventory','__eq_fair__')">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--amber)" id="eq-stat-fair">0</div>
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">Fair / Maint.</div>
             </div>
-            <div style="cursor:pointer" onclick="goToTabWithFilter('inventory','__damaged__')">
+            <div style="cursor:pointer" onclick="goToTab('inventory','__damaged__')">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--danger)" id="eq-stat-damaged">0</div>
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">Damaged</div>
             </div>
@@ -1786,7 +1786,7 @@ function handleLogin() {
 
 function handleLogout() {
   currentUser = null;
-  state = { staff:[], inventory:[], jobs:[], tasks:[], zones:[], taskLogs:[], incidents:[], supplyRequests:[], attendance:[], damageReports:[], _damageLoaded: false };
+  state = { staff:[], inventory:[], jobs:[], tasks:[], zones:[], taskLogs:[], incidents:[], supplyRequests:[], attendance:[], damageReports:[] };
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-pass').value = '';
@@ -1842,13 +1842,36 @@ function updateDateTime() {
   if (de) de.textContent = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
 
-async function goToTab(tab) {
+async function goToTab(tab, filter) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const screenEl = document.getElementById('screen-' + tab);
   const navEl = document.getElementById('nav-' + tab);
   if (screenEl) screenEl.classList.add('active');
   if (navEl) navEl.classList.add('active');
+
+  // Apply filter if provided
+  if (filter !== undefined) {
+    if (tab === 'staff') {
+      staffFilter = filter;
+      document.querySelectorAll('#screen-staff .tab').forEach(t => {
+        const oc = t.getAttribute('onclick') || '';
+        t.classList.toggle('active', oc.includes("'" + filter + "'"));
+      });
+    } else if (tab === 'inventory') {
+      invFilter = filter;
+      document.querySelectorAll('#screen-inventory .tab').forEach(t => {
+        const oc = t.getAttribute('onclick') || '';
+        t.classList.toggle('active', oc.includes("'" + filter + "'"));
+      });
+    } else if (tab === 'jobs') {
+      jobFilter = filter;
+      document.querySelectorAll('#screen-jobs .tab').forEach(t => {
+        const oc = t.getAttribute('onclick') || '';
+        t.classList.toggle('active', oc.includes("'" + filter + "'"));
+      });
+    }
+  }
 
   // Lazy-load data per tab
   if (tab === 'dashboard') renderDashboard();
@@ -2349,13 +2372,27 @@ function renderInventory() {
   const q = (document.getElementById('inv-search') || {value:''}).value.toLowerCase();
   const isEqTab = invFilter === '__equipment__';
   const isDamaged = invFilter === '__damaged__';
+  const isLowStock = invFilter === '__lowstock__';
+  const isEqGood = invFilter === '__eq_good__';
+  const isEqFair = invFilter === '__eq_fair__';
   let list;
 
-  if (isEqTab) {
-    list = state.inventory.filter(i => i.category === 'Equipment' &&
-      (i.name.toLowerCase().includes(q) || (i.serial||'').toLowerCase().includes(q)));
+  if (isEqTab || isEqGood || isEqFair) {
+    list = state.inventory.filter(i => {
+      if (i.category !== 'Equipment') return false;
+      if (!i.name.toLowerCase().includes(q) && !(i.serial||'').toLowerCase().includes(q)) return false;
+      if (isEqGood) return ['New','Good'].includes(i.condition);
+      if (isEqFair) return ['Fair','Maintenance'].includes(i.condition);
+      return true;
+    });
   } else if (isDamaged) {
     list = state.damageReports || [];
+  } else if (isLowStock) {
+    list = state.inventory.filter(i =>
+      i.category !== 'Equipment' &&
+      i.reorder != null && i.reorder !== '' &&
+      Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder) &&
+      (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)));
   } else {
     list = state.inventory.filter(i =>
       (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) &&
@@ -2372,8 +2409,8 @@ function renderInventory() {
   const grid = document.getElementById('inventory-grid');
   if (!grid) return;
 
-  if (isEqTab) {
-    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment added yet</div></div>'; grid.className = 'inv-grid'; return; }
+  if (isEqTab || isEqGood || isEqFair) {
+    if (!list.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment found</div></div>`; grid.className = 'inv-grid'; return; }
     grid.className = 'inv-grid';
     grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => equipmentCardHtml(item)).join('');
     grid._fullList = list;
@@ -2382,33 +2419,31 @@ function renderInventory() {
     return;
   }
 
+  if (isLowStock) {
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No low stock items</div></div>'; grid.className = 'inv-grid'; return; }
+    grid.className = 'inv-grid';
+    grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => invCardHtml(item)).join('');
+    grid._fullList = list;
+    const lm = document.getElementById('inv-load-more');
+    if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
+    return;
+  }
+
   if (isDamaged) {
-    // Show all inventory items whose condition is 'Damaged', plus items with damage reports
-    const damagedItems = state.inventory.filter(i => {
-      const condDamaged = (i.condition||'').toLowerCase() === 'damaged';
-      const hasDmgReport = (state.damageReports||[]).some(r => r.invid === i.id);
-      const variantDamaged = Array.isArray(i.variants) && i.variants.some(v => (v.condition||'').toLowerCase() === 'damaged');
-      return condDamaged || hasDmgReport || variantDamaged;
-    });
-    if (!damagedItems.length && !state.damageReports.length && !state._damageLoaded) {
-      state._damageLoaded = true;
-      loadDamageReports().then(() => { renderInventory(); });
+    if (!state.damageReports.length) {
+      loadDamageReports().then(() => renderInventory());
       grid.innerHTML = '<div class="empty-state"><div class="empty-text">Loading...</div></div>';
       return;
     }
-    if (!damagedItems.length) {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No damaged items</div></div>';
-      grid.className = 'inv-grid';
-      return;
-    }
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No damage reports</div></div>'; return; }
     grid.className = 'inv-grid';
-    grid.innerHTML = damagedItems.slice(0, PAGE_SIZE).map(item => {
-      const isEquip = item.category === 'Equipment';
-      return isEquip ? equipmentCardHtml(item) : invCardHtml(item);
+    grid.innerHTML = list.slice(0, PAGE_SIZE).map(r => {
+      const invItem = state.inventory.find(i => i.id === r.invid) || {};
+      return `<div class="damage-card"><div class="damage-header"><div class="damage-item-name">⚠ ${esc(invItem.name||r.itemname||'Unknown Item')}</div><div class="damage-date">📅 ${esc(r.date)}</div></div><div class="damage-body"><div class="damage-desc">${esc(r.description)}</div>${r.photo&&r.photo.startsWith('data:')?`<img src="${r.photo}" data-imgsrc="${r.photo}" class="damage-img-thumb" onclick="viewStoredImage(this,'Damage Photo')" alt="damage">`:''}<div style="font-size:10px;color:var(--text-muted);margin-top:6px">Reported by ${esc(r.reportedby||'—')}</div></div></div>`;
     }).join('');
-    grid._fullList = damagedItems;
     const lm = document.getElementById('inv-load-more');
-    if (lm) lm.style.display = damagedItems.length > PAGE_SIZE ? 'block' : 'none';
+    if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
+    grid._fullList = list;
     return;
   }
 
@@ -2499,15 +2534,11 @@ function loadMoreInv() {
   invPage++;
   const grid = document.getElementById('inventory-grid');
   const list = grid._fullList || [];
-  const isEqTab = invFilter === '__equipment__';
+  const isEq = ['__equipment__','__eq_good__','__eq_fair__'].includes(invFilter);
   const isDamaged = invFilter === '__damaged__';
   const page = list.slice(invPage * PAGE_SIZE, (invPage+1) * PAGE_SIZE);
-  if (isEqTab) grid.innerHTML += page.map(item => equipmentCardHtml(item)).join('');
-  else if (isDamaged) {
-    grid.innerHTML += page.map(item => {
-      return item.category === 'Equipment' ? equipmentCardHtml(item) : invCardHtml(item);
-    }).join('');
-  } else grid.innerHTML += page.map(item => invCardHtml(item)).join('');
+  if (isEq || isDamaged) grid.innerHTML += page.map(item => item.category === 'Equipment' ? equipmentCardHtml(item) : invCardHtml(item)).join('');
+  else grid.innerHTML += page.map(item => invCardHtml(item)).join('');
   const lm = document.getElementById('inv-load-more');
   if (lm) lm.style.display = list.length > (invPage+1) * PAGE_SIZE ? 'block' : 'none';
 }
@@ -2517,24 +2548,6 @@ function filterInv(f, btn) {
   document.querySelectorAll('#screen-inventory .tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   renderInventory();
-}
-
-function goToTabWithFilter(tab, filter) {
-  invFilter = filter;
-  goToTab(tab).then ? goToTab(tab).then(() => {
-    // highlight the matching tab button
-    document.querySelectorAll('#screen-inventory .tab').forEach(t => {
-      if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + filter + "'")) t.classList.add('active');
-      else t.classList.remove('active');
-    });
-    renderInventory();
-  }) : (goToTab(tab), setTimeout(() => {
-    document.querySelectorAll('#screen-inventory .tab').forEach(t => {
-      if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + filter + "'")) t.classList.add('active');
-      else t.classList.remove('active');
-    });
-    renderInventory();
-  }, 50));
 }
 
 function updateInvQtyPreview() {
