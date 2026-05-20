@@ -2227,7 +2227,7 @@ function openStaffProfile(id) {
     ${detRow('Staff ID', s.staffid||s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift)}
     ${detRow('Start Date', s.startdate||s.startDate)}
     ${s.address ? `<div class="detail-row"><span class="dk">Address</span><span class="dv">${esc(s.address)}</span></div>` : ''}
-    ${detRow('Ghana Card', s.ghanacard||s.ghanaCard)}${ghanaImagesHtml}
+    ${detRow('Ghana Card', s.ghanacard||s.ghanaCard)}${detRow('SSNIT Number', s.ssnit)}${ghanaImagesHtml}
     <div class="section-sep">Family</div>
     ${detRow('Marital Status', s.maritalstatus||s.maritalStatus)}${detRow('Spouse', s.spousename||s.spouseName)}${detRow('Spouse Contact', s.spousecontact||s.spouseContact)}${detRow('Children', s.numberofkids||s.numberOfKids||0)}
     <div class="section-sep">Emergency</div>
@@ -2283,6 +2283,7 @@ function printStaffPDF() {
   const numberOfKids = s.numberofkids||s.numberOfKids||0;
   const emergName = s.emergname||s.emergName||''; const emergPhone = s.emergphone||s.emergPhone||''; const emergRel = s.emergrel||s.emergRel||'';
   const bankName = s.bankname||s.bankName||''; const bankAcct = s.bankacct||s.bankAcct||'';
+  const startDate = s.startdate||s.startDate||''; const ssnit = s.ssnit||'';
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
   doc.setFillColor(10,22,40); doc.rect(0,0,210,44,'F');
@@ -2299,7 +2300,9 @@ function printStaffPDF() {
   doc.text(`Staff ID: ${staffId||'—'}`,px+pw+10,82); doc.text(`Phone: ${phone||'—'}`,px+pw+10,90); doc.text(`Shift: ${shift||'—'}`,px+pw+10,98);
   let y = py+ph+14;
   y = addSection(doc,'PERSONAL DETAILS',y);
-  y = addRow(doc,'Ghana Card',ghanaCard,y,true);
+  if (startDate) y = addRow(doc,'Start Date',startDate,y,true);
+  y = addRow(doc,'Ghana Card',ghanaCard,y,false);
+  if (ssnit) y = addRow(doc,'SSNIT Number',ssnit,y,true);
   if (address) y = addRow(doc,'Address',address,y,false);
   y = addRow(doc,'Marital Status',maritalStatus,y,true);
   if (spouseName) y = addRow(doc,'Spouse/Partner',spouseName,y,false);
@@ -2307,6 +2310,8 @@ function printStaffPDF() {
   y = addRow(doc,'Children',numberOfKids,y,false);
   y = addSection(doc,'EMERGENCY CONTACT',y+4);
   y = addRow(doc,'Contact',emergName,y,true); y = addRow(doc,'Phone',emergPhone,y,false); y = addRow(doc,'Relation',emergRel,y,true);
+  y = addSection(doc,'BANK DETAILS',y+4);
+  y = addRow(doc,'Bank Name',bankName,y,true); y = addRow(doc,'Account Number',bankAcct,y,false);
   doc.save(`3Rock_Staff_${name.replace(/\s+/g,'_')}.pdf`);
 }
 function addSection(doc,lbl,y){doc.setFillColor(10,22,40);doc.rect(14,y,182,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(lbl,17,y+5);return y+7;}
@@ -4515,7 +4520,7 @@ async function renderReports() {
   // Inventory usage
   const invEl = document.getElementById('report-inv');
   if (invEl) {
-    const usageSummary = state.inventory.filter(i => i.usageLog && i.usageLog.length > 0).slice(0, 10).map(i => {
+    const usageSummary = state.inventory.filter(i => i.category !== 'Equipment' && i.usageLog && i.usageLog.length > 0).slice(0, 10).map(i => {
       const logsInRange = i.usageLog.filter(l => {
         if (from && l.date < from) return false;
         if (to && l.date > to) return false;
@@ -4902,4 +4907,3 @@ async function deleteVariant(invId, variantId) {
 
 </body>
 </html>
-
