@@ -483,17 +483,17 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div><div class="alert-title">Low Stock Alert</div><div class="alert-items" id="low-stock-list"></div></div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card" onclick="goToTab('staff')">
+        <div class="stat-card" onclick="goToTab('staff','On Shift')">
           <div class="stat-val" id="stat-onshift">0</div>
           <div class="stat-lbl">On Shift</div>
           <div class="stat-sub" id="stat-staff-sub">of 0 staff</div>
         </div>
-        <div class="stat-card navy" onclick="goToTab('jobs')">
+        <div class="stat-card navy" onclick="goToTab('jobs','In Progress')">
           <div class="stat-val" id="stat-jobs-today">0</div>
           <div class="stat-lbl">Today's Jobs</div>
           <div class="stat-sub" id="stat-jobs-sub">0 in progress</div>
         </div>
-        <div class="stat-card amber" onclick="goToTab('inventory')">
+        <div class="stat-card amber" onclick="goToTab('inventory','__lowstock__')">
           <div class="stat-val" id="stat-lowstock">0</div>
           <div class="stat-lbl">Low Stock</div>
           <div class="stat-sub">items critical</div>
@@ -502,19 +502,22 @@ textarea.form-control{resize:vertical;min-height:56px}
       <!-- EQUIPMENT CONDITION BREAKDOWN -->
       <div id="equipment-dash-section" style="display:none">
         <div class="section-title">🔧 Equipment Status</div>
-        <div class="card" style="padding:14px;margin-bottom:18px" onclick="goToTab('inventory')" id="equipment-dash-card">
+        <div class="card" style="padding:14px;margin-bottom:18px" id="equipment-dash-card">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
-            <div>
+            <div style="cursor:pointer" onclick="goToTab('inventory','__eq_good__')">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--green)" id="eq-stat-good">0</div>
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">New / Good</div>
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-top:3px" id="eq-pct-good"></div>
             </div>
-            <div>
+            <div style="cursor:pointer" onclick="goToTab('inventory','__eq_fair__')">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--amber)" id="eq-stat-fair">0</div>
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">Fair / Maint.</div>
+              <div style="font-size:11px;font-weight:700;color:var(--amber);margin-top:3px" id="eq-pct-fair"></div>
             </div>
-            <div>
+            <div style="cursor:pointer" onclick="goToTab('inventory','__damaged__')">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--danger)" id="eq-stat-damaged">0</div>
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px">Damaged</div>
+              <div style="font-size:11px;font-weight:700;color:var(--danger);margin-top:3px" id="eq-pct-damaged"></div>
             </div>
           </div>
           <div style="margin-top:10px;height:6px;border-radius:4px;background:var(--surface);overflow:hidden;display:flex">
@@ -770,12 +773,23 @@ textarea.form-control{resize:vertical;min-height:56px}
     <!-- STOCK FIELDS (Chemicals, PPE, Consumables, Other) -->
     <div id="inv-stock-fields">
       <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Container Type <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <select class="form-control" id="inv-container-type" onchange="updateInvQtyPreview()">
+            <option value="">— Select —</option>
+            <option>Bottles</option><option>Packs</option><option>Boxes</option><option>Bags</option>
+            <option>Drums</option><option>Jerry Cans</option><option>Sachets</option><option>Rolls</option>
+            <option>Pairs</option><option>Cartons</option><option>Units</option>
+          </select>
+        </div>
         <div class="form-group"><label class="form-label">Opening Qty <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input type="number" class="form-control" id="inv-packs" min="0" placeholder="e.g. 3" oninput="updateInvQtyPreview()"></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label class="form-label">Units per Container <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input type="number" class="form-control" id="inv-pack-size" min="1" placeholder="e.g. 10" oninput="updateInvQtyPreview()"></div>
+        <div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom" onchange="updateInvQtyPreview()"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option><option>sachets</option><option>pairs</option></select></div>
       </div>
       <div id="inv-qty-preview" style="display:none;background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:12px;color:var(--text-secondary);margin-bottom:10px"></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Unit of Measure</label><select class="form-control" id="inv-uom" onchange="updateInvQtyPreview()"><option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option><option>sachets</option><option>pairs</option></select></div>
         <div class="form-group">
           <label class="form-label">Reorder Level</label>
           <div style="display:flex;gap:6px;align-items:center">
@@ -1291,8 +1305,7 @@ let state = {
   incidents: [],     // loaded on demand
   supplyRequests: [], // loaded on demand
   attendance: [],    // today only on load
-  damageReports: [],  // loaded on demand
-  _damageReportsLoaded: false
+  damageReports: []  // loaded on demand
 };
 
 // ================================================================
@@ -1787,7 +1800,7 @@ function handleLogin() {
 
 function handleLogout() {
   currentUser = null;
-  state = { staff:[], inventory:[], jobs:[], tasks:[], zones:[], taskLogs:[], incidents:[], supplyRequests:[], attendance:[], damageReports:[], _damageReportsLoaded: false };
+  state = { staff:[], inventory:[], jobs:[], tasks:[], zones:[], taskLogs:[], incidents:[], supplyRequests:[], attendance:[], damageReports:[], _dmgLoaded:false };
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-pass').value = '';
@@ -1843,7 +1856,7 @@ function updateDateTime() {
   if (de) de.textContent = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
 
-async function goToTab(tab) {
+async function goToTab(tab, filter) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const screenEl = document.getElementById('screen-' + tab);
@@ -1851,14 +1864,31 @@ async function goToTab(tab) {
   if (screenEl) screenEl.classList.add('active');
   if (navEl) navEl.classList.add('active');
 
-  // Lazy-load data per tab
+  if (filter !== undefined) {
+    if (tab === 'staff') {
+      staffFilter = filter;
+      document.querySelectorAll('#screen-staff .tab').forEach(t => {
+        t.classList.toggle('active', (t.getAttribute('onclick')||'').includes("'"+filter+"'"));
+      });
+    } else if (tab === 'inventory') {
+      invFilter = filter;
+      document.querySelectorAll('#screen-inventory .tab').forEach(t => {
+        t.classList.toggle('active', (t.getAttribute('onclick')||'').includes("'"+filter+"'"));
+      });
+    } else if (tab === 'jobs') {
+      jobFilter = filter;
+      document.querySelectorAll('#screen-jobs .tab').forEach(t => {
+        t.classList.toggle('active', (t.getAttribute('onclick')||'').includes("'"+filter+"'"));
+      });
+    }
+  }
+
   if (tab === 'dashboard') renderDashboard();
   else if (tab === 'staff') renderStaff();
   else if (tab === 'inventory') renderInventory();
   else if (tab === 'jobs') renderJobs();
   else if (tab === 'tasks') renderTasks();
   else if (tab === 'incidents') {
-    // Load fresh on navigate
     const from = document.getElementById('inc-filter-from')?.value || '';
     const to = document.getElementById('inc-filter-to')?.value || '';
     await loadIncidentsAndRequests(from, to);
@@ -1963,6 +1993,9 @@ function renderDashboard() {
       se('eq-bar-good').style.width = Math.round(goodCount/total*100) + '%';
       se('eq-bar-fair').style.width = Math.round(fairCount/total*100) + '%';
       se('eq-bar-damaged').style.width = Math.round(badCount/total*100) + '%';
+      if (se('eq-pct-good')) se('eq-pct-good').textContent = Math.round(goodCount/total*100) + '%';
+      if (se('eq-pct-fair')) se('eq-pct-fair').textContent = Math.round(fairCount/total*100) + '%';
+      if (se('eq-pct-damaged')) se('eq-pct-damaged').textContent = Math.round(badCount/total*100) + '%';
       se('eq-total-lbl').textContent = `${equipItems.length} equipment item${equipItems.length!==1?'s':''} · Tap to view`;
     } else {
       eqSection.style.display = 'none';
@@ -2348,15 +2381,31 @@ function toggleInvCategoryFields() {
 function renderInventory() {
   invPage = 0;
   const q = (document.getElementById('inv-search') || {value:''}).value.toLowerCase();
-  const isEqTab = invFilter === '__equipment__';
-  const isDamaged = invFilter === '__damaged__';
+  const isEqTab    = invFilter === '__equipment__';
+  const isDamaged  = invFilter === '__damaged__';
+  const isLowStock = invFilter === '__lowstock__';
+  const isEqGood   = invFilter === '__eq_good__';
+  const isEqFair   = invFilter === '__eq_fair__';
+  const isEqAny    = isEqTab || isEqGood || isEqFair;
   let list;
 
-  if (isEqTab) {
-    list = state.inventory.filter(i => i.category === 'Equipment' &&
-      (i.name.toLowerCase().includes(q) || (i.serial||'').toLowerCase().includes(q)));
+  if (isEqAny) {
+    list = state.inventory.filter(i => {
+      if (i.category !== 'Equipment') return false;
+      if (q && !i.name.toLowerCase().includes(q) && !(i.serial||'').toLowerCase().includes(q)) return false;
+      if (isEqGood) return ['New','Good'].includes(i.condition||'Good');
+      if (isEqFair) return ['Fair','Needs Maintenance'].includes(i.condition||'');
+      return true;
+    });
   } else if (isDamaged) {
-    list = state.damageReports || [];
+    list = [];
+  } else if (isLowStock) {
+    list = state.inventory.filter(i =>
+      i.category !== 'Equipment' &&
+      i.reorder != null && i.reorder !== '' && Number(i.reorder) > 0 &&
+      Number(i.qty) <= Number(i.reorder) &&
+      (!q || i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q))
+    );
   } else {
     list = state.inventory.filter(i =>
       (i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)) &&
@@ -2373,8 +2422,8 @@ function renderInventory() {
   const grid = document.getElementById('inventory-grid');
   if (!grid) return;
 
-  if (isEqTab) {
-    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment added yet</div></div>'; grid.className = 'inv-grid'; return; }
+  if (isEqAny) {
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">No equipment found</div></div>'; grid.className = 'inv-grid'; return; }
     grid.className = 'inv-grid';
     grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => equipmentCardHtml(item)).join('');
     grid._fullList = list;
@@ -2383,27 +2432,31 @@ function renderInventory() {
     return;
   }
 
-  if (isDamaged) {
-    // Show inventory items tagged as Damaged (by condition or with damage reports)
-    const damagedItems = state.inventory.filter(i => {
-      const condDamaged = (i.condition||'').toLowerCase() === 'damaged';
-      const hasDmgReport = (state.damageReports||[]).some(r => r.invid === i.id);
-      const variantDamaged = Array.isArray(i.variants) && i.variants.some(v => (v.condition||'').toLowerCase() === 'damaged');
-      return condDamaged || hasDmgReport || variantDamaged;
-    });
+  if (isLowStock) {
+    if (!list.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">All stock levels OK</div></div>'; grid.className = 'inv-grid'; return; }
+    grid.className = 'inv-grid';
+    grid.innerHTML = list.slice(0, PAGE_SIZE).map(item => invCardHtml(item)).join('');
+    grid._fullList = list;
+    const lm = document.getElementById('inv-load-more');
+    if (lm) lm.style.display = list.length > PAGE_SIZE ? 'block' : 'none';
+    return;
+  }
 
-    // Only fetch reports once — use a flag to avoid infinite loop
-    if (!state._damageReportsLoaded) {
-      state._damageReportsLoaded = true;
+  if (isDamaged) {
+    if (!state._dmgLoaded) {
+      state._dmgLoaded = true;
       loadDamageReports().then(() => renderInventory());
       grid.innerHTML = '<div class="empty-state"><div class="empty-text">Loading...</div></div>';
       return;
     }
-
+    const damagedItems = state.inventory.filter(i =>
+      (i.condition||'').toLowerCase() === 'damaged' ||
+      (state.damageReports||[]).some(r => r.invid === i.id) ||
+      (Array.isArray(i.variants) && i.variants.some(v => (v.condition||'').toLowerCase() === 'damaged'))
+    );
     if (!damagedItems.length) {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No damaged items</div></div>';
-      grid.className = 'inv-grid';
-      return;
+      grid.className = 'inv-grid'; return;
     }
     grid.className = 'inv-grid';
     grid.innerHTML = damagedItems.slice(0, PAGE_SIZE).map(item =>
@@ -2587,25 +2640,27 @@ async function saveInventory() {
         conditionhistory: [], img
       };
     } else {
-      const containers  = parseInt(document.getElementById('inv-packs').value) || 0;
-      const unitSize    = parseInt(document.getElementById('inv-pack-size').value) || 0;
-      const totalQty    = (containers > 0 && unitSize > 0) ? containers * unitSize : containers;
-      const reorderRaw  = parseInt(document.getElementById('inv-reorder').value) || 0;
-      const reorderUnit = document.getElementById('inv-reorder-unit').value;
-      // Always store reorder in same unit as qty (units/singles), convert if needed
-      const reorderQty  = (reorderUnit === 'containers' && unitSize > 0) ? reorderRaw * unitSize : reorderRaw;
+      const containers    = parseInt(document.getElementById('inv-packs').value) || 0;
+      const unitSize      = parseInt(document.getElementById('inv-pack-size').value) || 0;
+      const containerType = (document.getElementById('inv-container-type')?.value || '').trim();
+      // If opening qty given but no unit size, treat qty as direct unit qty (not container count)
+      const totalQty      = (containers > 0 && unitSize > 0) ? containers * unitSize : containers;
+      const reorderRaw    = parseInt(document.getElementById('inv-reorder').value) || 0;
+      const reorderUnit   = document.getElementById('inv-reorder-unit').value;
+      const reorderQty    = (reorderUnit === 'containers' && unitSize > 0) ? reorderRaw * unitSize : reorderRaw;
       item = {
         id: uid(), name: nameVal, category: cat,
         qty: totalQty,
         containers: containers || null,
         unitsize: unitSize || null,
+        containertype: containerType || null,
         uom: document.getElementById('inv-uom').value,
         reorder: reorderQty,
         reorderraw: reorderRaw,
         reorderunit: reorderUnit,
         supplier: document.getElementById('inv-supplier').value.trim(),
         suppliercontact: document.getElementById('inv-supplier-contact').value.trim(),
-        usagelog: [{ _meta:true, containers: containers||null, unitsize: unitSize||null, reorderraw: reorderRaw, reorderunit: reorderUnit }], img
+        usagelog: [{ _meta:true, containers: containers||null, unitsize: unitSize||null, containertype: containerType||null, reorderraw: reorderRaw, reorderunit: reorderUnit }], img
       };
     }
     await dbInsert('inventory', item);
