@@ -1406,7 +1406,7 @@ function buildUsagelogForDB(item) {
 }
 
 // Fields that live only in local state — not columns in Supabase schema.
-const INVENTORY_LOCAL_FIELDS = ['containers', 'unitsize', 'reorderraw', 'reorderunit', 'usageLog'];
+const INVENTORY_LOCAL_FIELDS = ['containers', 'unitsize', 'reorderraw', 'reorderunit', 'usageLog', 'containertype'];
 
 function sanitizeForDB(table, obj) {
   if (table !== 'inventory') return obj;
