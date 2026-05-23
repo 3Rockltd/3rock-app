@@ -2524,19 +2524,24 @@ function invCardHtml(item) {
   const dmgCount = (state.damageReports || []).filter(r => r.invid === item.id).length;
   const isLow = reorderQty > 0 && displayQty <= reorderQty;
   const uomLabel = item.uom || 'units';
-  // Rich qty label: "40 boxes · qty: 200 pcs" or just "200 pcs"
+  const ctLabel = item.containertype || 'container';
+  const ctLabelPlural = item.containertype ? item.containertype + 's' : 'containers';
+  // Rich qty label: use specific container type label; hide unit if uom blank
   let qtyDisplay;
   if (item.unitsize && item.containers > 0) {
     const fullC = Math.floor(displayQty / item.unitsize);
     const loose = displayQty % item.unitsize;
+    const unitPart = item.uom ? ` <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}` : '';
     qtyDisplay = `<div style="font-size:12px;font-weight:700;color:var(--navy);line-height:1.3">
-      ${fullC} container${fullC!==1?'s':''}${loose>0?` +${loose}`:''}
-      <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}
+      ${fullC} ${esc(fullC!==1?ctLabelPlural:ctLabel)}${loose>0?` +${loose}`:''}${unitPart}
     </div>`;
   } else if (item.containers > 0 && !item.unitsize) {
-    qtyDisplay = `<div style="font-size:12px;font-weight:700;color:var(--navy)">${item.containers} container${item.containers!==1?'s':''} <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}</div>`;
+    const unitPart = item.uom ? ` <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}` : '';
+    qtyDisplay = `<div style="font-size:12px;font-weight:700;color:var(--navy)">${item.containers} ${esc(item.containers!==1?ctLabelPlural:ctLabel)}${unitPart}</div>`;
   } else {
-    qtyDisplay = `<span style="font-size:12px;font-weight:700;color:var(--navy)">${displayQty} ${esc(uomLabel)}</span>`;
+    qtyDisplay = item.uom
+      ? `<span style="font-size:12px;font-weight:700;color:var(--navy)">${displayQty} ${esc(uomLabel)}</span>`
+      : `<span style="font-size:12px;font-weight:700;color:var(--navy)">${displayQty}</span>`;
   }
   return `<div class="inv-card ${dmgCount?'damaged-card':''}" onclick="openInvDetail('${esc(item.id)}')">
     <div class="inv-img">${item.img ? `<img src="${item.img}" alt="">` : '📦'}</div>
@@ -2802,8 +2807,23 @@ function openInvDetail(id) {
     const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
     document.getElementById('inv-detail-info').innerHTML = `
       <div class="detail-row"><span class="dk">Category</span><span class="dv">${esc(item.category)}</span></div>
-      <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty} ${esc(item.uom||'units')}</strong></span></div>
-      ${item.unitsize ? `<div class="detail-row"><span class="dk">Container Info</span><span class="dv">${item.containers != null ? item.containers + ' container' + (item.containers !== 1 ? 's' : '') : '—'} × ${item.unitsize} ${esc(item.uom||'units')} each</span></div>` : (item.containers != null && item.containers > 0 ? `<div class="detail-row"><span class="dk">Containers</span><span class="dv">${item.containers} container${item.containers !== 1 ? 's' : ''} (no unit size set)</span></div>` : '')}
+      <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty}${item.uom ? ' ' + esc(item.uom) : ''}</strong></span></div>
+      ${(() => {
+        const ct = item.containertype || 'container';
+        const ctP = item.containertype ? item.containertype + 's' : 'containers';
+        const hasContainers = item.containers != null && item.containers > 0;
+        const hasUnit = !!item.unitsize;
+        const uomStr = item.uom ? esc(item.uom) : '';
+        if (hasContainers && hasUnit && uomStr) {
+          return `<div class="detail-row"><span class="dk">Container Info</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)} × ${item.unitsize} ${uomStr} each</span></div>`;
+        } else if (hasContainers && hasUnit) {
+          return `<div class="detail-row"><span class="dk">Container Info</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)} × ${item.unitsize} each</span></div>`;
+        } else if (hasContainers && uomStr) {
+          return `<div class="detail-row"><span class="dk">${esc(item.containers !== 1 ? ctP.charAt(0).toUpperCase()+ctP.slice(1) : ct.charAt(0).toUpperCase()+ct.slice(1))}</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)}</span></div>`;
+        } else if (hasContainers) {
+          return `<div class="detail-row"><span class="dk">${esc(item.containers !== 1 ? ctP.charAt(0).toUpperCase()+ctP.slice(1) : ct.charAt(0).toUpperCase()+ct.slice(1))}</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)}</span></div>`;
+        } else { return ''; }
+      })()}
       <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorderraw != null ? item.reorderraw + ' ' + (item.reorderunit === 'containers' ? 'container' + (item.reorderraw !== 1 ? 's' : '') : esc(item.uom||'units')) : (item.reorder || 0) + ' ' + esc(item.uom||'units')}${item.reorderunit === 'containers' && item.unitsize ? ' (= ' + item.reorder + ' ' + esc(item.uom||'units') + ')' : ''}</span></div>
       <div class="detail-row"><span class="dk">Supplier</span><span class="dv">${esc(item.supplier||'—')}</span></div>
       <div class="detail-row"><span class="dk">Supplier Contact</span><span class="dv">${esc(item.suppliercontact||item.supplierContact||'—')}</span></div>
@@ -2815,15 +2835,18 @@ function openInvDetail(id) {
     imgStoreS.setAttribute('data-src', item.img || '');
     const qtyCtrl = document.getElementById('inv-qty-ctrl');
     // Build a rich, readable qty label
-    const uomLabel = esc(item.uom || 'units');
-    let qtyLine1 = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty} ${uomLabel}</span>`;
+    const uomLabel = item.uom ? esc(item.uom) : '';
+    const ctLbl = item.containertype || 'container';
+    const ctLblP = item.containertype ? item.containertype + 's' : 'containers';
+    let qtyLine1 = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty}${uomLabel ? ' ' + uomLabel : ''}</span>`;
     let qtyLine2 = '';
     if (item.unitsize && item.qty > 0) {
       const fullContainers = Math.floor(item.qty / item.unitsize);
       const loose = item.qty % item.unitsize;
-      qtyLine2 = `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${fullContainers} container${fullContainers!==1?'s':''} × ${item.unitsize} ${uomLabel}${loose > 0 ? ` + ${loose} loose` : ''}</div>`;
+      const unitPart = uomLabel ? ` × ${item.unitsize} ${uomLabel}` : ` × ${item.unitsize}`;
+      qtyLine2 = `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${fullContainers} ${esc(fullContainers!==1?ctLblP:ctLbl)}${unitPart}${loose > 0 ? ` + ${loose} loose` : ''}</div>`;
     } else if (item.containers && item.containers > 0 && !item.unitsize) {
-      qtyLine2 = `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${item.containers} container${item.containers!==1?'s':''}</div>`;
+      qtyLine2 = `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${item.containers} ${esc(item.containers!==1?ctLblP:ctLbl)}</div>`;
     }
     if (canEdit()) {
       qtyCtrl.innerHTML = `
@@ -2852,8 +2875,9 @@ function openInvDetail(id) {
         avgPerWeek = (totalDispensed / (daysSpan / 7)).toFixed(1);
       }
       const unitLabel = esc(item.uom || 'units');
+      const ctStatLbl = item.containertype ? esc(item.containertype + 's') : 'containers';
       const containerLine = item.unitsize && avgPerDay !== '—'
-        ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px">≈ ${(parseFloat(avgPerDay)/item.unitsize).toFixed(2)} containers/day · ${(parseFloat(avgPerWeek)/item.unitsize).toFixed(1)} containers/week</div>` : '';
+        ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px">≈ ${(parseFloat(avgPerDay)/item.unitsize).toFixed(2)} ${ctStatLbl}/day · ${(parseFloat(avgPerWeek)/item.unitsize).toFixed(1)} ${ctStatLbl}/week</div>` : '';
       const statsHtml = `<div style="background:var(--off-white);border:1px solid var(--border-light);border-radius:var(--r-md);padding:10px 12px;margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">📊 Usage Summary</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
@@ -2867,7 +2891,7 @@ function openInvDetail(id) {
         </div>` : ''}
       </div>`;
       const entriesHtml = logs.slice().reverse().map(log =>
-        `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">${log.variantName ? `<span style="font-size:10px;background:var(--surface);padding:1px 7px;border-radius:10px;font-weight:600;color:var(--navy)">${esc(log.variantName)}</span><br>` : ''}Issued: <strong>${log.qty} ${unitLabel}</strong>${item.unitsize ? ` <span style="font-size:10px;color:var(--text-muted)">(${(log.qty/item.unitsize).toFixed(2)} containers)</span>` : ''}${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`
+        `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">${log.variantName ? `<span style="font-size:10px;background:var(--surface);padding:1px 7px;border-radius:10px;font-weight:600;color:var(--navy)">${esc(log.variantName)}</span><br>` : ''}Issued: <strong>${log.qty}${item.uom ? ' ' + unitLabel : ''}</strong>${item.unitsize ? ` <span style="font-size:10px;color:var(--text-muted)">(${(log.qty/item.unitsize).toFixed(2)} ${ctStatLbl})</span>` : ''}${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`
       ).join('');
       return statsHtml + entriesHtml;
     })();
