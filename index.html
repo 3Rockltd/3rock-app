@@ -876,20 +876,34 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div class="modal center-m"><div class="modal-header"><span class="modal-title">✏️ Edit Item</span><button class="modal-close" onclick="closeModal('modal-edit-inv')">✕</button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-control" id="edit-inv-name"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Category</label>
-        <select class="form-control" id="edit-inv-cat">
-          <option>Chemicals</option><option>PPE</option><option>Consumables</option><option>Other</option>
-        </select>
+
+    <!-- STOCK FIELDS -->
+    <div id="edit-inv-stock-fields">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Category</label>
+          <select class="form-control" id="edit-inv-cat">
+            <option>Chemicals</option><option>PPE</option><option>Consumables</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Unit of Measure</label>
+          <select class="form-control" id="edit-inv-uom">
+            <option value="">— None —</option>
+            <option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option><option>sachets</option><option>pairs</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group"><label class="form-label">Unit of Measure</label>
-        <select class="form-control" id="edit-inv-uom">
-          <option>kg</option><option>litres</option><option>pcs</option><option>boxes</option><option>bottles</option><option>rolls</option><option>sachets</option><option>pairs</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Container Type <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <select class="form-control" id="edit-inv-container-type">
+            <option value="">— None —</option>
+            <option>Bottles</option><option>Packs</option><option>Boxes</option><option>Bags</option>
+            <option>Drums</option><option>Jerry Cans</option><option>Sachets</option><option>Rolls</option>
+            <option>Pairs</option><option>Cartons</option><option>Units</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Units per Container <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input type="number" class="form-control" id="edit-inv-unitsize" min="1" placeholder="e.g. 10"></div>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Units per Container <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input type="number" class="form-control" id="edit-inv-unitsize" min="1" placeholder="e.g. 10"></div>
       <div class="form-group">
         <label class="form-label">Reorder Level</label>
         <div style="display:flex;gap:6px">
@@ -900,11 +914,39 @@ textarea.form-control{resize:vertical;min-height:56px}
           </select>
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="edit-inv-supplier"></div>
+        <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="edit-inv-supplier-contact" placeholder="Phone/Email"></div>
+      </div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="edit-inv-supplier"></div>
-      <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="edit-inv-supplier-contact" placeholder="Phone/Email"></div>
+
+    <!-- EQUIPMENT FIELDS -->
+    <div id="edit-inv-equipment-fields" style="display:none">
+      <div class="form-group"><label class="form-label">Condition</label>
+        <select class="form-control" id="edit-inv-condition">
+          <option value="New">🟢 New</option>
+          <option value="Good">🟢 Good</option>
+          <option value="Fair">🟡 Fair</option>
+          <option value="Needs Maintenance">🟠 Needs Maintenance</option>
+          <option value="Damaged">🔴 Damaged</option>
+          <option value="Decommissioned">⚫ Decommissioned</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Asset / Serial No.</label><input type="text" class="form-control" id="edit-inv-serial" placeholder="e.g. EQ-001"></div>
+        <div class="form-group"><label class="form-label">Assigned To</label><input type="text" class="form-control" id="edit-inv-assigned-to" placeholder="e.g. Ama Mensah"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-control" id="edit-inv-purchase-date"></div>
+        <div class="form-group"><label class="form-label">Last Serviced</label><input type="date" class="form-control" id="edit-inv-last-serviced"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-control" id="edit-inv-eq-supplier"></div>
+        <div class="form-group"><label class="form-label">Supplier Contact</label><input type="text" class="form-control" id="edit-inv-eq-supplier-contact" placeholder="Phone/Email"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Condition Notes</label><textarea class="form-control" id="edit-inv-condition-notes" rows="2" placeholder="e.g. Handle cracked, motor running slow…"></textarea></div>
     </div>
+
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-edit-inv')">Cancel</button><button class="btn btn-primary" onclick="saveEditInv()">Save Changes</button></div>
   </div></div>
 </div>
@@ -2931,53 +2973,98 @@ function openInvDetail(id) {
 function openEditInvModal() {
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
+  const isEq = isEquipment(item);
   closeModal('modal-inv-detail');
   openModal('modal-edit-inv');
+
   document.getElementById('edit-inv-name').value = item.name || '';
-  const catEl = document.getElementById('edit-inv-cat');
-  if (catEl) { [...catEl.options].forEach(o => o.selected = o.value === item.category); }
-  const uomEl = document.getElementById('edit-inv-uom');
-  if (uomEl) { [...uomEl.options].forEach(o => o.selected = o.value === item.uom); }
-  document.getElementById('edit-inv-unitsize').value = item.unitsize || '';
-  document.getElementById('edit-inv-reorder').value = item.reorderraw != null ? item.reorderraw : (item.reorder || '');
-  const ruEl = document.getElementById('edit-inv-reorder-unit');
-  if (ruEl) ruEl.value = item.reorderunit || 'units';
-  document.getElementById('edit-inv-supplier').value = item.supplier || '';
-  document.getElementById('edit-inv-supplier-contact').value = item.suppliercontact || item.supplierContact || '';
+
+  // Show/hide the right field sets
+  document.getElementById('edit-inv-stock-fields').style.display = isEq ? 'none' : '';
+  document.getElementById('edit-inv-equipment-fields').style.display = isEq ? '' : 'none';
+
+  if (isEq) {
+    const condEl = document.getElementById('edit-inv-condition');
+    if (condEl) condEl.value = item.condition || 'Good';
+    document.getElementById('edit-inv-serial').value = item.serial || '';
+    document.getElementById('edit-inv-assigned-to').value = item.assignedto || '';
+    document.getElementById('edit-inv-purchase-date').value = item.purchasedate || '';
+    document.getElementById('edit-inv-last-serviced').value = item.lastserviced || '';
+    document.getElementById('edit-inv-eq-supplier').value = item.supplier || '';
+    document.getElementById('edit-inv-eq-supplier-contact').value = item.suppliercontact || item.supplierContact || '';
+    document.getElementById('edit-inv-condition-notes').value = item.conditionnotes || '';
+  } else {
+    const catEl = document.getElementById('edit-inv-cat');
+    if (catEl) [...catEl.options].forEach(o => o.selected = o.value === item.category);
+    const uomEl = document.getElementById('edit-inv-uom');
+    if (uomEl) uomEl.value = item.uom || '';
+    const ctEl = document.getElementById('edit-inv-container-type');
+    if (ctEl) ctEl.value = item.containertype || '';
+    document.getElementById('edit-inv-unitsize').value = item.unitsize || '';
+    document.getElementById('edit-inv-reorder').value = item.reorderraw != null ? item.reorderraw : (item.reorder || '');
+    const ruEl = document.getElementById('edit-inv-reorder-unit');
+    if (ruEl) ruEl.value = item.reorderunit || 'units';
+    document.getElementById('edit-inv-supplier').value = item.supplier || '';
+    document.getElementById('edit-inv-supplier-contact').value = item.suppliercontact || item.supplierContact || '';
+  }
 }
 
 async function saveEditInv() {
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
+  const isEq = isEquipment(item);
   const name = document.getElementById('edit-inv-name').value.trim();
   if (!name) { toast('Item name is required', 'error'); return; }
-  const unitsize   = parseInt(document.getElementById('edit-inv-unitsize').value) || null;
-  const reorderRaw = parseInt(document.getElementById('edit-inv-reorder').value) || 0;
-  const reorderUnit = document.getElementById('edit-inv-reorder-unit').value;
-  const reorderQty  = (reorderUnit === 'containers' && unitsize) ? reorderRaw * unitsize : reorderRaw;
-  const containers  = unitsize && item.qty ? Math.ceil(item.qty / unitsize) : (item.containers || null);
-  // Apply changes to local state
-  item.name           = name;
-  item.category       = document.getElementById('edit-inv-cat').value;
-  item.uom            = document.getElementById('edit-inv-uom').value;
-  item.unitsize       = unitsize;
-  item.containers     = containers;
-  item.reorder        = reorderQty;
-  item.reorderraw     = reorderRaw;
-  item.reorderunit    = reorderUnit;
-  item.supplier       = document.getElementById('edit-inv-supplier').value.trim();
-  item.suppliercontact = document.getElementById('edit-inv-supplier-contact').value.trim();
-  showLoading('Saving…');
-  try {
-    await dbUpdate('inventory', item.id, {
-      name: item.name, category: item.category, uom: item.uom,
+  item.name = name;
+
+  let dbChanges = { name };
+
+  if (isEq) {
+    item.condition       = document.getElementById('edit-inv-condition').value;
+    item.serial          = document.getElementById('edit-inv-serial').value.trim();
+    item.assignedto      = document.getElementById('edit-inv-assigned-to').value.trim();
+    item.purchasedate    = document.getElementById('edit-inv-purchase-date').value;
+    item.lastserviced    = document.getElementById('edit-inv-last-serviced').value;
+    item.supplier        = document.getElementById('edit-inv-eq-supplier').value.trim();
+    item.suppliercontact = document.getElementById('edit-inv-eq-supplier-contact').value.trim();
+    item.conditionnotes  = document.getElementById('edit-inv-condition-notes').value.trim();
+    dbChanges = { ...dbChanges,
+      condition: item.condition, serial: item.serial, assignedto: item.assignedto,
+      purchasedate: item.purchasedate, lastserviced: item.lastserviced,
+      supplier: item.supplier, suppliercontact: item.suppliercontact,
+      conditionnotes: item.conditionnotes
+    };
+  } else {
+    const unitsize    = parseInt(document.getElementById('edit-inv-unitsize').value) || null;
+    const reorderRaw  = parseInt(document.getElementById('edit-inv-reorder').value) || 0;
+    const reorderUnit = document.getElementById('edit-inv-reorder-unit').value;
+    const reorderQty  = (reorderUnit === 'containers' && unitsize) ? reorderRaw * unitsize : reorderRaw;
+    const containers  = unitsize && item.qty ? Math.ceil(item.qty / unitsize) : (item.containers || null);
+    const containerType = (document.getElementById('edit-inv-container-type').value || '').trim() || null;
+    item.category       = document.getElementById('edit-inv-cat').value;
+    item.uom            = document.getElementById('edit-inv-uom').value || null;
+    item.containertype  = containerType;
+    item.unitsize       = unitsize;
+    item.containers     = containers;
+    item.reorder        = reorderQty;
+    item.reorderraw     = reorderRaw;
+    item.reorderunit    = reorderUnit;
+    item.supplier       = document.getElementById('edit-inv-supplier').value.trim();
+    item.suppliercontact = document.getElementById('edit-inv-supplier-contact').value.trim();
+    dbChanges = { ...dbChanges,
+      category: item.category, uom: item.uom,
       reorder: item.reorder, supplier: item.supplier, suppliercontact: item.suppliercontact,
       usagelog: buildUsagelogForDB(item)
-    });
+    };
+  }
+
+  showLoading('Saving…');
+  try {
+    await dbUpdate('inventory', item.id, dbChanges);
     closeModal('modal-edit-inv');
     openInvDetail(item.id);
     renderInventory();
-    toast('Item updated', 'success');
+    toast('Item updated ✅', 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
