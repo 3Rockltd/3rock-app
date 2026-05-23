@@ -2523,23 +2523,23 @@ function invCardHtml(item) {
   const cls = pct > 60 ? 'fill-green' : pct > 30 ? 'fill-amber' : 'fill-red';
   const dmgCount = (state.damageReports || []).filter(r => r.invid === item.id).length;
   const isLow = reorderQty > 0 && displayQty <= reorderQty;
-  const uomLabel = item.uom || 'units';
-  const ctLabel = item.containertype || 'container';
-  const ctLabelPlural = item.containertype ? item.containertype + 's' : 'containers';
-  // Rich qty label: use specific container type label; hide unit if uom blank
+  const uomLabel = item.uom || '';
+  const ctLabel = item.containertype;
+  const ctLabelPlural = item.containertype ? item.containertype + 's' : '';
+  // Only show container prefix when a specific containertype was chosen
   let qtyDisplay;
-  if (item.unitsize && item.containers > 0) {
+  if (ctLabel && item.unitsize && item.containers > 0) {
     const fullC = Math.floor(displayQty / item.unitsize);
     const loose = displayQty % item.unitsize;
-    const unitPart = item.uom ? ` <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}` : '';
+    const unitPart = uomLabel ? ` <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}` : '';
     qtyDisplay = `<div style="font-size:12px;font-weight:700;color:var(--navy);line-height:1.3">
       ${fullC} ${esc(fullC!==1?ctLabelPlural:ctLabel)}${loose>0?` +${loose}`:''}${unitPart}
     </div>`;
-  } else if (item.containers > 0 && !item.unitsize) {
-    const unitPart = item.uom ? ` <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}` : '';
+  } else if (ctLabel && item.containers > 0 && !item.unitsize) {
+    const unitPart = uomLabel ? ` <span style="font-weight:400;color:var(--text-muted)">· qty:</span> ${displayQty} ${esc(uomLabel)}` : '';
     qtyDisplay = `<div style="font-size:12px;font-weight:700;color:var(--navy)">${item.containers} ${esc(item.containers!==1?ctLabelPlural:ctLabel)}${unitPart}</div>`;
   } else {
-    qtyDisplay = item.uom
+    qtyDisplay = uomLabel
       ? `<span style="font-size:12px;font-weight:700;color:var(--navy)">${displayQty} ${esc(uomLabel)}</span>`
       : `<span style="font-size:12px;font-weight:700;color:var(--navy)">${displayQty}</span>`;
   }
@@ -2809,8 +2809,9 @@ function openInvDetail(id) {
       <div class="detail-row"><span class="dk">Category</span><span class="dv">${esc(item.category)}</span></div>
       <div class="detail-row"><span class="dk">Current Stock</span><span class="dv"><strong>${item.qty}${item.uom ? ' ' + esc(item.uom) : ''}</strong></span></div>
       ${(() => {
-        const ct = item.containertype || 'container';
-        const ctP = item.containertype ? item.containertype + 's' : 'containers';
+        const ct = item.containertype;
+        if (!ct) return '';
+        const ctP = ct + 's';
         const hasContainers = item.containers != null && item.containers > 0;
         const hasUnit = !!item.unitsize;
         const uomStr = item.uom ? esc(item.uom) : '';
@@ -2818,10 +2819,8 @@ function openInvDetail(id) {
           return `<div class="detail-row"><span class="dk">Container Info</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)} × ${item.unitsize} ${uomStr} each</span></div>`;
         } else if (hasContainers && hasUnit) {
           return `<div class="detail-row"><span class="dk">Container Info</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)} × ${item.unitsize} each</span></div>`;
-        } else if (hasContainers && uomStr) {
-          return `<div class="detail-row"><span class="dk">${esc(item.containers !== 1 ? ctP.charAt(0).toUpperCase()+ctP.slice(1) : ct.charAt(0).toUpperCase()+ct.slice(1))}</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)}</span></div>`;
         } else if (hasContainers) {
-          return `<div class="detail-row"><span class="dk">${esc(item.containers !== 1 ? ctP.charAt(0).toUpperCase()+ctP.slice(1) : ct.charAt(0).toUpperCase()+ct.slice(1))}</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)}</span></div>`;
+          return `<div class="detail-row"><span class="dk">${esc((item.containers !== 1 ? ctP : ct).charAt(0).toUpperCase()+(item.containers !== 1 ? ctP : ct).slice(1))}</span><span class="dv">${item.containers} ${esc(item.containers !== 1 ? ctP : ct)}</span></div>`;
         } else { return ''; }
       })()}
       <div class="detail-row"><span class="dk">Reorder Level</span><span class="dv">${item.reorderraw != null ? item.reorderraw + ' ' + (item.reorderunit === 'containers' ? 'container' + (item.reorderraw !== 1 ? 's' : '') : esc(item.uom||'units')) : (item.reorder || 0) + ' ' + esc(item.uom||'units')}${item.reorderunit === 'containers' && item.unitsize ? ' (= ' + item.reorder + ' ' + esc(item.uom||'units') + ')' : ''}</span></div>
@@ -2836,16 +2835,16 @@ function openInvDetail(id) {
     const qtyCtrl = document.getElementById('inv-qty-ctrl');
     // Build a rich, readable qty label
     const uomLabel = item.uom ? esc(item.uom) : '';
-    const ctLbl = item.containertype || 'container';
-    const ctLblP = item.containertype ? item.containertype + 's' : 'containers';
+    const ctLbl = item.containertype;
+    const ctLblP = item.containertype ? item.containertype + 's' : '';
     let qtyLine1 = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--navy)">${item.qty}${uomLabel ? ' ' + uomLabel : ''}</span>`;
     let qtyLine2 = '';
-    if (item.unitsize && item.qty > 0) {
+    if (ctLbl && item.unitsize && item.qty > 0) {
       const fullContainers = Math.floor(item.qty / item.unitsize);
       const loose = item.qty % item.unitsize;
       const unitPart = uomLabel ? ` × ${item.unitsize} ${uomLabel}` : ` × ${item.unitsize}`;
       qtyLine2 = `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${fullContainers} ${esc(fullContainers!==1?ctLblP:ctLbl)}${unitPart}${loose > 0 ? ` + ${loose} loose` : ''}</div>`;
-    } else if (item.containers && item.containers > 0 && !item.unitsize) {
+    } else if (ctLbl && item.containers && item.containers > 0 && !item.unitsize) {
       qtyLine2 = `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${item.containers} ${esc(item.containers!==1?ctLblP:ctLbl)}</div>`;
     }
     if (canEdit()) {
