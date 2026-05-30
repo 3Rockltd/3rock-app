@@ -23,6 +23,21 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
 
+
+/* BREADCRUMB */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-bottom:14px;flex-wrap:wrap}
+.breadcrumb-sep{color:var(--border)}
+.breadcrumb-cur{color:var(--navy);font-weight:700}
+.breadcrumb-link{color:var(--text-secondary);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+/* AWARDS CARD on Dashboard */
+.awards-card{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);border-radius:var(--r-lg);padding:16px;margin-bottom:18px;color:#fff}
+.awards-card .aw-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.awards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.award-item{background:rgba(255,255,255,.08);border-radius:var(--r-md);padding:10px;text-align:center}
+.award-item .aw-icon{font-size:22px;margin-bottom:4px}
+.award-item .aw-name{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#fff}
+.award-item .aw-label{font-size:9px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+
 /* TOAST */
 #toast-container{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:400px}
 .toast{padding:12px 16px;border-radius:var(--r-md);font-size:13px;font-weight:600;color:#fff;box-shadow:var(--shadow-lg);animation:toastIn .25s ease;pointer-events:auto;display:flex;align-items:center;gap:8px}
@@ -528,6 +543,17 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div style="font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center" id="eq-total-lbl">0 equipment items · Tap to view</div>
         </div>
       </div>
+      <!-- AWARDS CARD — director view only -->
+      <div id="awards-dash-section" style="display:none">
+        <div class="awards-card">
+          <div class="aw-title">🏆 Monthly Awards</div>
+          <div class="awards-row" id="awards-display">
+            <div class="award-item"><div class="aw-icon">⭐</div><div class="aw-name" id="aw-best-name">—</div><div class="aw-label">Best Performing</div></div>
+            <div class="award-item"><div class="aw-icon">👔</div><div class="aw-name" id="aw-dress-name">—</div><div class="aw-label">Best Dressed</div></div>
+          </div>
+          <div id="awards-comments-preview" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.6);font-style:italic;display:none"></div>
+        </div>
+      </div>
       <div id="director-metrics-section" style="display:none">
         <div class="section-title">Today's Task Progress</div>
         <div id="dash-task-progress" class="card"></div>
@@ -687,7 +713,16 @@ textarea.form-control{resize:vertical;min-height:56px}
 
     <!-- PAYROLL SCREEN -->
     <div class="screen" id="screen-payroll">
-      <div class="page-header">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <span class="breadcrumb-link" onclick="goToTab('dashboard')">🏠 Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-cur">💰 Payroll</span>
+        <span class="breadcrumb-sep" id="pay-bc-sep" style="display:none">›</span>
+        <span class="breadcrumb-cur" id="pay-bc-month" style="display:none"></span>
+      </div>
+
+      <div class="page-header" style="margin-bottom:12px">
         <div class="page-title">Payroll Management</div>
         <div class="page-sub" id="payroll-sub-lbl">Monthly salary register</div>
         <div class="page-actions">
@@ -695,6 +730,8 @@ textarea.form-control{resize:vertical;min-height:56px}
           <button class="btn btn-primary btn-sm" onclick="exportPayrollPDF()">📄 Export PDF</button>
         </div>
       </div>
+
+      <!-- Month selector -->
       <div class="card" style="padding:14px;margin-bottom:14px">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <div class="form-group" style="margin-bottom:0;flex:1;min-width:160px">
@@ -707,15 +744,56 @@ textarea.form-control{resize:vertical;min-height:56px}
           </div>
         </div>
       </div>
+
+      <!-- KPI summary -->
       <div class="kpi-row" id="payroll-kpis" style="margin-bottom:16px"></div>
+
+      <!-- Awards & Comments (input for supervisor/manager, view for director) -->
+      <div class="section-title">🏆 Monthly Awards & Notes</div>
+      <div class="card" style="padding:14px;margin-bottom:14px" id="payroll-awards-section">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">⭐ Best Performing Staff</label>
+            <select class="form-control" id="pay-best-performer" onchange="savePayrollAwards()">
+              <option value="">— Select staff —</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">👔 Best Dressed Staff</label>
+            <select class="form-control" id="pay-best-dressed" onchange="savePayrollAwards()">
+              <option value="">— Select staff —</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">📝 General Comments for the Month</label>
+          <textarea class="form-control" id="pay-comments" rows="3" placeholder="Overall performance notes, issues, observations for this payroll period..." onchange="savePayrollAwards()"></textarea>
+        </div>
+      </div>
+
+      <!-- Staff Salary Register -->
       <div class="section-title">Staff Salary Register</div>
       <div id="payroll-staff-list"></div>
+
+      <!-- Totals + bank details summary -->
+      <div class="section-title" id="pay-bank-title" style="display:none">🏦 Bank Account Details</div>
+      <div class="card" id="pay-bank-list" style="display:none;padding:0;margin-bottom:14px;overflow:hidden"></div>
+
+      <!-- Summary totals -->
       <div class="card" id="payroll-totals" style="display:none;margin-bottom:80px"></div>
     </div>
 
     <!-- DAILY REPORT SCREEN -->
     <div class="screen" id="screen-dailyreport">
-      <div class="page-header">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <span class="breadcrumb-link" onclick="goToTab('dashboard')">🏠 Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-cur">📊 Daily Report</span>
+        <span class="breadcrumb-sep" id="dr-bc-sep" style="display:none">›</span>
+        <span class="breadcrumb-cur" id="dr-bc-date" style="display:none"></span>
+      </div>
+      <div class="page-header" style="margin-bottom:12px">
         <div class="page-title">Daily Report</div>
         <div class="page-sub" id="report-date-lbl">Cleaning Activity Report</div>
       </div>
@@ -2008,6 +2086,10 @@ async function initApp() {
     if (['director','manager'].includes(currentUser.role)) {
       document.getElementById('director-kpi').style.display = 'block';
       document.getElementById('director-metrics-section').style.display = 'block';
+      // Load current month awards for dashboard
+      const curMonth = todayStr().slice(0,7);
+      const savedAwards = getPayrollAwards(curMonth);
+      renderAwardsDashboard(curMonth, savedAwards);
     }
   }
   setSyncDot('syncing');
@@ -5309,20 +5391,104 @@ async function loadPayrollMonth() {
   renderPayroll();
 }
 
+// ── Payroll awards helpers ───────────────────────────────────────
+
+function getPayrollAwards(month) {
+  try {
+    const saved = localStorage.getItem('3rock_awards_' + month);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { bestPerformer: '', bestDressed: '', comments: '' };
+}
+
+function savePayrollAwards() {
+  const month = payrollCurrentMonth;
+  if (!month) return;
+  const awards = {
+    bestPerformer: document.getElementById('pay-best-performer').value,
+    bestDressed: document.getElementById('pay-best-dressed').value,
+    comments: document.getElementById('pay-comments').value.trim()
+  };
+  localStorage.setItem('3rock_awards_' + month, JSON.stringify(awards));
+  // Sync to Supabase
+  const payload = { id: 'awards_' + month, month: month, type: 'awards', data: JSON.stringify(awards) };
+  supabaseClient.from('payroll_meta').upsert(payload).then(function(r) {
+    if (r.error && !r.error.message.includes('does not exist')) console.warn('Awards sync:', r.error.message);
+  });
+  // Update dashboard awards card
+  renderAwardsDashboard(month, awards);
+}
+
+function renderAwardsDashboard(month, awards) {
+  const section = document.getElementById('awards-dash-section');
+  if (!section) return;
+  if (!['director','manager'].includes(currentUser ? currentUser.role : '')) return;
+  section.style.display = 'block';
+  const monthLabel = month ? new Date(month+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'}) : '';
+  if (monthLabel) {
+    const titleEl = section.querySelector('.aw-title');
+    if (titleEl) titleEl.textContent = '🏆 Monthly Awards — ' + monthLabel;
+  }
+  const bestName = document.getElementById('aw-best-name');
+  const dressName = document.getElementById('aw-dress-name');
+  const commentsPreview = document.getElementById('awards-comments-preview');
+  if (bestName) {
+    const bp = state.staff.find(function(s){return s.id===awards.bestPerformer;});
+    bestName.textContent = bp ? bp.name : '—';
+  }
+  if (dressName) {
+    const bd = state.staff.find(function(s){return s.id===awards.bestDressed;});
+    dressName.textContent = bd ? bd.name : '—';
+  }
+  if (commentsPreview) {
+    if (awards.comments) {
+      commentsPreview.style.display = 'block';
+      commentsPreview.textContent = '"' + awards.comments + '"';
+    } else {
+      commentsPreview.style.display = 'none';
+    }
+  }
+}
+
+// ── Main render ─────────────────────────────────────────────────
+
 function renderPayroll() {
   const month = payrollCurrentMonth;
   if (!month) return;
   const s = getPayrollSettings();
   const records = getPayrollRecords(month);
   const monthLabel = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+  // Breadcrumb
+  const bcSep = document.getElementById('pay-bc-sep');
+  const bcMonth = document.getElementById('pay-bc-month');
+  if (bcSep) bcSep.style.display = '';
+  if (bcMonth) { bcMonth.style.display = ''; bcMonth.textContent = monthLabel; }
   const subEl = document.getElementById('payroll-sub-lbl');
   if (subEl) subEl.textContent = 'Payroll — ' + monthLabel;
 
+  // Awards dropdowns
+  const awards = getPayrollAwards(month);
+  const bpSel = document.getElementById('pay-best-performer');
+  const bdSel = document.getElementById('pay-best-dressed');
+  if (bpSel && bdSel) {
+    const opts = '<option value="">— Select staff —</option>'
+      + state.staff.map(function(st){ return '<option value="'+esc(st.id)+'">'+esc(st.name)+'</option>'; }).join('');
+    bpSel.innerHTML = opts;
+    bdSel.innerHTML = opts;
+    bpSel.value = awards.bestPerformer || '';
+    bdSel.value = awards.bestDressed || '';
+  }
+  const commentsEl = document.getElementById('pay-comments');
+  if (commentsEl) commentsEl.value = awards.comments || '';
+  renderAwardsDashboard(month, awards);
+
+  // Staff rows
   const staffList = state.staff;
   let totalBase = 0, totalDeductions = 0, totalNet = 0;
   let rows = '';
 
-  staffList.forEach((st, idx) => {
+  staffList.forEach(function(st) {
     const rec = records[st.id] || {
       workingDays: s.workingDays, daysPresent: s.workingDays,
       absentPerm: 0, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, remarks: ''
@@ -5335,159 +5501,221 @@ function renderPayroll() {
     totalDeductions += totalDeduction;
     totalNet += netPay;
     const isLow = netPay < s.baseSalary * 0.8;
-    rows += '<div class="card" style="padding:12px;margin-bottom:8px;cursor:pointer" onclick="openPayrollEntry(\'' + esc(st.id) + '\')">'
+
+    const bankName = st.bankname || st.bankName || '';
+    const bankAcct = st.bankacct || st.bankAcct || '';
+    const isBestPerformer = awards.bestPerformer === st.id;
+    const isBestDressed = awards.bestDressed === st.id;
+
+    rows += '<div class="card" style="padding:12px;margin-bottom:8px;cursor:pointer;position:relative" onclick="openPayrollEntry(\''+esc(st.id)+'\')">'
+      + (isBestPerformer || isBestDressed ? '<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px">'
+          + (isBestPerformer ? '<span style="background:#f5c842;color:#0a1628;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px">⭐ BEST</span>' : '')
+          + (isBestDressed ? '<span style="background:#7c3aed;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px">👔 DRESSED</span>' : '')
+          + '</div>' : '')
       + '<div style="display:flex;align-items:center;gap:10px">'
       + '<div style="width:36px;height:36px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">'
-      + (st.photo ? '<img src="' + st.photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : esc(initials(st.name)))
+      + (st.photo ? '<img src="'+st.photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : esc(initials(st.name)))
       + '</div>'
       + '<div style="flex:1;min-width:0">'
-      + '<div style="font-weight:700;font-size:13px;color:var(--navy)">' + esc(st.name) + '</div>'
-      + '<div style="font-size:10px;color:var(--text-muted)">' + esc(st.role) + ' · ' + rec.daysPresent + '/' + rec.workingDays + ' days' + (rec.remarks ? ' · ' + esc(rec.remarks) : '') + '</div>'
+      + '<div style="font-weight:700;font-size:13px;color:var(--navy)">'+esc(st.name)+'</div>'
+      + '<div style="font-size:10px;color:var(--text-muted)">'+esc(st.role)+' · '+rec.daysPresent+'/'+rec.workingDays+' days'+(rec.remarks?' · '+esc(rec.remarks):'')+'</div>'
+      + (bankAcct ? '<div style="font-size:10px;color:var(--text-secondary);margin-top:2px">🏦 '+esc(bankName)+' · '+esc(bankAcct)+'</div>' : '<div style="font-size:10px;color:var(--amber)">⚠ No bank details</div>')
       + '</div>'
       + '<div style="text-align:right;flex-shrink:0">'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:800;color:' + (isLow ? 'var(--danger)' : 'var(--green)') + '">GHC ' + netPay.toLocaleString() + '</div>'
-      + (totalDeduction > 0 ? '<div style="font-size:10px;color:var(--danger)">−' + totalDeduction + ' deducted</div>' : '<div style="font-size:10px;color:var(--text-muted)">No deductions</div>')
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:800;color:'+(isLow?'var(--danger)':'var(--green)')+'">GHC '+netPay.toLocaleString()+'</div>'
+      + (totalDeduction>0 ? '<div style="font-size:10px;color:var(--danger)">−'+totalDeduction+' deducted</div>' : '<div style="font-size:10px;color:var(--text-muted)">No deductions</div>')
       + '</div></div></div>';
   });
 
   if (!staffList.length) rows = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">No staff enrolled yet</div></div>';
   document.getElementById('payroll-staff-list').innerHTML = rows;
 
+  // KPI row
   const kpiEl = document.getElementById('payroll-kpis');
   if (kpiEl) kpiEl.innerHTML =
-    '<div class="kpi-item"><div class="kpi-num" style="color:var(--navy)">' + staffList.length + '</div><div class="kpi-lbl">Total Staff</div></div>'
-    + '<div class="kpi-item"><div class="kpi-num" style="color:var(--green);font-size:16px">GHC ' + totalNet.toLocaleString() + '</div><div class="kpi-lbl">Net Payout</div></div>'
-    + '<div class="kpi-item"><div class="kpi-num" style="color:var(--danger);font-size:16px">GHC ' + totalDeductions.toLocaleString() + '</div><div class="kpi-lbl">Deductions</div></div>'
-    + '<div class="kpi-item"><div class="kpi-num" style="font-size:14px">GHC ' + totalBase.toLocaleString() + '</div><div class="kpi-lbl">Gross Total</div></div>';
+    '<div class="kpi-item"><div class="kpi-num" style="color:var(--navy)">'+staffList.length+'</div><div class="kpi-lbl">Total Staff</div></div>'
+    + '<div class="kpi-item"><div class="kpi-num" style="color:var(--green);font-size:15px">GHC '+totalNet.toLocaleString()+'</div><div class="kpi-lbl">Net Payout</div></div>'
+    + '<div class="kpi-item"><div class="kpi-num" style="color:var(--danger);font-size:15px">GHC '+totalDeductions.toLocaleString()+'</div><div class="kpi-lbl">Deductions</div></div>'
+    + '<div class="kpi-item"><div class="kpi-num" style="font-size:13px">GHC '+totalBase.toLocaleString()+'</div><div class="kpi-lbl">Gross Total</div></div>';
 
+  // Bank details panel
+  const bankTitleEl = document.getElementById('pay-bank-title');
+  const bankListEl = document.getElementById('pay-bank-list');
+  if (bankListEl && staffList.length) {
+    bankTitleEl.style.display = '';
+    bankListEl.style.display = 'block';
+    bankListEl.innerHTML = staffList.map(function(st, i) {
+      const bankName = st.bankname || st.bankName || '—';
+      const bankAcct = st.bankacct || st.bankAcct || '—';
+      const hasBank = (st.bankacct || st.bankAcct);
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;'+(i>0?'border-top:1px solid var(--border-light)':'')+'">'
+        + '<div style="width:28px;height:28px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">'
+        + esc(initials(st.name)) + '</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--navy)">'+esc(st.name)+'</div>'
+        + '<div style="font-size:10px;color:var(--text-muted)">'+esc(bankName)+'</div>'
+        + '</div>'
+        + '<div style="text-align:right">'
+        + '<div style="font-size:13px;font-weight:700;color:'+(hasBank?'var(--navy)':'var(--amber)')+'">'+esc(bankAcct)+'</div>'
+        + (hasBank?'':'<div style="font-size:9px;color:var(--amber)">Missing</div>')
+        + '</div></div>';
+    }).join('');
+  }
+
+  // Summary totals
   const totalsEl = document.getElementById('payroll-totals');
   if (totalsEl && staffList.length) {
     totalsEl.style.display = 'block';
-    totalsEl.innerHTML = '<div class="card-title">Payroll Summary — ' + monthLabel + '</div>'
-      + detRow('Base Rate (per staff)', 'GHC ' + s.baseSalary.toLocaleString())
-      + detRow('Absent Deduction Rate', 'GHC ' + s.absentRate + '/day (no permission)')
-      + detRow('Uniform Violation Rate', 'GHC ' + s.uniformRate + '/day')
-      + detRow('Expected Working Days', s.workingDays + ' days')
+    const bpStaff = state.staff.find(function(st){return st.id===awards.bestPerformer;});
+    const bdStaff = state.staff.find(function(st){return st.id===awards.bestDressed;});
+    totalsEl.innerHTML = '<div class="card-title">Payroll Summary — '+monthLabel+'</div>'
+      + detRow('Base Rate (per staff)', 'GHC '+s.baseSalary.toLocaleString())
+      + detRow('Absent Deduction Rate', 'GHC '+s.absentRate+'/day (no permission)')
+      + detRow('Uniform Violation Rate', 'GHC '+s.uniformRate+'/day')
+      + detRow('Working Days', s.workingDays+' days')
       + detRow('Total Staff', staffList.length)
-      + detRow('Total Gross', 'GHC ' + totalBase.toLocaleString())
-      + detRow('Total Deductions', 'GHC ' + totalDeductions.toLocaleString())
+      + detRow('Total Gross', 'GHC '+totalBase.toLocaleString())
+      + detRow('Total Deductions', 'GHC '+totalDeductions.toLocaleString())
+      + (bpStaff ? detRow('⭐ Best Performer', bpStaff.name) : '')
+      + (bdStaff ? detRow('👔 Best Dressed', bdStaff.name) : '')
+      + (awards.comments ? detRow('Monthly Comments', awards.comments) : '')
       + '<div style="background:var(--navy);color:#fff;border-radius:var(--r-md);padding:12px 16px;margin-top:12px;display:flex;justify-content:space-between;align-items:center">'
       + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:16px;font-weight:700">TOTAL NET PAYOUT</div>'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:800;color:var(--gold)">GHC ' + totalNet.toLocaleString() + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:800;color:var(--gold)">GHC '+totalNet.toLocaleString()+'</div>'
       + '</div>';
   }
 }
 
-function openPayrollEntry(staffId) {
-  if (!currentUser || !['director','manager','supervisor'].includes(currentUser.role)) return;
-  const st = state.staff.find(x => x.id === staffId);
-  if (!st) return;
-  const s = getPayrollSettings();
-  const records = getPayrollRecords(payrollCurrentMonth);
-  const rec = records[staffId] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentPerm: 0, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, remarks: '' };
-  document.getElementById('payroll-entry-title').textContent = 'Edit — ' + st.name;
-  document.getElementById('pe-staff-id').value = staffId;
-  document.getElementById('pe-staff-name').value = st.name;
-  document.getElementById('pe-working-days').value = rec.workingDays;
-  document.getElementById('pe-days-present').value = rec.daysPresent;
-  document.getElementById('pe-absent-perm').value = rec.absentPerm || 0;
-  document.getElementById('pe-absent-noperm').value = rec.absentNoPerm || 0;
-  document.getElementById('pe-uniform-days').value = rec.uniformDays || 0;
-  document.getElementById('pe-other-deductions').value = rec.otherDeductions || 0;
-  document.getElementById('pe-remarks').value = rec.remarks || '';
-  calcPayrollEntry();
-  openModal('modal-payroll-entry');
-}
-
-function calcPayrollEntry() {
-  const s = getPayrollSettings();
-  const absentNoPerm = parseFloat(document.getElementById('pe-absent-noperm').value) || 0;
-  const uniformDays = parseFloat(document.getElementById('pe-uniform-days').value) || 0;
-  const other = parseFloat(document.getElementById('pe-other-deductions').value) || 0;
-  const absDed = absentNoPerm * s.absentRate;
-  const uniDed = uniformDays * s.uniformRate;
-  const totalDed = absDed + uniDed + other;
-  const netPay = s.baseSalary - totalDed;
-  const preview = document.getElementById('pe-calc-preview');
-  if (preview) {
-    preview.style.display = 'block';
-    preview.innerHTML =
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--text-secondary)">'
-      + '<span>Base Salary:</span><span style="font-weight:700;color:var(--navy)">GHC ' + s.baseSalary.toLocaleString() + '</span>'
-      + '<span>Absent Deduction:</span><span style="color:var(--danger)">−GHC ' + absDed + '</span>'
-      + '<span>Uniform Deduction:</span><span style="color:var(--danger)">−GHC ' + uniDed + '</span>'
-      + '<span>Other Deductions:</span><span style="color:var(--danger)">−GHC ' + other + '</span></div>'
-      + '<div style="border-top:2px solid var(--navy);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;align-items:center">'
-      + '<span style="font-weight:700;font-size:13px;color:var(--navy)">NET PAY</span>'
-      + '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:24px;font-weight:800;color:' + (netPay < s.baseSalary * 0.8 ? 'var(--danger)' : 'var(--green)') + '">GHC ' + netPay.toLocaleString() + '</span></div>';
-  }
-}
-
-function savePayrollEntry() {
-  const staffId = document.getElementById('pe-staff-id').value;
-  if (!staffId || !payrollCurrentMonth) return;
-  const rec = {
-    workingDays: parseInt(document.getElementById('pe-working-days').value) || 26,
-    daysPresent: parseInt(document.getElementById('pe-days-present').value) || 0,
-    absentPerm: parseInt(document.getElementById('pe-absent-perm').value) || 0,
-    absentNoPerm: parseInt(document.getElementById('pe-absent-noperm').value) || 0,
-    uniformDays: parseInt(document.getElementById('pe-uniform-days').value) || 0,
-    otherDeductions: parseFloat(document.getElementById('pe-other-deductions').value) || 0,
-    remarks: document.getElementById('pe-remarks').value.trim(),
-    updatedby: currentUser.name,
-    updatedat: new Date().toISOString()
-  };
-  const records = getPayrollRecords(payrollCurrentMonth);
-  records[staffId] = rec;
-  savePayrollRecordsToLocal(payrollCurrentMonth, records);
-  closeModal('modal-payroll-entry');
-  renderPayroll();
-  toast('Payroll entry saved', 'success');
-}
+// ── exportPayrollPDF — full featured ────────────────────────────
 
 async function exportPayrollPDF() {
   const month = payrollCurrentMonth;
   if (!month) { toast('Load a payroll month first', 'error'); return; }
   const s = getPayrollSettings();
   const records = getPayrollRecords(month);
+  const awards = getPayrollAwards(month);
   const monthLabel = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
-  doc.setFillColor(10,22,40); doc.rect(0,0,297,32,'F');
-  doc.setFillColor(204,31,46); doc.rect(0,30,297,3,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(22); doc.text('3-Rock Builders',14,18);
-  doc.setFontSize(10); doc.text('Payroll Register — ' + monthLabel,14,26);
-  doc.text('Generated: '+new Date().toLocaleDateString(),200,26);
-  let y = 42;
-  const cols = [['#',8],['Staff Name',46],['Days Present',24],['Absent (NoPerm)',28],['Uniform Viol.',24],['Abs.Ded.',22],['Unif.Ded.',22],['Other Ded.',22],['Total Ded.',22],['Net Pay (GHC)',28]];
+
+  // ── Cover Header ──
+  doc.setFillColor(10,22,40); doc.rect(0,0,297,36,'F');
+  doc.setFillColor(204,31,46); doc.rect(0,34,297,3,'F');
+  doc.setTextColor(245,200,66); doc.setFontSize(24); doc.setFont('helvetica','bold');
+  doc.text('3-Rock Builders',14,18);
+  doc.setTextColor(255,255,255); doc.setFontSize(11); doc.setFont('helvetica','normal');
+  doc.text('Payroll Register — '+monthLabel,14,28);
+  doc.text('Generated: '+new Date().toLocaleString(),180,28);
+
+  let y = 44;
+
+  // ── Awards & Comments Summary ──
+  const bpStaff = state.staff.find(function(st){return st.id===awards.bestPerformer;});
+  const bdStaff = state.staff.find(function(st){return st.id===awards.bestDressed;});
+  if (bpStaff || bdStaff || awards.comments) {
+    doc.setFillColor(245,200,66); doc.rect(10,y,277,6,'F');
+    doc.setTextColor(10,22,40); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text('MONTHLY AWARDS & COMMENTS',12,y+4.5);
+    y += 7;
+    doc.setFillColor(255,253,240); doc.rect(10,y,277,18,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(10,22,40);
+    if (bpStaff) doc.text('⭐  Best Performing Staff: '+bpStaff.name, 14, y+6);
+    if (bdStaff) doc.text('👔  Best Dressed Staff: '+bdStaff.name, 14, y+12);
+    if (awards.comments) {
+      const commentLines = doc.splitTextToSize('Comments: '+awards.comments, 240);
+      if (bpStaff || bdStaff) {
+        doc.text(commentLines, 160, y+6);
+      } else {
+        doc.text(commentLines, 14, y+6);
+      }
+    }
+    y += 20;
+  }
+
+  // ── Staff Salary Table ──
   doc.setFillColor(20,32,64); doc.rect(10,y,277,8,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(7.5);
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  const cols = [['#',7],['Staff Name',38],['Bank',28],['Account No.',30],['Days',14],['Abs.NP',14],['Uni.V',12],['Abs.Ded',18],['Uni.Ded',18],['Other',16],['Total Ded',20],['Net Pay (GHC)',26]];
   let x = 12;
-  cols.forEach(function(c) { doc.text(c[0],x,y+5.5); x+=c[1]; });
+  cols.forEach(function(c){ doc.text(c[0],x,y+5.5); x+=c[1]; });
   y += 8;
   let totalNet = 0;
   state.staff.forEach(function(st, i) {
-    const rec = records[st.id] || { workingDays:s.workingDays,daysPresent:s.workingDays,absentNoPerm:0,uniformDays:0,otherDeductions:0 };
+    const rec = records[st.id] || {workingDays:s.workingDays,daysPresent:s.workingDays,absentNoPerm:0,uniformDays:0,otherDeductions:0};
     const absDed = (rec.absentNoPerm||0)*s.absentRate;
     const uniDed = (rec.uniformDays||0)*s.uniformRate;
     const totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions)||0);
     const net = s.baseSalary - totalDed;
     totalNet += net;
-    if (i%2===0) { doc.setFillColor(247,249,253); } else { doc.setFillColor(255,255,255); }
-    doc.rect(10,y,277,7,'F');
-    doc.setTextColor(10,22,40); doc.setFontSize(7.5);
+    const bankName = (st.bankname||st.bankName||'—').slice(0,14);
+    const bankAcct = st.bankacct||st.bankAcct||'—';
+    const isBP = awards.bestPerformer === st.id;
+    const isBD = awards.bestDressed === st.id;
+    // Row background
+    if (isBP) { doc.setFillColor(255,253,220); }
+    else if (isBD) { doc.setFillColor(245,240,255); }
+    else if (i%2===0) { doc.setFillColor(247,249,253); }
+    else { doc.setFillColor(255,255,255); }
+    doc.rect(10,y,277,8,'F');
+    doc.setTextColor(10,22,40); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
     let cx=12;
-    const row = [i+1, st.name, rec.daysPresent+'/'+rec.workingDays, rec.absentNoPerm||0, rec.uniformDays||0, 'GHC '+absDed, 'GHC '+uniDed, 'GHC '+(parseFloat(rec.otherDeductions)||0), 'GHC '+totalDed, 'GHC '+net];
-    cols.forEach(function(c,ci) { doc.text(String(row[ci]),cx,y+5); cx+=c[1]; });
-    y+=7;
-    if (y>185) { doc.addPage(); y=20; }
+    const row = [i+1, st.name+(isBP?' ⭐':isBD?' 👔':''), bankName, bankAcct,
+      rec.daysPresent+'/'+rec.workingDays, rec.absentNoPerm||0, rec.uniformDays||0,
+      absDed, uniDed, parseFloat(rec.otherDeductions)||0, totalDed, net];
+    cols.forEach(function(c,ci){
+      const val = String(row[ci]);
+      const truncated = val.length > Math.floor(c[1]/2) ? val.slice(0, Math.floor(c[1]/1.8))+'…' : val;
+      doc.text(truncated,cx,y+5.5); cx+=c[1];
+    });
+    y += 8;
+    if (y > 188) { doc.addPage(); y = 16; }
   });
+
+  // ── Totals row ──
   doc.setFillColor(10,22,40); doc.rect(10,y,277,9,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(9);
-  doc.text('TOTAL NET PAYOUT',12,y+6);
-  doc.text('GHC '+totalNet.toLocaleString(),255,y+6);
+  doc.setTextColor(245,200,66); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('TOTAL NET PAYOUT — '+monthLabel,12,y+6);
+  doc.text('GHC '+totalNet.toLocaleString(),250,y+6);
+  y += 13;
+
+  // ── Bank Account Summary Table ──
+  if (y > 170) { doc.addPage(); y = 16; }
+  doc.setFillColor(245,200,66); doc.rect(10,y,277,6,'F');
+  doc.setTextColor(10,22,40); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('BANK ACCOUNT DETAILS — PAYMENT REFERENCE',12,y+4.5);
+  y += 7;
+  const bCols = [['#',8],['Staff Name',60],['Bank Name',60],['Account Number',60],['Net Amount (GHC)',70]];
+  doc.setFillColor(20,32,64); doc.rect(10,y,277,7,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+  let bx = 12;
+  bCols.forEach(function(c){ doc.text(c[0],bx,y+5); bx+=c[1]; });
+  y += 7;
+  state.staff.forEach(function(st, i) {
+    const rec = records[st.id]||{};
+    const absDed=(rec.absentNoPerm||0)*s.absentRate, uniDed=(rec.uniformDays||0)*s.uniformRate;
+    const totalDed=absDed+uniDed+(parseFloat(rec.otherDeductions)||0);
+    const net=s.baseSalary-totalDed;
+    const bankName=st.bankname||st.bankName||'—';
+    const bankAcct=st.bankacct||st.bankAcct||'—';
+    if (i%2===0){doc.setFillColor(247,249,253);}else{doc.setFillColor(255,255,255);}
+    doc.rect(10,y,277,7,'F');
+    doc.setTextColor(10,22,40); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    let bcx=12;
+    [i+1, st.name, bankName, bankAcct, 'GHC '+net.toLocaleString()].forEach(function(v,vi){ doc.text(String(v),bcx,y+5); bcx+=bCols[vi][1]; });
+    y+=7;
+    if(y>188){doc.addPage();y=16;}
+  });
+
+  // ── Footer ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p=1;p<=totalPages;p++) {
+    doc.setPage(p);
+    doc.setFontSize(7); doc.setTextColor(140,150,170); doc.setFont('helvetica','normal');
+    doc.text('3-Rock Builders · Payroll '+monthLabel+' · Page '+p+' of '+totalPages+' · Confidential', 14, 200);
+  }
   doc.save('3Rock_Payroll_'+month+'.pdf');
 }
+
 
 // ================================================================
 // DAILY REPORT SYSTEM  — supervisor-driven input + HTML email
@@ -5512,7 +5740,13 @@ async function loadDailyReportForDate() {
   drCurrentDate = d;
 
   const dateLbl = document.getElementById('report-date-lbl');
-  if (dateLbl) dateLbl.textContent = new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const friendlyDate = new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  if (dateLbl) dateLbl.textContent = friendlyDate;
+  // Breadcrumb
+  const drBcSep = document.getElementById('dr-bc-sep');
+  const drBcDate = document.getElementById('dr-bc-date');
+  if (drBcSep) drBcSep.style.display = '';
+  if (drBcDate) { drBcDate.style.display = ''; drBcDate.textContent = friendlyDate; }
 
   showLoading('Loading report...');
   try {
@@ -6228,6 +6462,9 @@ goToTab = async function(tab, filter) {
       payrollCurrentMonth = monthEl.value;
     }
     renderPayroll();
+    // Scroll to top on mobile
+    const main = document.getElementById('main-content') || document.querySelector('.main-content');
+    if (main) main.scrollTop = 0;
     return;
   }
   if (tab === 'dailyreport') {
@@ -6240,6 +6477,8 @@ goToTab = async function(tab, filter) {
     const drDate = document.getElementById('daily-report-date');
     if (drDate && !drDate.value) drDate.value = todayStr();
     loadDailyReportForDate();
+    const main = document.getElementById('main-content') || document.querySelector('.main-content');
+    if (main) main.scrollTop = 0;
     return;
   }
   return _origGoToTab(tab, filter);
