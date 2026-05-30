@@ -89,12 +89,33 @@ body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--tex
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200;box-shadow:0 -4px 20px rgba(10,22,40,.4)}
-.nav-item{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif;transition:background .2s}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--red);display:flex;z-index:200;box-shadow:0 -4px 20px rgba(10,22,40,.4);height:62px}
+.nav-item{flex:1;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:transparent;font-family:'Barlow',sans-serif;transition:all .18s;position:relative}
 .nav-item.active{background:rgba(204,31,46,.18)}
-.nav-icon{font-size:19px;line-height:1}
-.nav-label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.38)}
+.nav-item.active::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--red-light);border-radius:0 0 3px 3px}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:8.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.nav-item.active .nav-icon{transform:translateY(-1px)}
 .nav-item.active .nav-label{color:var(--red-light)}
+/* HAMBURGER SIDEBAR */
+.ham-btn{background:none;border:none;cursor:pointer;padding:4px 6px;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center}
+.ham-btn span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:all .2s}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;opacity:0;pointer-events:none;transition:opacity .22s}
+.sidebar-overlay.open{opacity:1;pointer-events:all}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:270px;background:var(--navy);z-index:401;transform:translateX(-100%);transition:transform .26s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar.open{transform:translateX(0)}
+.sidebar-head{background:rgba(0,0,0,.25);padding:16px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);margin-top:0}
+.sidebar-logo{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#fff;line-height:1}
+.sidebar-logo span{color:var(--red-light)}
+.sidebar-user{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px}
+.sidebar-section{padding:10px 0 4px}
+.sidebar-section-label{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.28);padding:0 18px;margin-bottom:4px}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.65);transition:all .15s;border-left:3px solid transparent}
+.sidebar-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sidebar-item.active{background:rgba(204,31,46,.18);color:#fff;border-left-color:var(--red-light)}
+.sidebar-item .si-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+.sidebar-divider{height:1px;background:rgba(255,255,255,.07);margin:6px 16px}
+.sidebar-close{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.08)}
 
 /* MAIN */
 .main-content{flex:1;padding:18px 14px 86px;max-width:800px;margin:0 auto;width:100%}
@@ -463,6 +484,9 @@ textarea.form-control{resize:vertical;min-height:56px}
 <!-- APP -->
 <div id="app">
   <header class="app-header">
+    <button class="ham-btn" onclick="openSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
     <div class="hdr-logo"><span class="s">3-Rock</span><span class="c"> Builders</span></div>
     <div class="hdr-right">
       <div class="sync-dot" id="sync-dot" title="Cloud sync status"></div>
@@ -905,6 +929,25 @@ textarea.form-control{resize:vertical;min-height:56px}
   </main>
 
   <nav class="bottom-nav" id="bottom-nav"></nav>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div>
+        <div class="sidebar-logo">3-Rock<span> Builders</span></div>
+        <div class="sidebar-user" id="sidebar-user-lbl">Management System</div>
+      </div>
+    </div>
+    <div id="sidebar-body">
+      <!-- populated by buildSidebar() -->
+    </div>
+    <div class="sidebar-close">
+      <div class="sidebar-item" onclick="closeSidebar()" style="color:rgba(255,255,255,.35);border-left:none">
+        <span class="si-icon">✕</span><span>Close</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ========== MODALS ========== -->
@@ -2097,20 +2140,86 @@ async function initApp() {
   renderAll();
 }
 
+// ── Sidebar ───────────────────────────────────────────────────────
+
+function openSidebar() {
+  document.getElementById('sidebar-overlay').classList.add('open');
+  document.getElementById('sidebar').classList.add('open');
+  buildSidebar();
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function buildSidebar() {
+  const body = document.getElementById('sidebar-body');
+  if (!body || !currentUser) return;
+  const lbl = document.getElementById('sidebar-user-lbl');
+  if (lbl) lbl.textContent = currentUser.name + ' · ' + currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+  const isMgmt = ['director','manager'].includes(currentUser.role);
+  const isSup  = currentUser.role === 'supervisor';
+  const currentScreenId = (document.querySelector('.screen.active') || {}).id || '';
+
+  function item(icon, label, tab, show) {
+    if (!show) return '';
+    const active = currentScreenId === 'screen-' + tab ? ' active' : '';
+    return '<div class="sidebar-item' + active + '" onclick="sidebarGoTo(\'' + tab + '\')">'
+      + '<span class="si-icon">' + icon + '</span><span>' + label + '</span></div>';
+  }
+
+  body.innerHTML =
+    '<div class="sidebar-section">'
+    + '<div class="sidebar-section-label">Main</div>'
+    + item('🏠', 'Dashboard',    'dashboard',   true)
+    + item('👥', 'Staff',        'staff',        isMgmt || isSup)
+    + item('📋', 'Jobs',         'jobs',         isMgmt || isSup)
+    + item('✅', 'Tasks',        'tasks',        true)
+    + '</div>'
+    + '<div class="sidebar-divider"></div>'
+    + '<div class="sidebar-section">'
+    + '<div class="sidebar-section-label">Operations</div>'
+    + item('📦', 'Inventory',    'inventory',    isMgmt || isSup)
+    + item('🚨', 'Incidents',    'incidents',    isMgmt || isSup)
+    + item('📊', 'Daily Report', 'dailyreport',  isMgmt || isSup)
+    + item('📈', 'Analytics',    'reports',      isMgmt)
+    + '</div>'
+    + (isMgmt || isSup ?
+        '<div class="sidebar-divider"></div>'
+        + '<div class="sidebar-section">'
+        + '<div class="sidebar-section-label">Finance</div>'
+        + item('💰', 'Payroll', 'payroll', true)
+        + '</div>'
+       : '')
+    + '<div class="sidebar-divider"></div>'
+    + '<div class="sidebar-section">'
+    + '<div class="sidebar-section-label">Account</div>'
+    + '<div class="sidebar-item" onclick="handleLogout();closeSidebar()">'
+    + '<span class="si-icon">🚪</span><span>Sign Out</span></div>'
+    + '</div>';
+}
+
+function sidebarGoTo(tab) {
+  closeSidebar();
+  setTimeout(function(){ goToTab(tab); }, 60);
+}
+
+// drawerGoTo alias kept for any existing onclick references
+function drawerGoTo(tab) { sidebarGoTo(tab); }
+
 function buildBottomNav() {
   const nav = document.getElementById('bottom-nav');
   if (currentUser.role === 'cleaner') {
     nav.innerHTML = `
-      <button class="nav-item active" onclick="goToTab('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">My Tasks</span></button>
-      <button class="nav-item" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>`;
+      <button class="nav-item active" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+      <button class="nav-item" onclick="goToTab('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>`;
   } else {
     nav.innerHTML = `
       <button class="nav-item active" onclick="goToTab('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-      <button class="nav-item" onclick="goToTab('staff')" id="nav-staff"><span class="nav-icon">👥</span><span class="nav-label">Staff</span></button>
-      <button class="nav-item" onclick="goToTab('inventory')" id="nav-inventory"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></button>
+      <button class="nav-item" onclick="goToTab('staff')" id="nav-staff"><span class="nav-icon">👥</span><span class="nav-label">People</span></button>
       <button class="nav-item" onclick="goToTab('jobs')" id="nav-jobs"><span class="nav-icon">📋</span><span class="nav-label">Jobs</span></button>
-      <button class="nav-item" onclick="goToTab('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>
-      <button class="nav-item" onclick="goToTab('incidents')" id="nav-incidents"><span class="nav-icon">🚨</span><span class="nav-label">Reports</span></button>`;
+      <button class="nav-item" onclick="goToTab('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>`;
   }
 }
 
@@ -2174,12 +2283,14 @@ function renderAll() {
 
 function buildQuickActions() {
   const items = [
-    { icon:'👥', label:'Enrol Staff', action:"openModal('modal-add-staff')", sup:true },
-    { icon:'📋', label:'New Job', action:"openModal('modal-add-job')", sup:true },
-    { icon:'📦', label:'Add Item', action:"openModal('modal-add-inv')", sup:true },
-    { icon:'🗓', label:'Attendance', action:'openAttendance()', sup:true },
-    { icon:'🚨', label:'Incident', action:"openModal('modal-incident')", sup:false },
-    { icon:'📊', label:'Reports', action:"goToTab('reports')", sup:false }
+    { icon:'👥', label:'Enrol Staff',  action:"openModal('modal-add-staff')", sup:true  },
+    { icon:'📋', label:'New Job',       action:"openModal('modal-add-job')",   sup:true  },
+    { icon:'📦', label:'Add Stock',     action:"openModal('modal-add-inv')",   sup:true  },
+    { icon:'🗓', label:'Attendance',    action:'openAttendance()',              sup:true  },
+    { icon:'🚨', label:'Log Incident',  action:"openModal('modal-incident')",  sup:false },
+    { icon:'📊', label:'Daily Report',  action:"sidebarGoTo('dailyreport')",   sup:false },
+    { icon:'💰', label:'Payroll',       action:"sidebarGoTo('payroll')",       sup:false },
+    { icon:'📈', label:'Analytics',     action:"sidebarGoTo('reports')",       sup:false },
   ];
   const g = document.getElementById('qa-grid');
   if (g) g.innerHTML = items.map(a => `<div class="qa-btn ${!a.sup || canEdit() ? '' : 'locked'}" onclick="${a.action}"><span class="qa-icon">${a.icon}</span><span class="qa-label">${esc(a.label)}</span></div>`).join('');
@@ -6338,7 +6449,9 @@ function showMissedReportBanner(date) {
 
 function quickFillMissedReport(date) {
   document.getElementById('missed-report-banner') && document.getElementById('missed-report-banner').remove();
-  document.getElementById('daily-report-date').value = date;
+  const drDate = document.getElementById('daily-report-date');
+  if (drDate) drDate.value = date;
+  closeMoreDrawer();
   goToTab('dailyreport');
 }
 
@@ -6407,85 +6520,10 @@ function sendPayrollReminderEmail(month, monthLabel, totalNet) {
 
 
 // ================================================================
-// EXTEND buildBottomNav to include payroll + daily report tabs
-// ================================================================
-var _origBuildBottomNav = buildBottomNav;
-buildBottomNav = function() {
-  const nav = document.getElementById('bottom-nav');
-  if (currentUser.role === 'cleaner') {
-    nav.innerHTML = '<button class="nav-item active" onclick="goToTab(\'tasks\')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">My Tasks</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'dashboard\')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>';
-  } else {
-    nav.innerHTML = '<button class="nav-item active" onclick="goToTab(\'dashboard\')" id="nav-dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'staff\')" id="nav-staff"><span class="nav-icon">👥</span><span class="nav-label">Staff</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'inventory\')" id="nav-inventory"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'jobs\')" id="nav-jobs"><span class="nav-icon">📋</span><span class="nav-label">Jobs</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'tasks\')" id="nav-tasks"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'incidents\')" id="nav-incidents"><span class="nav-icon">🚨</span><span class="nav-label">Reports</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'payroll\')" id="nav-payroll"><span class="nav-icon">💰</span><span class="nav-label">Payroll</span></button>'
-      + '<button class="nav-item" onclick="goToTab(\'dailyreport\')" id="nav-dailyreport"><span class="nav-icon">📊</span><span class="nav-label">Daily</span></button>';
-  }
-};
 
-// Extend buildQuickActions
-var _origBuildQuickActions = buildQuickActions;
-buildQuickActions = function() {
-  const items = [
-    { icon:'👥', label:'Enrol Staff', action:"openModal('modal-add-staff')", sup:true },
-    { icon:'📋', label:'New Job', action:"openModal('modal-add-job')", sup:true },
-    { icon:'📦', label:'Add Item', action:"openModal('modal-add-inv')", sup:true },
-    { icon:'🗓', label:'Attendance', action:'openAttendance()', sup:true },
-    { icon:'🚨', label:'Incident', action:"openModal('modal-incident')", sup:false },
-    { icon:'📊', label:'Reports', action:"goToTab('reports')", sup:false },
-    { icon:'💰', label:'Payroll', action:"goToTab('payroll')", sup:false },
-    { icon:'📧', label:'Daily Report', action:"goToTab('dailyreport')", sup:false }
-  ];
-  const g = document.getElementById('qa-grid');
-  if (g) g.innerHTML = items.map(function(a) { return '<div class="qa-btn ' + (!a.sup || canEdit() ? '' : 'locked') + '" onclick="' + a.action + '"><span class="qa-icon">' + a.icon + '</span><span class="qa-label">' + esc(a.label) + '</span></div>'; }).join('');
-};
-
-// Extend goToTab for new screens
-var _origGoToTab = goToTab;
-goToTab = async function(tab, filter) {
-  if (tab === 'payroll') {
-    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
-    const screenEl = document.getElementById('screen-payroll');
-    const navEl = document.getElementById('nav-payroll');
-    if (screenEl) screenEl.classList.add('active');
-    if (navEl) navEl.classList.add('active');
-    const monthEl = document.getElementById('payroll-month');
-    if (monthEl && !monthEl.value) {
-      monthEl.value = todayStr().slice(0,7);
-      payrollCurrentMonth = monthEl.value;
-    } else if (monthEl && monthEl.value) {
-      payrollCurrentMonth = monthEl.value;
-    }
-    renderPayroll();
-    // Scroll to top on mobile
-    const main = document.getElementById('main-content') || document.querySelector('.main-content');
-    if (main) main.scrollTop = 0;
-    return;
-  }
-  if (tab === 'dailyreport') {
-    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
-    const screenEl = document.getElementById('screen-dailyreport');
-    const navEl = document.getElementById('nav-dailyreport');
-    if (screenEl) screenEl.classList.add('active');
-    if (navEl) navEl.classList.add('active');
-    const drDate = document.getElementById('daily-report-date');
-    if (drDate && !drDate.value) drDate.value = todayStr();
-    loadDailyReportForDate();
-    const main = document.getElementById('main-content') || document.querySelector('.main-content');
-    if (main) main.scrollTop = 0;
-    return;
-  }
-  return _origGoToTab(tab, filter);
-};
-
-// Fix supervisorUncheck which is referenced in the task UI
+// Fix supervisorUncheck
 function supervisorUncheck(taskId, shift) { return uncheckTask(taskId, shift); }
+
 
 </script>
 
