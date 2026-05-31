@@ -851,7 +851,8 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:8px">🌅 Morning Shift</div>
           <div class="form-group" style="margin-bottom:8px">
             <label class="form-label">Staff on Morning Shift</label>
-            <input type="text" class="form-control" id="dr-morning-staff" placeholder="e.g. Cecilia, Patience, Perpetual">
+            <div id="dr-morning-staff-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);cursor:pointer" onclick="openShiftPicker('morning')"></div>
+            <input type="hidden" id="dr-morning-staff">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">What was accomplished</label>
@@ -864,7 +865,8 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:8px">☀️ Afternoon Shift</div>
           <div class="form-group" style="margin-bottom:8px">
             <label class="form-label">Staff on Afternoon Shift</label>
-            <input type="text" class="form-control" id="dr-afternoon-staff" placeholder="e.g. Sophia, Deborah">
+            <div id="dr-afternoon-staff-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);cursor:pointer" onclick="openShiftPicker('afternoon')"></div>
+            <input type="hidden" id="dr-afternoon-staff">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">What was accomplished</label>
@@ -877,7 +879,8 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:8px">🌙 Evening Shift</div>
           <div class="form-group" style="margin-bottom:8px">
             <label class="form-label">Staff on Evening Shift</label>
-            <input type="text" class="form-control" id="dr-evening-staff" placeholder="e.g. Maxwell, Emmanuel, Gladys">
+            <div id="dr-evening-staff-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);cursor:pointer" onclick="openShiftPicker('evening')"></div>
+            <input type="hidden" id="dr-evening-staff">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">What was accomplished</label>
@@ -956,7 +959,20 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="form-group"><div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'staff-photo-preview','staff-photo-placeholder','del-staff-photo')"><img src="" class="photo-preview-circle" id="staff-photo-preview" style="display:none"><div id="staff-photo-placeholder"><div style="font-size:30px">📷</div><div>Tap to upload passport photo</div></div></div><button type="button" class="photo-delete-btn" id="del-staff-photo" onclick="clearPhoto('staff-photo-preview','staff-photo-placeholder','del-staff-photo')" title="Remove photo">✕</button></div></div>
     <div class="section-sep">Personal Information</div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="sf-name"><div class="field-error" id="err-sf-name">Name is required</div></div>
+      <div class="form-group"><label class="form-label">First Name *</label><input type="text" class="form-control" id="sf-firstname" oninput="sfBuildFullName()"><div class="field-error" id="err-sf-name">First name is required</div></div>
+      <div class="form-group"><label class="form-label">Middle Name</label><input type="text" class="form-control" id="sf-middlename" oninput="sfBuildFullName()"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Last Name *</label><input type="text" class="form-control" id="sf-lastname" oninput="sfBuildFullName()"></div>
+      <div class="form-group"><label class="form-label">Alias / Preferred Name</label><input type="text" class="form-control" id="sf-alias" placeholder="e.g. Cecilia"></div>
+    </div>
+    <input type="hidden" id="sf-name">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="sf-dob" onchange="sfCalcAge()"></div>
+      <div class="form-group"><label class="form-label">Age</label><input type="text" class="form-control" id="sf-age" readonly placeholder="Auto-calculated" style="background:var(--off-white)"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="display:none"><label class="form-label">Full Name</label><input type="text" class="form-control" id="sf-name-display" readonly style="background:var(--off-white)"></div>
       <div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"><div class="field-error" id="err-sf-id">Staff ID is required</div></div>
     </div>
     <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
@@ -1881,8 +1897,19 @@ async function loadInitialData() {
           config   = rawLog[0];
           usageLog = rawLog.slice(1);
         }
+        // Restore variants — may come as array (JSONB) or JSON string
+        let variants = item.variants;
+        if (typeof variants === 'string') { try { variants = JSON.parse(variants); } catch(e) { variants = []; } }
+        if (!Array.isArray(variants) || variants.length === 0) {
+          // Fall back to localStorage cache
+          try {
+            const cache = JSON.parse(localStorage.getItem('3rock_variants_cache') || '{}');
+            if (cache[item.id] && Array.isArray(cache[item.id])) variants = cache[item.id];
+          } catch(le) {}
+        }
         return {
           ...item,
+          variants: Array.isArray(variants) ? variants : [],
           usageLog,
           containers:  config.containers  ?? null,
           unitsize:    config.unitsize    ?? null,
@@ -2114,6 +2141,14 @@ async function initApp() {
   updateDateTime();
   setInterval(updateDateTime, 60000);
   buildBottomNav();
+  // Seed history so back button works
+  _navHistory = ['dashboard'];
+  try {
+    history.replaceState({ tab: 'dashboard' }, '', '');
+    // Push 2 extra entries so hardware back on mobile navigates within app
+    history.pushState({ tab: 'dashboard' }, '', '');
+    history.pushState({ tab: 'dashboard' }, '', '');
+  } catch(e) {}
   // Run post-login checks after a short delay so state loads first
   setTimeout(function() {
     checkMissedDailyReport();
@@ -2204,6 +2239,28 @@ function sidebarGoTo(tab) {
 // drawerGoTo alias kept for any existing onclick references
 function drawerGoTo(tab) { sidebarGoTo(tab); }
 
+// ── Back button navigation ────────────────────────────────────────
+// Push a state on login so pressing back goes to dashboard not closes app
+var _navHistory = [];
+
+function pushNavState(tab) {
+  _navHistory.push(tab);
+  try { history.pushState({ tab: tab }, '', ''); } catch(e) {}
+}
+
+window.addEventListener('popstate', function(e) {
+  if (_navHistory.length > 1) {
+    _navHistory.pop();
+    var prev = _navHistory[_navHistory.length - 1];
+    // Use replaceState to avoid adding another history entry
+    try { history.replaceState({ tab: prev }, '', ''); } catch(ee) {}
+    goToTab(prev, undefined, true); // true = skipPush to avoid double-pushing
+  } else {
+    // On root (dashboard) — re-push so next back doesn't close app
+    try { history.pushState({ tab: 'dashboard' }, '', ''); } catch(ee) {}
+  }
+});
+
 function buildBottomNav() {
   const nav = document.getElementById('bottom-nav');
   if (currentUser.role === 'cleaner') {
@@ -2230,7 +2287,8 @@ function updateDateTime() {
   if (de) de.textContent = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
 
-async function goToTab(tab, filter) {
+async function goToTab(tab, filter, skipPush) {
+  if (!skipPush) pushNavState(tab);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const screenEl = document.getElementById('screen-' + tab);
@@ -2492,12 +2550,45 @@ function filterStaff(f, btn) {
   renderStaff();
 }
 
+
+// ── Staff enrollment form helpers ────────────────────────────────
+
+function sfBuildFullName() {
+  var first  = (document.getElementById('sf-firstname').value || '').trim();
+  var middle = (document.getElementById('sf-middlename').value || '').trim();
+  var last   = (document.getElementById('sf-lastname').value || '').trim();
+  var full   = [first, middle, last].filter(Boolean).join(' ');
+  document.getElementById('sf-name').value = full;
+  var disp = document.getElementById('sf-name-display');
+  if (disp) disp.value = full;
+}
+
+function sfCalcAge() {
+  var dob = document.getElementById('sf-dob').value;
+  var ageEl = document.getElementById('sf-age');
+  if (!dob || !ageEl) return;
+  var today = new Date();
+  var birth = new Date(dob);
+  var age = today.getFullYear() - birth.getFullYear();
+  var m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  ageEl.value = age >= 0 ? age + ' years' : '';
+}
+
 async function saveStaff() {
   if (!canEdit()) return;
+  sfBuildFullName();
   const nameVal = document.getElementById('sf-name').value.trim();
   const idVal = document.getElementById('sf-id').value.trim();
   let valid = true;
-  valid = validateField('sf-name', 'err-sf-name', v => v.trim().length > 0) && valid;
+  if (!document.getElementById('sf-firstname').value.trim()) {
+    const errEl = document.getElementById('err-sf-name');
+    if (errEl) { errEl.style.display = 'block'; errEl.textContent = 'First name is required'; }
+    valid = false;
+  } else {
+    const errEl = document.getElementById('err-sf-name');
+    if (errEl) errEl.style.display = 'none';
+  }
   valid = validateField('sf-id', 'err-sf-id', v => v.trim().length > 0) && valid;
   if (!valid) return;
 
@@ -2515,7 +2606,14 @@ async function saveStaff() {
   const existingStaff = isEditing ? state.staff.find(s => s.id === editingStaffId) : null;
   const s = {
     id: isEditing ? editingStaffId : uid(),
-    name: nameVal, role: document.getElementById('sf-role').value,
+    name: nameVal,
+    firstname:  document.getElementById('sf-firstname').value.trim(),
+    middlename: document.getElementById('sf-middlename').value.trim(),
+    lastname:   document.getElementById('sf-lastname').value.trim(),
+    alias:      document.getElementById('sf-alias').value.trim(),
+    dob:        document.getElementById('sf-dob').value,
+    age:        document.getElementById('sf-age').value,
+    role: document.getElementById('sf-role').value,
     staffid: idVal,
     phone: document.getElementById('sf-phone').value,
     shift: document.getElementById('sf-shift').value,
@@ -2564,7 +2662,15 @@ function openEditStaff() {
   document.getElementById('add-staff-modal-title').textContent = 'Edit Staff Member';
   document.getElementById('save-staff-btn').textContent = 'Save Changes';
   const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  f('sf-name', s.name); f('sf-id', s.staffid||s.staffId);
+  // Name fields
+  f('sf-firstname',  s.firstname  || s.name.split(' ')[0] || '');
+  f('sf-middlename', s.middlename || '');
+  f('sf-lastname',   s.lastname   || (s.name.split(' ').length > 1 ? s.name.split(' ').slice(-1)[0] : '') || '');
+  f('sf-alias',      s.alias      || '');
+  f('sf-dob',        s.dob        || '');
+  f('sf-name',       s.name       || '');
+  if (s.dob) sfCalcAge(); else f('sf-age', s.age || '');
+  f('sf-id', s.staffid||s.staffId);
   f('sf-phone', s.phone); f('sf-shift', s.shift);
   f('sf-startdate', s.startdate||s.startDate);
   f('sf-address', s.address); f('sf-ghana', s.ghanacard||s.ghanaCard);
@@ -5149,7 +5255,7 @@ function clearStaffForm() {
   if (t) t.textContent = 'Enrol New Staff Member';
   if (b) b.textContent = 'Enrol Staff Member';
   editingStaffId = null;
-  ['sf-name','sf-id','sf-phone','sf-address','sf-ghana','sf-ssnit','sf-startdate','sf-emerg-name','sf-emerg-phone','sf-bank-name','sf-bank-acct','sf-spouse-name','sf-spouse-contact','sf-marital-other'].forEach(id => {
+  ['sf-firstname','sf-middlename','sf-lastname','sf-alias','sf-dob','sf-age','sf-name','sf-id','sf-phone','sf-address','sf-ghana','sf-ssnit','sf-startdate','sf-emerg-name','sf-emerg-phone','sf-bank-name','sf-bank-acct','sf-spouse-name','sf-spouse-contact','sf-marital-other'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('sf-kids').value = '0';
@@ -5352,22 +5458,58 @@ async function saveVariant() {
     updatedat: new Date().toISOString()
   };
 
+  // Update local state first
+  const prevVariants = JSON.parse(JSON.stringify(item.variants)); // snapshot for rollback
   if (editingVariantId) {
     const idx = item.variants.findIndex(v => v.id === editingVariantId);
     if (idx >= 0) item.variants[idx] = variantData;
+    else item.variants.push(variantData);
   } else {
     item.variants.push(variantData);
   }
+
   showLoading('Saving variant…');
   try {
-    await dbUpdate('inventory', item.id, { variants: item.variants });
-    await syncParentQty(item);
+    // Sync total qty from variants
+    const totalQty = item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0);
+    item.qty = totalQty;
+
+    // Save both variants (as JSON string fallback) and qty to DB
+    const variantsJson = JSON.stringify(item.variants);
+    let saveError = null;
+
+    // Try saving variants as array (JSONB column)
+    try {
+      await dbUpdate('inventory', item.id, { variants: item.variants, qty: totalQty });
+    } catch(e1) {
+      // Fallback: try saving as JSON string in a text column
+      try {
+        await dbUpdate('inventory', item.id, { variants: variantsJson, qty: totalQty });
+      } catch(e2) {
+        saveError = e2;
+      }
+    }
+
+    // Always persist to localStorage as a reliable backup
+    try {
+      const cache = JSON.parse(localStorage.getItem('3rock_variants_cache') || '{}');
+      cache[item.id] = item.variants;
+      localStorage.setItem('3rock_variants_cache', JSON.stringify(cache));
+    } catch(le) {}
+
     closeModal('modal-add-variant');
     openInvDetail(currentInvId);
     renderInventory();
-    toast(editingVariantId ? 'Variant updated ✅' : 'Variant added ✅', 'success');
+
+    if (saveError) {
+      toast('Variant saved locally ✅ (DB sync issue — will retry)', 'info', 4000);
+    } else {
+      toast(editingVariantId ? 'Variant updated ✅' : 'Variant added ✅', 'success');
+    }
   } catch(e) {
-    if (!editingVariantId) item.variants.pop();
+    // Full rollback
+    item.variants = prevVariants;
+    item.qty = item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0);
     toast('Save failed: ' + e.message, 'error');
   } finally { hideLoading(); }
 }
@@ -5390,10 +5532,18 @@ async function deleteVariant(invId, variantId) {
   const item = state.inventory.find(x => x.id === invId);
   if (!item || !Array.isArray(item.variants)) return;
   item.variants = item.variants.filter(v => v.id !== variantId);
+  const totalQty = item.variants.reduce((s, v) => s + (Number(v.qty) || 0), 0);
+  item.qty = totalQty;
   showLoading('Deleting variant…');
   try {
-    await dbUpdate('inventory', item.id, { variants: item.variants });
-    await syncParentQty(item);
+    try { await dbUpdate('inventory', item.id, { variants: item.variants, qty: totalQty }); }
+    catch(e1) { await dbUpdate('inventory', item.id, { variants: JSON.stringify(item.variants), qty: totalQty }); }
+    // Update localStorage cache
+    try {
+      const cache = JSON.parse(localStorage.getItem('3rock_variants_cache') || '{}');
+      cache[invId] = item.variants;
+      localStorage.setItem('3rock_variants_cache', JSON.stringify(cache));
+    } catch(le) {}
     openInvDetail(invId);
     renderInventory();
     toast('Variant removed', 'success');
@@ -5466,6 +5616,7 @@ function openPayrollSettings() {
   document.getElementById('ps-manager-emails').value = s.managerEmails || '';
   document.getElementById('ps-reminder-day').value = s.reminderDay || '';
   document.getElementById('ps-report-deadline').value = s.reportDeadline || '21:00';
+  document.getElementById('ps-webhook-url').value = s.appsScriptWebhookUrl || '';
   openModal('modal-payroll-settings');
 }
 
@@ -5479,7 +5630,8 @@ function savePayrollSettings() {
     directorEmails: document.getElementById('ps-director-emails').value.trim(),
     managerEmails: document.getElementById('ps-manager-emails').value.trim(),
     reminderDay: parseInt(document.getElementById('ps-reminder-day').value) || 0,
-    reportDeadline: document.getElementById('ps-report-deadline').value || '21:00'
+    reportDeadline: document.getElementById('ps-report-deadline').value || '21:00',
+    appsScriptWebhookUrl: document.getElementById('ps-webhook-url').value.trim()
   };
   savePayrollSettingsToLocal(s);
   closeModal('modal-payroll-settings');
@@ -5659,13 +5811,20 @@ function renderPayroll() {
     }
     row.appendChild(mid);
 
-    // Net pay
-    const pc = document.createElement('div'); pc.style.cssText = 'text-align:right;flex-shrink:0';
+    // Net pay + edit button
+    const pc = document.createElement('div'); pc.style.cssText = 'text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px';
     const pn = document.createElement('div');
     pn.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:800;color:' + (isLow ? 'var(--danger)' : 'var(--green)') + ';line-height:1';
     pn.textContent = 'GHC ' + netPay.toLocaleString();
     const th = document.createElement('div'); th.style.cssText = 'font-size:9px;color:var(--text-muted);margin-top:2px'; th.textContent = 'tap for details';
     pc.appendChild(pn); pc.appendChild(th);
+    if (canEdit()) {
+      const eb = document.createElement('button');
+      eb.textContent = '✏️ Edit';
+      eb.style.cssText = 'background:var(--navy);color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px';
+      eb.addEventListener('click', function(e){ e.stopPropagation(); openPayrollEntry(st.id); });
+      pc.appendChild(eb);
+    }
     row.appendChild(pc);
     return row;
   }
@@ -5828,6 +5987,71 @@ function copyAcct(acct, name) {
 function openPayrollEntryFromDetail() {
   closeModal('modal-payroll-detail');
   if (_pdCurrentStaffId) setTimeout(function(){ openPayrollEntry(_pdCurrentStaffId); }, 150);
+}
+
+function openPayrollEntry(staffId) {
+  if (!payrollCurrentMonth) { toast('Load a payroll month first', 'error'); return; }
+  const st = state.staff.find(function(s){ return s.id === staffId; });
+  if (!st) return;
+  const s = getPayrollSettings();
+  const records = getPayrollRecords(payrollCurrentMonth);
+  const rec = records[staffId] || {
+    workingDays: s.workingDays, daysPresent: s.workingDays,
+    absentPerm: 0, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, remarks: ''
+  };
+  document.getElementById('pe-staff-name').value = st.name;
+  document.getElementById('pe-staff-id').value = staffId;
+  document.getElementById('pe-working-days').value = rec.workingDays || s.workingDays;
+  document.getElementById('pe-days-present').value = rec.daysPresent || s.workingDays;
+  document.getElementById('pe-absent-perm').value = rec.absentPerm || 0;
+  document.getElementById('pe-absent-noperm').value = rec.absentNoPerm || 0;
+  document.getElementById('pe-uniform-days').value = rec.uniformDays || 0;
+  document.getElementById('pe-other-deductions').value = rec.otherDeductions || 0;
+  document.getElementById('pe-remarks').value = rec.remarks || '';
+  calcPayrollEntry();
+  openModal('modal-payroll-entry');
+}
+
+function calcPayrollEntry() {
+  const s = getPayrollSettings();
+  const daysPresent = parseInt(document.getElementById('pe-days-present').value) || 0;
+  const absentNoPerm = parseInt(document.getElementById('pe-absent-noperm').value) || 0;
+  const uniformDays = parseInt(document.getElementById('pe-uniform-days').value) || 0;
+  const otherDed = parseFloat(document.getElementById('pe-other-deductions').value) || 0;
+  const absDed = absentNoPerm * s.absentRate;
+  const uniDed = uniformDays * s.uniformRate;
+  const totalDed = absDed + uniDed + otherDed;
+  const netPay = s.baseSalary - totalDed;
+  const preview = document.getElementById('pe-calc-preview');
+  if (preview) {
+    preview.style.display = 'block';
+    preview.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Base Salary</span><span style="font-size:12px;font-weight:600">GHC ' + s.baseSalary.toLocaleString() + '</span></div>'
+      + (absDed > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Absent deduction</span><span style="font-size:12px;font-weight:600;color:var(--danger)">−GHC ' + absDed + '</span></div>' : '')
+      + (uniDed > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Uniform violation</span><span style="font-size:12px;font-weight:600;color:var(--danger)">−GHC ' + uniDed + '</span></div>' : '')
+      + (otherDed > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Other deductions</span><span style="font-size:12px;font-weight:600;color:var(--danger)">−GHC ' + otherDed + '</span></div>' : '')
+      + '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span style="font-size:13px;font-weight:700">Net Pay</span><span style="font-size:16px;font-weight:800;color:' + (netPay < s.baseSalary * 0.8 ? 'var(--danger)' : 'var(--green)') + '">GHC ' + netPay.toLocaleString() + '</span></div>';
+  }
+}
+
+async function savePayrollEntry() {
+  const staffId = document.getElementById('pe-staff-id').value;
+  if (!staffId || !payrollCurrentMonth) return;
+  const s = getPayrollSettings();
+  const records = getPayrollRecords(payrollCurrentMonth);
+  const existing = records[staffId] || {};
+  records[staffId] = Object.assign({}, existing, {
+    workingDays: parseInt(document.getElementById('pe-working-days').value) || s.workingDays,
+    daysPresent: parseInt(document.getElementById('pe-days-present').value) || 0,
+    absentPerm: parseInt(document.getElementById('pe-absent-perm').value) || 0,
+    absentNoPerm: parseInt(document.getElementById('pe-absent-noperm').value) || 0,
+    uniformDays: parseInt(document.getElementById('pe-uniform-days').value) || 0,
+    otherDeductions: parseFloat(document.getElementById('pe-other-deductions').value) || 0,
+    remarks: document.getElementById('pe-remarks').value.trim()
+  });
+  savePayrollRecordsToLocal(payrollCurrentMonth, records);
+  closeModal('modal-payroll-entry');
+  renderPayroll();
+  toast('Payroll entry saved', 'success');
 }
 
 // ── exportPayrollPDF — full featured ────────────────────────────
@@ -6027,6 +6251,7 @@ function showDraftForm(date) {
   document.getElementById('dr-issues').value = '';
   drPhotos = [];
   renderDrPhotos();
+  clearShiftTags();
 
   // Build attendance grid
   drAttendance = {};
@@ -6067,6 +6292,7 @@ function editDailyReport() {
   try { drAttendance = typeof d.attendance === 'string' ? JSON.parse(d.attendance) : (d.attendance || {}); } catch(e) {}
   state.staff.forEach(function(st) { if (!drAttendance[st.id]) drAttendance[st.id] = 'present'; });
   renderAttendanceGrid();
+  initShiftTagsFromData(d);
 
   // Restore photos
   drPhotos = [];
@@ -6296,8 +6522,9 @@ function buildReportEmailHTML(data) {
   var totalIssues = (data.issues && data.issues.trim()) ? data.issues.trim().split('\n').filter(function(l){return l.trim();}).length : 0;
 
   // Pill badge helper
-  function pill(name) {
-    return '<span style="display:inline-block;background:#1e3a5f;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px;letter-spacing:.5px">' + esc(name.toUpperCase()) + '</span>';
+  function pill(st) {
+    var n = (typeof st === 'string') ? st : (st.alias || st.name);
+    return '<span style="display:inline-block;background:#1e3a5f;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px;letter-spacing:.5px">' + esc(n.toUpperCase()) + '</span>';
   }
 
   // Shift block helper
@@ -6358,17 +6585,17 @@ function buildReportEmailHTML(data) {
     // Staff Present pills
     + (presentList.length ? '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
       + '<h3 style="font-size:16px;font-weight:700;color:#1e3a5f;margin:0 0 12px;display:flex;align-items:center;gap:6px">👥 Staff Present:</h3>'
-      + presentList.map(function(s){return pill(s.name);}).join('') + '</div>' : '')
+      + presentList.map(function(s){return pill(s);}).join('') + '</div>' : '')
 
     // Absent
     + (absentList.length ? '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
       + '<h3 style="font-size:16px;font-weight:700;color:#dc2626;margin:0 0 12px;display:flex;align-items:center;gap:6px">❌ Staff Absent:</h3>'
-      + absentList.map(function(s){'<span style="display:inline-block;background:#dc2626;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px">'+esc(s.name.toUpperCase())+'</span>';}).join('') + '</div>' : '')
+      + absentList.map(function(s){return '<span style="display:inline-block;background:#dc2626;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px">'+esc(s.name.toUpperCase())+'</span>';}).join('') + '</div>' : '')
 
     // Permission
     + (permList.length ? '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
       + '<h3 style="font-size:16px;font-weight:700;color:#d97706;margin:0 0 12px;display:flex;align-items:center;gap:6px">🟡 On Permission:</h3>'
-      + permList.map(function(s){'<span style="display:inline-block;background:#d97706;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px">'+esc(s.name.toUpperCase())+'</span>';}).join('') + '</div>' : '')
+      + permList.map(function(s){return '<span style="display:inline-block;background:#d97706;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px">'+esc(s.name.toUpperCase())+'</span>';}).join('') + '</div>' : '')
 
     // Shift Reports
     + '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
@@ -6406,46 +6633,47 @@ function kpiCard(value, label, color, borderColor) {
 
 // ── Email + Copy + PDF ────────────────────────────────────────────
 
-function emailDailyReport() {
+async function emailDailyReport() {
   const data = drCurrentData || {};
   if (!data.date) { toast('No report to send', 'error'); return; }
+
   const s = getPayrollSettings();
-  const toEmails = [s.directorEmails, s.managerEmails].filter(Boolean).join(',');
-  const date = data.date;
-  const dateStr = new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  // Build plain-text fallback
-  var attendance = {};
-  try { attendance = typeof data.attendance==='string'?JSON.parse(data.attendance):(data.attendance||{}); } catch(e) {}
-  var presentList = state.staff.filter(function(s){return (attendance[s.id]||'present')==='present';});
-  var absentList  = state.staff.filter(function(s){return attendance[s.id]==='absent';});
-  var permList    = state.staff.filter(function(s){return attendance[s.id]==='permission';});
-
-  var body = '🧹 Cleaning Activity Report — ' + dateStr + '\n3 Rock Builders Company Limited\n'
-    + '='.repeat(50) + '\n\n'
-    + 'EXECUTIVE SUMMARY\n'
-    + '• Staff Present: ' + presentList.length + ' — ' + presentList.map(function(s){return s.name;}).join(', ') + '\n'
-    + '• Staff Absent: ' + absentList.length + (absentList.length ? ' — ' + absentList.map(function(s){return s.name;}).join(', ') : '') + '\n'
-    + '• On Permission: ' + permList.length + (permList.length ? ' — ' + permList.map(function(s){return s.name;}).join(', ') : '') + '\n\n'
-    + 'SHIFT REPORTS\n'
-    + (data.morning_narrative ? '🌅 Morning — ' + (data.morning_staff?data.morning_staff+': ':'') + data.morning_narrative + '\n\n' : '')
-    + (data.afternoon_narrative ? '☀️ Afternoon — ' + (data.afternoon_staff?data.afternoon_staff+': ':'') + data.afternoon_narrative + '\n\n' : '')
-    + (data.evening_narrative ? '🌙 Evening — ' + (data.evening_staff?data.evening_staff+': ':'') + data.evening_narrative + '\n\n' : '')
-    + (data.issues ? 'ADDITIONAL NOTES & ISSUES\n' + data.issues + '\n\n' : '')
-    + 'Submitted by: ' + (data.submitted_by||'') + ' (' + (data.submitted_role||'') + ')\n'
-    + 'Sent from 3-Rock Builders Management App';
-
-  const subject = encodeURIComponent('🧹 Cleaning Activity Report — ' + dateStr);
-  const bodyEnc = encodeURIComponent(body);
-
-  if (bodyEnc.length > 8000) {
-    navigator.clipboard.writeText(body).then(function(){
-      toast('Report copied — paste into email (too long for auto-launch)', 'info', 6000);
-    }).catch(function(){ toast('Use "Copy Report" to copy', 'info'); });
+  // ── If Apps Script webhook URL is configured, trigger it server-side ──
+  if (s.appsScriptWebhookUrl && s.appsScriptWebhookUrl.startsWith('https://')) {
+    showLoading('Sending email via Apps Script...');
+    try {
+      const url = s.appsScriptWebhookUrl
+        + '?date=' + encodeURIComponent(data.date)
+        + '&source=app';
+      // Try with cors first; fall back to no-cors
+      let sent = false;
+      try {
+        const resp = await fetch(url, { method: 'GET', mode: 'cors' });
+        if (resp.ok) {
+          const json = await resp.json().catch(function(){ return {}; });
+          if (json.ok === false) {
+            toast('Apps Script error: ' + (json.error || 'Unknown error'), 'error');
+          } else {
+            toast('✅ Email sent successfully via Apps Script', 'success');
+          }
+          sent = true;
+        }
+      } catch(corsErr) {
+        // CORS blocked — use no-cors (can't read response but script still fires)
+      }
+      if (!sent) {
+        await fetch(url, { method: 'GET', mode: 'no-cors' });
+        toast('✅ Email sent via Apps Script', 'success');
+      }
+    } catch(e) {
+      toast('Send failed: ' + e.message + ' — check your Apps Script URL in Payroll Settings', 'error');
+    } finally { hideLoading(); }
     return;
   }
-  window.location.href = 'mailto:' + (toEmails||'') + '?subject=' + subject + '&body=' + bodyEnc;
-  toast('Email client opened', 'success');
+
+  // ── No webhook configured — show guidance ──
+  toast('⚙️ Add your Apps Script Webhook URL in Payroll Settings → ⚙ to enable direct email sending', 'info', 6000);
 }
 
 function copyDailyReport() {
@@ -6654,11 +6882,117 @@ function sendPayrollReminderEmail(month, monthLabel, totalNet) {
 
 // ================================================================
 
+
+// ── Shift staff picker ────────────────────────────────────────────
+
+var _shiftPickerShift = 'morning';
+var _shiftPickerSelected = { morning: [], afternoon: [], evening: [] };
+
+function openShiftPicker(shift) {
+  _shiftPickerShift = shift;
+  const titles = { morning: '🌅 Morning Shift', afternoon: '☀️ Afternoon Shift', evening: '🌙 Evening Shift' };
+  document.getElementById('shift-picker-title').textContent = 'Select Staff — ' + titles[shift];
+  const grid = document.getElementById('shift-picker-grid');
+  const selected = _shiftPickerSelected[shift] || [];
+  grid.innerHTML = state.staff.map(function(st) {
+    const display = st.alias || st.firstname || st.name.split(' ')[0];
+    const isSelected = selected.indexOf(st.id) !== -1;
+    return '<div onclick="toggleShiftStaff(\'' + st.id + '\',\'' + shift + '\')" id="spp-' + st.id + '" style="'
+      + 'padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;user-select:none;transition:all .15s;'
+      + (isSelected
+          ? 'background:var(--navy);color:#fff;'
+          : 'background:var(--off-white);color:var(--text-secondary);border:1.5px solid var(--border);')
+      + '">' + esc(display.toUpperCase()) + '</div>';
+  }).join('');
+  openModal('modal-shift-picker');
+}
+
+function toggleShiftStaff(staffId, shift) {
+  const sel = _shiftPickerSelected[shift];
+  const idx = sel.indexOf(staffId);
+  if (idx === -1) { sel.push(staffId); }
+  else { sel.splice(idx, 1); }
+  // Update button style live
+  const btn = document.getElementById('spp-' + staffId);
+  if (btn) {
+    const st = state.staff.find(function(s){ return s.id === staffId; });
+    const display = st ? (st.alias || st.firstname || st.name.split(' ')[0]) : '';
+    const isSelected = sel.indexOf(staffId) !== -1;
+    btn.style.background = isSelected ? 'var(--navy)' : 'var(--off-white)';
+    btn.style.color       = isSelected ? '#fff' : 'var(--text-secondary)';
+    btn.style.border      = isSelected ? 'none' : '1.5px solid var(--border)';
+  }
+}
+
+function confirmShiftPicker() {
+  renderShiftTags(_shiftPickerShift);
+  closeModal('modal-shift-picker');
+}
+
+function renderShiftTags(shift) {
+  const tagContainer = document.getElementById('dr-' + shift + '-staff-tags');
+  const hiddenInput  = document.getElementById('dr-' + shift + '-staff');
+  if (!tagContainer) return;
+  const selected = _shiftPickerSelected[shift] || [];
+  const names = selected.map(function(id) {
+    const st = state.staff.find(function(s){ return s.id === id; });
+    return st ? (st.alias || st.firstname || st.name.split(' ')[0]) : '';
+  }).filter(Boolean);
+  hiddenInput.value = names.join(', ');
+
+  if (names.length === 0) {
+    tagContainer.innerHTML = '<span style="font-size:11px;color:var(--text-muted)">Tap to select staff...</span>';
+    return;
+  }
+  tagContainer.innerHTML = names.map(function(n) {
+    return '<span style="background:var(--navy);color:#fff;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700">'
+      + esc(n.toUpperCase()) + '</span>';
+  }).join('');
+}
+
+function initShiftTagsFromData(data) {
+  // Called when editing a submitted report — restore selected IDs from names
+  ['morning','afternoon','evening'].forEach(function(shift) {
+    const staffStr = data[shift + '_staff'] || '';
+    const names = staffStr.split(',').map(function(n){ return n.trim().toLowerCase(); });
+    _shiftPickerSelected[shift] = state.staff
+      .filter(function(st) {
+        const alias = (st.alias || st.firstname || st.name.split(' ')[0]).toLowerCase();
+        return names.indexOf(alias) !== -1 || names.indexOf(st.name.toLowerCase()) !== -1;
+      })
+      .map(function(st){ return st.id; });
+    renderShiftTags(shift);
+  });
+}
+
+function clearShiftTags() {
+  _shiftPickerSelected = { morning: [], afternoon: [], evening: [] };
+  ['morning','afternoon','evening'].forEach(function(shift){ renderShiftTags(shift); });
+}
+
 // Fix supervisorUncheck
 function supervisorUncheck(taskId, shift) { return uncheckTask(taskId, shift); }
 
 
 </script>
+
+<!-- SHIFT STAFF PICKER MODAL -->
+<div class="modal-overlay center-ov" id="modal-shift-picker" style="display:none" onclick="overlayClick(event,'modal-shift-picker')">
+  <div class="modal center-m" style="max-width:360px">
+    <div class="modal-header" style="background:var(--navy)">
+      <span class="modal-title" id="shift-picker-title">Select Staff — Morning Shift</span>
+      <button class="modal-close" onclick="closeModal('modal-shift-picker')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:12px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Tap to select/deselect. Only enrolled staff shown.</div>
+      <div id="shift-picker-grid" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      <div class="form-actions" style="margin-top:14px">
+        <button class="btn btn-outline" onclick="closeModal('modal-shift-picker')">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmShiftPicker()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- PAYROLL STAFF DETAIL SHEET -->
 <div class="modal-overlay center-ov" id="modal-payroll-detail" style="display:none" onclick="overlayClick(event,'modal-payroll-detail')">
@@ -6704,8 +7038,13 @@ function supervisorUncheck(taskId, shift) { return uncheckTask(taskId, shift); }
       <div class="form-group"><label class="form-label">Director Email(s) <span style="font-weight:400;color:var(--text-muted)">(comma-separated — used for daily report & payroll reminders)</span></label><input type="text" class="form-control" id="ps-director-emails" placeholder="director@company.com, owner@company.com"></div>
       <div class="form-group"><label class="form-label">Manager Email(s) <span style="font-weight:400;color:var(--text-muted)">(comma-separated)</span></label><input type="text" class="form-control" id="ps-manager-emails" placeholder="manager@company.com"></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Payment Reminder Day <span style="font-weight:400;color:var(--text-muted)">(day of month)</span></label><input type="number" class="form-control" id="ps-reminder-day" min="1" max="28" placeholder="25" title="App will alert on this day each month to process payroll"></div>
-        <div class="form-group"><label class="form-label">Report Sent-By Time</label><input type="time" class="form-control" id="ps-report-deadline" value="21:00" title="Alert shows if report not submitted by this time"></div>
+        <div class="form-group"><label class="form-label">Payment Reminder Day <span style="font-weight:400;color:var(--text-muted)">(day of month)</span></label><input type="number" class="form-control" id="ps-reminder-day" min="1" max="28" placeholder="25"></div>
+        <div class="form-group"><label class="form-label">Report Sent-By Time</label><input type="time" class="form-control" id="ps-report-deadline" value="21:00"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apps Script Webhook URL <span style="font-weight:400;color:var(--text-muted)">(for direct email sending)</span></label>
+        <input type="url" class="form-control" id="ps-webhook-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Get this from Apps Script → Deploy → Web App → Copy URL. Enables ✉️ Resend to send directly without opening Gmail.</div>
       </div>
       <div class="form-actions">
         <button class="btn btn-outline" onclick="closeModal('modal-payroll-settings')">Cancel</button>
