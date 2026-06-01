@@ -976,7 +976,7 @@ textarea.form-control{resize:vertical;min-height:56px}
     </div>
     <div class="form-row">
       <div class="form-group" style="display:none"><label class="form-label">Full Name</label><input type="text" class="form-control" id="sf-name-display" readonly style="background:var(--off-white)"></div>
-      <div class="form-group"><label class="form-label">Staff ID *</label><input type="text" class="form-control" id="sf-id"><div class="field-error" id="err-sf-id">Staff ID is required</div></div>
+      <div class="form-group"><label class="form-label">Staff ID <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input type="text" class="form-control" id="sf-id" placeholder="e.g. 3ROCK-001"><div class="field-error" id="err-sf-id"></div></div>
     </div>
     <div class="form-group"><label class="form-label">Home Address</label><textarea class="form-control" id="sf-address" style="min-height:56px"></textarea></div>
     <div class="form-row">
@@ -2323,6 +2323,7 @@ async function goToTab(tab, filter, skipPush) {
   else if (tab === 'inventory') renderInventory();
   else if (tab === 'jobs') renderJobs();
   else if (tab === 'tasks') renderTasks();
+  else if (tab === 'payroll') { loadPayrollSettingsFromSupabase().then(function(){ if (payrollCurrentMonth) renderPayroll(); }); }
   else if (tab === 'incidents') {
     const from = document.getElementById('inc-filter-from')?.value || '';
     const to = document.getElementById('inc-filter-to')?.value || '';
@@ -2592,7 +2593,7 @@ async function saveStaff() {
     const errEl = document.getElementById('err-sf-name');
     if (errEl) errEl.style.display = 'none';
   }
-  valid = validateField('sf-id', 'err-sf-id', v => v.trim().length > 0) && valid;
+  // Staff ID is optional — no validation required
   if (!valid) return;
 
   const rawPhoto = document.getElementById('staff-photo-preview').src || '';
@@ -2614,13 +2615,13 @@ async function saveStaff() {
     middlename: document.getElementById('sf-middlename').value.trim(),
     lastname:   document.getElementById('sf-lastname').value.trim(),
     alias:      document.getElementById('sf-alias').value.trim(),
-    dob:        document.getElementById('sf-dob').value,
-    age:        document.getElementById('sf-age').value,
+    dob:        document.getElementById('sf-dob').value || null,
+    age:        document.getElementById('sf-age').value ? parseInt(document.getElementById('sf-age').value) : null,
     role: document.getElementById('sf-role').value,
-    staffid: idVal,
+    staffid: idVal || null,   // null when blank — avoids integer type errors in Supabase
     phone: document.getElementById('sf-phone').value,
     shift: document.getElementById('sf-shift').value,
-    startdate: document.getElementById('sf-startdate').value,
+    startdate: document.getElementById('sf-startdate').value || null,
     address: document.getElementById('sf-address').value,
     ghanacard: document.getElementById('sf-ghana').value,
     ghanafront: ghanaFront || (existingStaff ? existingStaff.ghanafront : ''),
@@ -5559,52 +5560,112 @@ async function deleteVariant(invId, variantId) {
 // ================================================================
 let payrollSettings = null;
 let payrollRecords = {};
+let payrollAwardsCache = {};
 let payrollCurrentMonth = '';
 
 function getPayrollSettings() {
   if (payrollSettings) return payrollSettings;
-  try {
-    const saved = localStorage.getItem('3rock_payroll_settings');
-    if (saved) { payrollSettings = JSON.parse(saved); return payrollSettings; }
-  } catch(e) {}
-  payrollSettings = { baseSalary: 1100, absentRate: 50, uniformRate: 0, workingDays: 26, offDays: 4, directorEmails: '' };
+  // Return defaults; loadPayrollSettingsFromSupabase() populates this async
+  payrollSettings = { baseSalary: 1100, absentRate: 50, uniformRate: 0, workingDays: 26, offDays: 4, directorEmails: '', managerEmails: '', appsScriptWebhookUrl: '' };
   return payrollSettings;
+}
+
+async function loadPayrollSettingsFromSupabase() {
+  try {
+    const { data, error } = await supabaseClient.from('payroll_settings').select('*').eq('id','global').single();
+    if (!error && data) {
+      payrollSettings = {
+        baseSalary:          parseFloat(data.base_salary)   || 1100,
+        absentRate:          parseFloat(data.absent_rate)   || 50,
+        uniformRate:         parseFloat(data.uniform_rate)  || 0,
+        workingDays:         parseInt(data.working_days)    || 26,
+        offDays:             parseInt(data.off_days)        || 4,
+        directorEmails:      data.director_emails           || '',
+        managerEmails:       data.manager_emails            || '',
+        reminderDay:         parseInt(data.reminder_day)    || 0,
+        reportDeadline:      data.report_deadline           || '21:00',
+        appsScriptWebhookUrl: data.webhook_url              || ''
+      };
+      return payrollSettings;
+    }
+  } catch(e) { console.warn('loadPayrollSettingsFromSupabase:', e); }
+  return getPayrollSettings();
 }
 
 function savePayrollSettingsToLocal(s) {
   payrollSettings = s;
-  try { localStorage.setItem('3rock_payroll_settings', JSON.stringify(s)); } catch(e) {}
+  // Persist to Supabase (source of truth — syncs across all devices)
+  const payload = {
+    id:              'global',
+    base_salary:     s.baseSalary,
+    absent_rate:     s.absentRate,
+    uniform_rate:    s.uniformRate,
+    working_days:    s.workingDays,
+    off_days:        s.offDays,
+    director_emails: s.directorEmails  || '',
+    manager_emails:  s.managerEmails   || '',
+    reminder_day:    s.reminderDay     || 0,
+    report_deadline: s.reportDeadline  || '21:00',
+    webhook_url:     s.appsScriptWebhookUrl || '',
+    updated_at:      new Date().toISOString()
+  };
+  supabaseClient.from('payroll_settings').upsert(payload).then(function(r) {
+    if (r.error) console.warn('Settings sync error:', r.error.message);
+  });
 }
 
 function getPayrollRecords(month) {
   if (payrollRecords[month]) return payrollRecords[month];
-  try {
-    const saved = localStorage.getItem('3rock_payroll_' + month);
-    if (saved) { payrollRecords[month] = JSON.parse(saved); return payrollRecords[month]; }
-  } catch(e) {}
   payrollRecords[month] = {};
   return payrollRecords[month];
 }
 
 function savePayrollRecordsToLocal(month, records) {
   payrollRecords[month] = records;
-  try { localStorage.setItem('3rock_payroll_' + month, JSON.stringify(records)); } catch(e) {}
-  const payload = { id: month, month: month, records: JSON.stringify(records) };
-  supabaseClient.from('payroll_records').upsert(payload).then(({ error }) => {
-    if (error && !error.message.includes('does not exist')) console.warn('Payroll sync:', error.message);
+  // Save each staff record as its own row for per-device sync
+  const upsertRows = Object.keys(records).map(function(staffId) {
+    const r = records[staffId];
+    return {
+      id:               month + '_' + staffId,
+      month:            month,
+      staff_id:         staffId,
+      working_days:     r.workingDays     || 26,
+      days_present:     r.daysPresent     || 0,
+      absent_perm:      r.absentPerm      || 0,
+      absent_no_perm:   r.absentNoPerm    || 0,
+      uniform_days:     r.uniformDays     || 0,
+      other_deductions: r.otherDeductions || 0,
+      remarks:          r.remarks         || '',
+      updated_at:       new Date().toISOString()
+    };
   });
+  if (upsertRows.length) {
+    supabaseClient.from('payroll_records').upsert(upsertRows).then(function(r) {
+      if (r.error) console.warn('Payroll records sync error:', r.error.message);
+    });
+  }
 }
 
 async function loadPayrollFromSupabase(month) {
   try {
-    const { data, error } = await supabaseClient.from('payroll_records').select('*').eq('month', month).single();
-    if (!error && data) {
-      const records = typeof data.records === 'string' ? JSON.parse(data.records) : data.records;
+    const { data, error } = await supabaseClient.from('payroll_records').select('*').eq('month', month);
+    if (!error && data && data.length) {
+      const records = {};
+      data.forEach(function(row) {
+        records[row.staff_id] = {
+          workingDays:     row.working_days,
+          daysPresent:     row.days_present,
+          absentPerm:      row.absent_perm,
+          absentNoPerm:    row.absent_no_perm,
+          uniformDays:     row.uniform_days,
+          otherDeductions: row.other_deductions,
+          remarks:         row.remarks || ''
+        };
+      });
       payrollRecords[month] = records;
-      try { localStorage.setItem('3rock_payroll_' + month, JSON.stringify(records)); } catch(e) {}
       return records;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('loadPayrollFromSupabase:', e); }
   return getPayrollRecords(month);
 }
 
@@ -5648,7 +5709,13 @@ async function loadPayrollMonth() {
   if (!month) { toast('Select a month', 'error'); return; }
   payrollCurrentMonth = month;
   showLoading('Loading payroll data...');
-  try { await loadPayrollFromSupabase(month); } catch(e) {}
+  try {
+    await Promise.all([
+      loadPayrollSettingsFromSupabase(),
+      loadPayrollFromSupabase(month),
+      loadPayrollAwardsFromSupabase(month)
+    ]);
+  } catch(e) {}
   finally { hideLoading(); }
   renderPayroll();
 }
@@ -5656,18 +5723,28 @@ async function loadPayrollMonth() {
 // ── Payroll awards helpers ───────────────────────────────────────
 
 function getPayrollAwards(month) {
+  // Returns cached in-memory value; loadPayrollAwardsFromSupabase() populates it
+  if (payrollAwardsCache && payrollAwardsCache[month]) return payrollAwardsCache[month];
+  return { bestPerformer: [], bestDressed: [], comments: '' };
+}
+
+async function loadPayrollAwardsFromSupabase(month) {
   try {
-    const saved = localStorage.getItem('3rock_awards_' + month);
-    if (saved) {
-      const a = JSON.parse(saved);
-      // Migrate old single-string format to arrays
-      if (typeof a.bestPerformer === 'string' && a.bestPerformer) a.bestPerformer = [a.bestPerformer];
-      if (typeof a.bestDressed   === 'string' && a.bestDressed)   a.bestDressed   = [a.bestDressed];
-      if (!Array.isArray(a.bestPerformer)) a.bestPerformer = [];
-      if (!Array.isArray(a.bestDressed))   a.bestDressed   = [];
-      return a;
+    const { data, error } = await supabaseClient.from('payroll_awards').select('*').eq('id', 'awards_' + month).single();
+    if (!error && data) {
+      let bp = data.best_performer || [];
+      let bd = data.best_dressed   || [];
+      // Handle JSONB returning as string
+      if (typeof bp === 'string') { try { bp = JSON.parse(bp); } catch(e) { bp = bp ? [bp] : []; } }
+      if (typeof bd === 'string') { try { bd = JSON.parse(bd); } catch(e) { bd = bd ? [bd] : []; } }
+      if (!Array.isArray(bp)) bp = [];
+      if (!Array.isArray(bd)) bd = [];
+      const awards = { bestPerformer: bp, bestDressed: bd, comments: data.comments || '' };
+      if (!payrollAwardsCache) payrollAwardsCache = {};
+      payrollAwardsCache[month] = awards;
+      return awards;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('loadPayrollAwardsFromSupabase:', e); }
   return { bestPerformer: [], bestDressed: [], comments: '' };
 }
 
@@ -5753,11 +5830,20 @@ function savePayrollAwards() {
     bestDressed:   Array.isArray(bd) ? bd : [],
     comments: document.getElementById('pay-comments').value.trim()
   };
-  localStorage.setItem('3rock_awards_' + month, JSON.stringify(awards));
-  // Sync to Supabase
-  const payload = { id: 'awards_' + month, month: month, type: 'awards', data: JSON.stringify(awards) };
-  supabaseClient.from('payroll_meta').upsert(payload).then(function(r) {
-    if (r.error && !r.error.message.includes('does not exist')) console.warn('Awards sync:', r.error.message);
+  // Cache in memory
+  if (!payrollAwardsCache) payrollAwardsCache = {};
+  payrollAwardsCache[month] = awards;
+  // Persist to Supabase (syncs all devices)
+  const payload = {
+    id:               'awards_' + month,
+    month:            month,
+    best_performer:   awards.bestPerformer,
+    best_dressed:     awards.bestDressed,
+    comments:         awards.comments,
+    updated_at:       new Date().toISOString()
+  };
+  supabaseClient.from('payroll_awards').upsert(payload).then(function(r) {
+    if (r.error) console.warn('Awards sync error:', r.error.message);
   });
   renderAwardsDashboard(month, awards);
 }
