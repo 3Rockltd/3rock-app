@@ -5585,11 +5585,44 @@ async function loadPayrollSettingsFromSupabase() {
   return getPayrollSettings();
 }
 
+// ── Robust payroll_settings upsert ────────────────────────────────────────
+// Supabase's schema cache error looks like: "Could not find the 'X' column of 'payroll_settings' in the schema cache"
+// This helper strips offending optional columns one-by-one and retries up to 10 times,
+// so the core fields always save even when optional columns haven't been migrated yet.
+// Run the full migration when convenient:
+//   ALTER TABLE payroll_settings
+//     ADD COLUMN IF NOT EXISTS off_days        integer DEFAULT 4,
+//     ADD COLUMN IF NOT EXISTS director_emails text    DEFAULT '',
+//     ADD COLUMN IF NOT EXISTS manager_emails  text    DEFAULT '',
+//     ADD COLUMN IF NOT EXISTS reminder_day    integer DEFAULT 0,
+//     ADD COLUMN IF NOT EXISTS report_deadline text    DEFAULT '21:00',
+//     ADD COLUMN IF NOT EXISTS webhook_url     text    DEFAULT '';
+const PAYROLL_SETTINGS_OPTIONAL_COLS = ['off_days','director_emails','manager_emails','reminder_day','report_deadline','webhook_url'];
+
+async function upsertPayrollSettingsSafe(payload) {
+  let p = Object.assign({}, payload);
+  const stripped = [];
+  for (let attempt = 0; attempt <= PAYROLL_SETTINGS_OPTIONAL_COLS.length; attempt++) {
+    const { error } = await supabaseClient.from('payroll_settings').upsert(p);
+    if (!error) {
+      if (stripped.length) console.warn('payroll_settings saved without columns (run migration):', stripped.join(', '));
+      return null;
+    }
+    // Detect missing-column error and strip the offending column
+    const match = error.message && error.message.match(/Could not find (?:the ')?([a-z_]+)(?:' column)?.*schema cache/i);
+    const col = match ? match[1] : null;
+    if (col && PAYROLL_SETTINGS_OPTIONAL_COLS.includes(col)) {
+      stripped.push(col);
+      delete p[col];
+      continue;
+    }
+    return error; // non-column error — bubble up
+  }
+  return new Error('payroll_settings: too many missing columns');
+}
+
 function savePayrollSettingsToLocal(s) {
   payrollSettings = s;
-  // Persist to Supabase (source of truth — syncs across all devices)
-  // NOTE: If off_days column is missing, run this migration in Supabase SQL editor:
-  //   ALTER TABLE payroll_settings ADD COLUMN IF NOT EXISTS off_days integer DEFAULT 4;
   const payload = {
     id:              'global',
     base_salary:     s.baseSalary,
@@ -5604,20 +5637,8 @@ function savePayrollSettingsToLocal(s) {
     webhook_url:     s.appsScriptWebhookUrl || '',
     updated_at:      new Date().toISOString()
   };
-  supabaseClient.from('payroll_settings').upsert(payload).then(function(r) {
-    if (r.error) {
-      // If off_days column doesn't exist yet, retry without it
-      if (r.error.message && r.error.message.includes('off_days')) {
-        console.warn('off_days column missing — retrying without it. Run migration: ALTER TABLE payroll_settings ADD COLUMN IF NOT EXISTS off_days integer DEFAULT 4;');
-        const fallback = Object.assign({}, payload);
-        delete fallback.off_days;
-        supabaseClient.from('payroll_settings').upsert(fallback).then(function(r2) {
-          if (r2.error) console.warn('Settings sync error (fallback):', r2.error.message);
-        });
-      } else {
-        console.warn('Settings sync error:', r.error.message);
-      }
-    }
+  upsertPayrollSettingsSafe(payload).then(function(err) {
+    if (err) console.warn('Settings sync error:', err.message);
   });
 }
 
@@ -5723,16 +5744,7 @@ async function savePayrollSettings() {
       webhook_url:     s.appsScriptWebhookUrl || '',
       updated_at:      new Date().toISOString()
     };
-    let { error: saveErr } = await supabaseClient.from('payroll_settings').upsert(payload);
-    // If off_days column missing, retry without it.
-    // Fix: run in Supabase SQL editor → ALTER TABLE payroll_settings ADD COLUMN IF NOT EXISTS off_days integer DEFAULT 4;
-    if (saveErr && saveErr.message && saveErr.message.includes('off_days')) {
-      const fallback = Object.assign({}, payload);
-      delete fallback.off_days;
-      const r2 = await supabaseClient.from('payroll_settings').upsert(fallback);
-      saveErr = r2.error;
-      if (!saveErr) toast('⚠ Settings saved (off_days column missing — add it via SQL migration)', 'info', 5000);
-    }
+    const saveErr = await upsertPayrollSettingsSafe(payload);
     if (saveErr) throw saveErr;
     closeModal('modal-payroll-settings');
     renderPayroll();
