@@ -5650,7 +5650,7 @@ function getPayrollRecords(month) {
 
 function savePayrollRecordsToLocal(month, records) {
   payrollRecords[month] = records;
-  // Save each staff record as its own row for per-device sync
+  // Strip internal tracking keys (_tally_*, _dailyDays) — these are not DB columns
   const upsertRows = Object.keys(records).map(function(staffId) {
     const r = records[staffId];
     return {
@@ -5666,10 +5666,17 @@ function savePayrollRecordsToLocal(month, records) {
       remarks:          r.remarks         || '',
       updated_at:       new Date().toISOString()
     };
+    // Note: _tally_* keys and _dailyDays are intentionally excluded — they live only in memory
   });
   if (upsertRows.length) {
     supabaseClient.from('payroll_records').upsert(upsertRows).then(function(r) {
-      if (r.error) console.warn('Payroll records sync error:', r.error.message);
+      if (r.error) {
+        console.warn('Payroll records sync error:', r.error.message);
+        toast('⚠ Payroll sync error: ' + r.error.message, 'error', 5000);
+        setSyncDot('error');
+      } else {
+        setSyncDot('synced');
+      }
     });
   }
 }
@@ -6256,23 +6263,67 @@ function calcPayrollEntry() {
 
 async function savePayrollEntry() {
   const staffId = document.getElementById('pe-staff-id').value;
-  if (!staffId || !payrollCurrentMonth) return;
+  if (!staffId || !payrollCurrentMonth) { toast('No staff or month selected', 'error'); return; }
   const s = getPayrollSettings();
   const records = getPayrollRecords(payrollCurrentMonth);
   const existing = records[staffId] || {};
+  // Preserve internal tally keys, only update the user-editable fields
   records[staffId] = Object.assign({}, existing, {
-    workingDays: parseInt(document.getElementById('pe-working-days').value) || s.workingDays,
-    daysPresent: parseInt(document.getElementById('pe-days-present').value) || 0,
-    absentPerm: parseInt(document.getElementById('pe-absent-perm').value) || 0,
-    absentNoPerm: parseInt(document.getElementById('pe-absent-noperm').value) || 0,
-    uniformDays: parseInt(document.getElementById('pe-uniform-days').value) || 0,
+    workingDays:     parseInt(document.getElementById('pe-working-days').value)    || s.workingDays,
+    daysPresent:     parseInt(document.getElementById('pe-days-present').value)    || 0,
+    absentPerm:      parseInt(document.getElementById('pe-absent-perm').value)     || 0,
+    absentNoPerm:    parseInt(document.getElementById('pe-absent-noperm').value)   || 0,
+    uniformDays:     parseInt(document.getElementById('pe-uniform-days').value)    || 0,
     otherDeductions: parseFloat(document.getElementById('pe-other-deductions').value) || 0,
-    remarks: document.getElementById('pe-remarks').value.trim()
+    remarks:         document.getElementById('pe-remarks').value.trim()
   });
-  savePayrollRecordsToLocal(payrollCurrentMonth, records);
-  closeModal('modal-payroll-entry');
-  renderPayroll();
-  toast('Payroll entry saved', 'success');
+  showLoading('Saving payroll entry…');
+  try {
+    // Build the single row and upsert directly so we can await the result
+    const r = records[staffId];
+    const row = {
+      id:               payrollCurrentMonth + '_' + staffId,
+      month:            payrollCurrentMonth,
+      staff_id:         staffId,
+      working_days:     r.workingDays     || 26,
+      days_present:     r.daysPresent     || 0,
+      absent_perm:      r.absentPerm      || 0,
+      absent_no_perm:   r.absentNoPerm    || 0,
+      uniform_days:     r.uniformDays     || 0,
+      other_deductions: r.otherDeductions || 0,
+      remarks:          r.remarks         || '',
+      updated_at:       new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('payroll_records').upsert(row);
+    if (error) throw error;
+    payrollRecords[payrollCurrentMonth] = records;
+    closeModal('modal-payroll-entry');
+    renderPayroll();
+    toast('✅ Payroll entry saved', 'success');
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+async function resetPayrollEntry() {
+  const staffId = document.getElementById('pe-staff-id').value;
+  const name = document.getElementById('pe-staff-name').value;
+  if (!staffId || !payrollCurrentMonth) return;
+  const confirmed = await showConfirm('Reset Entry', 'Clear all payroll data for ' + name + ' this month? This cannot be undone.', 'Reset', 'btn-danger');
+  if (!confirmed) return;
+  showLoading('Resetting entry…');
+  try {
+    const rowId = payrollCurrentMonth + '_' + staffId;
+    await supabaseClient.from('payroll_records').delete().eq('id', rowId);
+    const records = getPayrollRecords(payrollCurrentMonth);
+    delete records[staffId];
+    payrollRecords[payrollCurrentMonth] = records;
+    closeModal('modal-payroll-entry');
+    renderPayroll();
+    toast('Entry reset to defaults', 'success');
+  } catch(e) {
+    toast('Reset failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
 }
 
 // ── emailPayrollReport — sends payroll summary via Apps Script ──
@@ -6365,7 +6416,19 @@ async function emailPayrollReport() {
       await fetch(url, { method: 'GET', mode: 'no-cors' });
       toast('✅ Payroll email sent via Apps Script', 'success');
     } catch(e) {
-      toast('Send failed: ' + e.message, 'error');
+      const msg = e.message || '';
+      if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('403')) {
+        toast('⚠ Apps Script permission denied — re-deploy with "Anyone" access (see console for steps)', 'error', 7000);
+        console.warn(
+          'Apps Script permission error.\n' +
+          'Fix: Open your Apps Script → Deploy → Manage Deployments → Edit → \n' +
+          '  • Execute as: Me\n' +
+          '  • Who has access: Anyone\n' +
+          'Then copy the new URL and paste it in Payroll Settings.'
+        );
+      } else {
+        toast('Send failed: ' + msg, 'error');
+      }
     } finally { hideLoading(); }
     return;
   }
@@ -7008,11 +7071,27 @@ async function emailDailyReport() {
         // CORS blocked — use no-cors (can't read response but script still fires)
       }
       if (!sent) {
-        await fetch(url, { method: 'GET', mode: 'no-cors' });
-        toast('✅ Email sent via Apps Script', 'success');
+        try {
+          await fetch(url, { method: 'GET', mode: 'no-cors' });
+          toast('✅ Email triggered via Apps Script (no-cors — check your inbox to confirm)', 'success');
+        } catch(ncErr) {
+          toast('⚠ Apps Script unreachable — check the URL and deployment access in Payroll Settings', 'error', 6000);
+        }
       }
     } catch(e) {
-      toast('Send failed: ' + e.message + ' — check your Apps Script URL in Payroll Settings', 'error');
+      const msg = e.message || '';
+      if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('403')) {
+        toast('⚠ Apps Script permission denied — re-deploy your script with "Anyone" access (see console for steps)', 'error', 7000);
+        console.warn(
+          'Apps Script permission error.\n' +
+          'Fix: Open your Apps Script → Deploy → Manage Deployments → Edit → \n' +
+          '  • Execute as: Me\n' +
+          '  • Who has access: Anyone\n' +
+          'Then copy the new URL and paste it in Payroll Settings.'
+        );
+      } else {
+        toast('Send failed: ' + msg + ' — check your Apps Script URL in Payroll Settings', 'error');
+      }
     } finally { hideLoading(); }
     return;
   }
@@ -7438,9 +7517,12 @@ function supervisorUncheck(taskId, shift) { return uncheckTask(taskId, shift); }
       </div>
       <div id="pe-calc-preview" style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin:10px 0;display:none"></div>
       <div class="form-group"><label class="form-label">Remarks</label><input type="text" class="form-control" id="pe-remarks" placeholder="e.g. Probation, Bonus, Medical leave..."></div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="closeModal('modal-payroll-entry')">Cancel</button>
-        <button class="btn btn-primary" style="background:#0369a1" onclick="savePayrollEntry()">Save Entry</button>
+      <div class="form-actions" style="justify-content:space-between">
+        <button class="btn btn-danger btn-sm" onclick="resetPayrollEntry()" title="Clear all data for this staff member this month">🗑 Reset</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="closeModal('modal-payroll-entry')">Cancel</button>
+          <button class="btn btn-primary" style="background:#0369a1" onclick="savePayrollEntry()">💾 Save Entry</button>
+        </div>
       </div>
     </div>
   </div>
