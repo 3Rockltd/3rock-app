@@ -2152,6 +2152,12 @@ async function initApp() {
     history.pushState({ tab: 'dashboard' }, '', '');
     history.pushState({ tab: 'dashboard' }, '', '');
   } catch(e) {}
+
+  setSyncDot('syncing');
+
+  // Load payroll settings immediately so webhook URL is available on every device/login
+  loadPayrollSettingsFromSupabase().catch(function(e){ console.warn('Settings preload:', e); });
+
   // Run post-login checks after a short delay so state loads first
   setTimeout(function() {
     checkMissedDailyReport();
@@ -2165,11 +2171,11 @@ async function initApp() {
       document.getElementById('director-metrics-section').style.display = 'block';
       // Load current month awards for dashboard
       const curMonth = todayStr().slice(0,7);
-      const savedAwards = getPayrollAwards(curMonth);
-      renderAwardsDashboard(curMonth, savedAwards);
+      loadPayrollAwardsFromSupabase(curMonth).then(function(awards){
+        renderAwardsDashboard(curMonth, awards);
+      });
     }
   }
-  setSyncDot('syncing');
   await loadInitialData();
   renderAll();
 }
@@ -5684,7 +5690,7 @@ function openPayrollSettings() {
   openModal('modal-payroll-settings');
 }
 
-function savePayrollSettings() {
+async function savePayrollSettings() {
   const s = {
     baseSalary: parseFloat(document.getElementById('ps-base-salary').value) || 1100,
     absentRate: parseFloat(document.getElementById('ps-absent-rate').value) || 50,
@@ -5697,10 +5703,33 @@ function savePayrollSettings() {
     reportDeadline: document.getElementById('ps-report-deadline').value || '21:00',
     appsScriptWebhookUrl: document.getElementById('ps-webhook-url').value.trim()
   };
-  savePayrollSettingsToLocal(s);
-  closeModal('modal-payroll-settings');
-  renderPayroll();
-  toast('Payroll settings saved', 'success');
+  // Update in-memory cache immediately
+  payrollSettings = s;
+  // Save to Supabase and wait for confirmation
+  showLoading('Saving settings…');
+  try {
+    const payload = {
+      id:              'global',
+      base_salary:     s.baseSalary,
+      absent_rate:     s.absentRate,
+      uniform_rate:    s.uniformRate,
+      working_days:    s.workingDays,
+      off_days:        s.offDays,
+      director_emails: s.directorEmails  || '',
+      manager_emails:  s.managerEmails   || '',
+      reminder_day:    s.reminderDay     || 0,
+      report_deadline: s.reportDeadline  || '21:00',
+      webhook_url:     s.appsScriptWebhookUrl || '',
+      updated_at:      new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('payroll_settings').upsert(payload);
+    if (error) throw error;
+    closeModal('modal-payroll-settings');
+    renderPayroll();
+    toast('✅ Settings saved — synced to all devices', 'success');
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
 }
 
 async function loadPayrollMonth() {
