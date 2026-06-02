@@ -842,7 +842,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         <!-- ATTENDANCE SECTION -->
         <div class="section-title">👥 Attendance</div>
         <div class="card" style="padding:14px;margin-bottom:12px">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Tap each staff member to cycle: Present → Absent → On Permission</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Tap each staff member to cycle: Present → Absent → On Permission → Off Duty</div>
           <div id="dr-attendance-grid" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         </div>
 
@@ -906,6 +906,15 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div class="section-title">📝 Additional Notes & Issues</div>
         <div class="card" style="padding:14px;margin-bottom:12px">
           <textarea class="form-control" id="dr-issues" rows="3" placeholder="Any issues, complaints, damages, or notes to flag for management..."></textarea>
+        </div>
+
+        <!-- SUPERVISOR SIGN-OFF -->
+        <div class="section-title">✍️ Sign Off</div>
+        <div class="card" style="padding:14px;margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Supervisor Name</label>
+            <input type="text" class="form-control" id="dr-supervisor-name" placeholder="Enter name of supervisor submitting this report" autocomplete="name">
+          </div>
         </div>
 
         <!-- ACTION BUTTONS -->
@@ -6426,35 +6435,33 @@ async function emailPayrollReport() {
   if (s.appsScriptWebhookUrl && s.appsScriptWebhookUrl.startsWith('https://')) {
     showLoading('Sending payroll email…');
     try {
-      const to   = encodeURIComponent([s.directorEmails, s.managerEmails].filter(Boolean).join(','));
-      const subj = encodeURIComponent('💰 Payroll Register — ' + monthLabel);
-      const url  = s.appsScriptWebhookUrl
+      const toList = [s.directorEmails, s.managerEmails].filter(Boolean).join(',');
+      if (!toList) { toast('Add director/manager emails in Payroll Settings first', 'error'); return; }
+      const subj = '💰 Payroll Register — ' + monthLabel;
+      // Pass everything as GET params — html body sent as encoded param so script just sends it
+      const url = s.appsScriptWebhookUrl
         + '?action=sendPayroll'
-        + '&to=' + to
-        + '&subject=' + subj
-        + '&month=' + encodeURIComponent(month)
-        + '&source=app';
+        + '&to='      + encodeURIComponent(toList)
+        + '&subject=' + encodeURIComponent(subj)
+        + '&month='   + encodeURIComponent(month)
+        + '&htmlBody=' + encodeURIComponent(html);
       try {
         const resp = await fetch(url, { method: 'GET', mode: 'cors' });
         if (resp.ok) {
           const json = await resp.json().catch(function(){ return {}; });
-          toast(json.ok === false ? ('Error: ' + (json.error || 'Unknown')) : '✅ Payroll email sent', json.ok === false ? 'error' : 'success');
+          if (json.ok === false) { toast('Error: ' + (json.error || 'Unknown'), 'error'); }
+          else { toast('✅ Payroll email sent', 'success'); }
           return;
         }
-      } catch(e) { /* fall through to no-cors */ }
+      } catch(corsErr) { /* CORS blocked — fall through to no-cors fire-and-forget */ }
+      // no-cors fallback — can't confirm delivery but script will receive and send
       await fetch(url, { method: 'GET', mode: 'no-cors' });
-      toast('✅ Payroll email sent via Apps Script', 'success');
+      toast('✅ Payroll email triggered (check inbox to confirm)', 'success');
     } catch(e) {
       const msg = e.message || '';
       if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('403')) {
-        toast('⚠ Apps Script permission denied — re-deploy with "Anyone" access (see console for steps)', 'error', 7000);
-        console.warn(
-          'Apps Script permission error.\n' +
-          'Fix: Open your Apps Script → Deploy → Manage Deployments → Edit → \n' +
-          '  • Execute as: Me\n' +
-          '  • Who has access: Anyone\n' +
-          'Then copy the new URL and paste it in Payroll Settings.'
-        );
+        toast('⚠ Apps Script permission denied — re-deploy with "Anyone" access (see console)', 'error', 7000);
+        console.warn('Fix: Apps Script → Deploy → Manage Deployments → Edit → Execute as: Me, Who has access: Anyone');
       } else {
         toast('Send failed: ' + msg, 'error');
       }
@@ -6857,13 +6864,17 @@ function showDraftForm(date) {
   document.getElementById('dr-evening-staff').value = '';
   document.getElementById('dr-evening-narrative').value = '';
   document.getElementById('dr-issues').value = '';
+  document.getElementById('dr-supervisor-name').value = '';
   drPhotos = [];
   renderDrPhotos();
   clearShiftTags();
 
   // Build attendance grid
   drAttendance = {};
-  state.staff.forEach(function(st) { drAttendance[st.id] = 'present'; });
+  state.staff.forEach(function(st) {
+    // Default off-shift staff to off_duty, everyone else present
+    drAttendance[st.id] = (st.status === 'Off Shift' || st.status === 'On Leave') ? 'off_duty' : 'present';
+  });
   renderAttendanceGrid();
 }
 
@@ -6894,6 +6905,7 @@ function editDailyReport() {
   document.getElementById('dr-evening-staff').value = d.evening_staff || '';
   document.getElementById('dr-evening-narrative').value = d.evening_narrative || '';
   document.getElementById('dr-issues').value = d.issues || '';
+  document.getElementById('dr-supervisor-name').value = d.supervisor_name || '';
 
   // Restore attendance
   drAttendance = {};
@@ -6919,7 +6931,8 @@ function renderAttendanceGrid() {
   const statusConfig = {
     present:    { label:'Present',     bg:'#1e3a5f', color:'#fff' },
     absent:     { label:'Absent',      bg:'#dc2626', color:'#fff' },
-    permission: { label:'Permission',  bg:'#d97706', color:'#fff' }
+    permission: { label:'Permission',  bg:'#d97706', color:'#fff' },
+    off_duty:   { label:'Off Duty',    bg:'#64748b', color:'#fff' }
   };
   grid.innerHTML = state.staff.map(function(st) {
     const status = drAttendance[st.id] || 'present';
@@ -6932,9 +6945,9 @@ function renderAttendanceGrid() {
 }
 
 function cycleAttendance(staffId) {
-  const order = ['present', 'absent', 'permission'];
+  const order = ['present', 'absent', 'permission', 'off_duty'];
   const cur = drAttendance[staffId] || 'present';
-  drAttendance[staffId] = order[(order.indexOf(cur) + 1) % 3];
+  drAttendance[staffId] = order[(order.indexOf(cur) + 1) % 4];
   renderAttendanceGrid();
 }
 
@@ -6991,9 +7004,11 @@ async function submitDailyReport() {
   }
 
   // Count attendance
-  const presentStaff = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
-  const absentStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
+  const presentStaff    = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
+  const absentStaff     = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
   const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
+  const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
+  const supervisorName  = (document.getElementById('dr-supervisor-name').value || '').trim();
 
   const reportData = {
     id: date,
@@ -7007,11 +7022,13 @@ async function submitDailyReport() {
     issues: issues,
     photos: JSON.stringify(drPhotos),
     attendance: JSON.stringify(drAttendance),
-    present_count: presentStaff.length,
-    absent_count: absentStaff.length,
+    present_count:    presentStaff.length,
+    absent_count:     absentStaff.length,
     permission_count: permissionStaff.length,
-    submitted_by: currentUser ? currentUser.name : '',
-    submitted_role: currentUser ? currentUser.role : '',
+    off_duty_count:   offDutyStaff.length,
+    supervisor_name:  supervisorName || (currentUser ? currentUser.name : ''),
+    submitted_by:     currentUser ? currentUser.name : '',
+    submitted_role:   currentUser ? currentUser.role : '',
     submitted_at: new Date().toISOString()
   };
 
@@ -7039,23 +7056,23 @@ async function submitDailyReport() {
       if (!rec[tallyKey]) {
         rec[tallyKey] = status;
         rec._dailyDays = (rec._dailyDays || 0) + 1;
-        if (status === 'present') {
-          rec.daysPresent = (rec.daysPresent || 0) + 1;
-        } else if (status === 'permission') {
-          rec.absentPerm = (rec.absentPerm || 0) + 1;
-        } else if (status === 'absent') {
-          rec.absentNoPerm = (rec.absentNoPerm || 0) + 1;
-        }
+        // off_duty doesn't count as present, absent, or permission — neutral
+        if (status === 'present')    { rec.daysPresent = (rec.daysPresent || 0) + 1; }
+        else if (status === 'permission') { rec.absentPerm = (rec.absentPerm || 0) + 1; }
+        else if (status === 'absent')     { rec.absentNoPerm = (rec.absentNoPerm || 0) + 1; }
+        // off_duty: no payroll effect
       } else if (rec[tallyKey] !== status) {
-        // Status changed for this date — adjust
+        // Status changed for this date — reverse old tally, apply new
         const old = rec[tallyKey];
-        if (old === 'present') rec.daysPresent = Math.max(0, (rec.daysPresent || 1) - 1);
-        else if (old === 'permission') rec.absentPerm = Math.max(0, (rec.absentPerm || 1) - 1);
-        else if (old === 'absent') rec.absentNoPerm = Math.max(0, (rec.absentNoPerm || 1) - 1);
+        if (old === 'present')    rec.daysPresent  = Math.max(0, (rec.daysPresent  || 1) - 1);
+        else if (old === 'permission') rec.absentPerm   = Math.max(0, (rec.absentPerm   || 1) - 1);
+        else if (old === 'absent')     rec.absentNoPerm = Math.max(0, (rec.absentNoPerm || 1) - 1);
+        // off_duty had no tally to reverse
         rec[tallyKey] = status;
-        if (status === 'present') rec.daysPresent = (rec.daysPresent || 0) + 1;
-        else if (status === 'permission') rec.absentPerm = (rec.absentPerm || 0) + 1;
-        else if (status === 'absent') rec.absentNoPerm = (rec.absentNoPerm || 0) + 1;
+        if (status === 'present')    rec.daysPresent  = (rec.daysPresent  || 0) + 1;
+        else if (status === 'permission') rec.absentPerm   = (rec.absentPerm   || 0) + 1;
+        else if (status === 'absent')     rec.absentNoPerm = (rec.absentNoPerm || 0) + 1;
+        // off_duty: no payroll effect
       }
     });
     savePayrollRecordsToLocal(month, payRecords);
@@ -7076,9 +7093,10 @@ async function submitDailyReport() {
 
 function previewDailyReport() {
   const date = drCurrentDate || todayStr();
-  const presentStaff = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
-  const absentStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
+  const presentStaff    = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
+  const absentStaff     = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
   const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
+  const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
   const draft = {
     date: date,
     morning_staff: document.getElementById('dr-morning-staff').value,
@@ -7119,9 +7137,10 @@ function buildReportEmailHTML(data) {
   // Attendance
   var attendance = {};
   try { attendance = typeof data.attendance === 'string' ? JSON.parse(data.attendance) : (data.attendance || {}); } catch(e) {}
-  var presentList = state.staff.filter(function(s){ return (attendance[s.id]||'present')==='present'; });
-  var absentList  = state.staff.filter(function(s){ return attendance[s.id]==='absent'; });
-  var permList    = state.staff.filter(function(s){ return attendance[s.id]==='permission'; });
+  var presentList  = state.staff.filter(function(s){ return (attendance[s.id]||'present')==='present'; });
+  var absentList   = state.staff.filter(function(s){ return attendance[s.id]==='absent'; });
+  var permList     = state.staff.filter(function(s){ return attendance[s.id]==='permission'; });
+  var offDutyList  = state.staff.filter(function(s){ return attendance[s.id]==='off_duty'; });
 
   // Photos
   var photos = [];
@@ -7185,7 +7204,7 @@ function buildReportEmailHTML(data) {
     + kpiCard(String(presentList.length), 'Staff Present', '#2563eb', '#1d4ed8')
     + kpiCard(String(absentList.length), 'Staff Absent', '#dc2626', '#b91c1c')
     + kpiCard(String(permList.length), 'On Permission', '#16a34a', '#15803d')
-    + kpiCard(String([data.morning_narrative, data.afternoon_narrative, data.evening_narrative].filter(Boolean).length), 'Total Reports', '#2563eb', '#1d4ed8')
+    + kpiCard(String(offDutyList.length), 'Off Duty', '#64748b', '#475569')
     + kpiCard(String(photos.length), 'Photos', '#7c3aed', '#6d28d9')
     + kpiCard(String(totalIssues), 'Issues', '#dc2626', '#b91c1c')
     + '</div></div>'
@@ -7205,6 +7224,12 @@ function buildReportEmailHTML(data) {
       + '<h3 style="font-size:16px;font-weight:700;color:#d97706;margin:0 0 12px;display:flex;align-items:center;gap:6px">🟡 On Permission:</h3>'
       + permList.map(function(s){return '<span style="display:inline-block;background:#d97706;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px">'+esc(s.name.toUpperCase())+'</span>';}).join('') + '</div>' : '')
 
+
+    // Off Duty
+    + (offDutyList.length ? '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
+      + '<h3 style="font-size:16px;font-weight:700;color:#64748b;margin:0 0 12px;display:flex;align-items:center;gap:6px">⚫ Off Duty:</h3>'
+      + offDutyList.map(function(s){return '<span style="display:inline-block;background:#64748b;color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin:3px">'+esc(s.name.toUpperCase())+'</span>';}).join('') + '</div>' : '')
+
     // Shift Reports
     + '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
     + '<h3 style="font-size:16px;font-weight:700;color:#1e3a5f;margin:0 0 4px;display:flex;align-items:center;gap:6px">📋 Shift Reports</h3>'
@@ -7222,8 +7247,9 @@ function buildReportEmailHTML(data) {
 
     // Footer
     + '<div style="background:#fff;border-radius:12px;padding:16px;border-left:4px solid #1e3a5f;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
-    + '<p style="color:#94a3b8;font-size:12px;margin:0 0 4px">Generated: ' + new Date(data.submitted_at || Date.now()).toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'}) + '</p>'
-    + '<p style="color:#1e3a5f;font-weight:700;font-size:15px;margin:0">' + esc(data.submitted_by || '') + '</p>'
+    + '<p style="color:#94a3b8;font-size:12px;margin:0 0 8px">Generated: ' + new Date(data.submitted_at || Date.now()).toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'}) + '</p>'
+    + '<p style="color:#64748b;font-size:11px;font-weight:600;margin:0 0 2px;text-transform:uppercase;letter-spacing:.5px">Supervisor</p>'
+    + '<p style="color:#1e3a5f;font-weight:700;font-size:16px;margin:0 0 2px">' + esc(data.supervisor_name || data.submitted_by || '') + '</p>'
     + '<p style="color:#64748b;font-size:12px;margin:0;text-transform:capitalize">' + esc(data.submitted_role || '') + '</p>'
     + '</div>'
 
@@ -7316,7 +7342,7 @@ function copyDailyReport() {
     + (data.afternoon_narrative ? '☀️ AFTERNOON SHIFT\n'+(data.afternoon_staff?data.afternoon_staff+': ':'')+data.afternoon_narrative+'\n\n':'')
     + (data.evening_narrative ? '🌙 EVENING SHIFT\n'+(data.evening_staff?data.evening_staff+': ':'')+data.evening_narrative+'\n\n':'')
     + (data.issues ? 'NOTES & ISSUES\n'+data.issues+'\n\n':'')
-    + 'Submitted by: '+(data.submitted_by||'')+' · '+new Date(data.submitted_at||Date.now()).toLocaleString();
+    + 'Supervisor: '+(data.supervisor_name||data.submitted_by||'')+' · '+new Date(data.submitted_at||Date.now()).toLocaleString();
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function(){toast('Report copied ✅','success');});
   } else {
@@ -7346,9 +7372,10 @@ function exportDailyReportPDF() {
   var y = 48;
   var attendance = {};
   try { attendance = typeof data.attendance==='string'?JSON.parse(data.attendance):(data.attendance||{}); } catch(e){}
-  var presentList = state.staff.filter(function(s){return (attendance[s.id]||'present')==='present';});
-  var absentList  = state.staff.filter(function(s){return attendance[s.id]==='absent';});
-  var permList    = state.staff.filter(function(s){return attendance[s.id]==='permission';});
+  var presentList  = state.staff.filter(function(s){return (attendance[s.id]||'present')==='present';});
+  var absentList   = state.staff.filter(function(s){return attendance[s.id]==='absent';});
+  var permList     = state.staff.filter(function(s){return attendance[s.id]==='permission';});
+  var offDutyList  = state.staff.filter(function(s){return attendance[s.id]==='off_duty';});
 
   function pdfSection(title, color) {
     doc.setFillColor(color[0],color[1],color[2]); doc.rect(14,y,182,7,'F');
@@ -7365,6 +7392,7 @@ function exportDailyReportPDF() {
   pdfText('Staff Present ('+presentList.length+'): '+presentList.map(function(s){return s.name;}).join(', '));
   pdfText('Staff Absent ('+absentList.length+'): '+(absentList.length?absentList.map(function(s){return s.name;}).join(', '):'None'));
   pdfText('On Permission ('+permList.length+'): '+(permList.length?permList.map(function(s){return s.name;}).join(', '):'None'));
+  pdfText('Off Duty ('+offDutyList.length+'): '+(offDutyList.length?offDutyList.map(function(s){return s.name;}).join(', '):'None'));
   y+=4;
 
   if (data.morning_narrative) {
@@ -7392,7 +7420,7 @@ function exportDailyReportPDF() {
   doc.setTextColor(100,116,139); doc.setFontSize(8);
   doc.text('Generated: '+new Date(data.submitted_at||Date.now()).toLocaleString(),16,y+6);
   doc.setTextColor(30,58,95); doc.setFont('helvetica','bold'); doc.setFontSize(9);
-  doc.text(data.submitted_by||'',16,y+12);
+  doc.text('Supervisor: '+(data.supervisor_name||data.submitted_by||''),16,y+12);
   doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,116,139);
   doc.text((data.submitted_role||'').charAt(0).toUpperCase()+(data.submitted_role||'').slice(1),16,y+17);
 
