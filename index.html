@@ -5,50 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>3-Rock Builders</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-async function syncAttendanceToPayroll(staffId, monthStr) {
-    const { data: reports } = await supabase.from('daily_reports').select('attendance');
-    let present = 0, absent = 0, permission = 0;
-    
-    reports.forEach(r => {
-        if (r.attendance && r.attendance[staffId]) {
-            const status = r.attendance[staffId].status;
-            if (status === 'Present') present++;
-            else if (status === 'Absent') absent++;
-            else if (status === 'Permission') permission++;
-        }
-    });
-    
-    const presentInput = document.getElementById('pe-present');
-    const absentInput = document.getElementById('pe-absent');
-    if (presentInput) presentInput.value = present;
-    if (absentInput) absentInput.value = absent;
-    calculatePayrollDeductions();
-}
-
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
-async function syncAttendanceToPayroll(staffId, monthStr) {
-    const { data: reports } = await supabase.from('daily_reports').select('attendance');
-    let present = 0, absent = 0, permission = 0;
-    
-    reports.forEach(r => {
-        if (r.attendance && r.attendance[staffId]) {
-            const status = r.attendance[staffId].status;
-            if (status === 'Present') present++;
-            else if (status === 'Absent') absent++;
-            else if (status === 'Permission') permission++;
-        }
-    });
-    
-    const presentInput = document.getElementById('pe-present');
-    const absentInput = document.getElementById('pe-absent');
-    if (presentInput) presentInput.value = present;
-    if (absentInput) absentInput.value = absent;
-    calculatePayrollDeductions();
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --navy:#0a1628;--navy-mid:#142040;--navy-light:#1e3060;
@@ -7667,27 +7625,6 @@ function clearShiftTags() {
 // Fix supervisorUncheck
 function supervisorUncheck(taskId, shift) { return uncheckTask(taskId, shift); }
 
-
-
-async function syncAttendanceToPayroll(staffId, monthStr) {
-    const { data: reports } = await supabase.from('daily_reports').select('attendance');
-    let present = 0, absent = 0, permission = 0;
-    
-    reports.forEach(r => {
-        if (r.attendance && r.attendance[staffId]) {
-            const status = r.attendance[staffId].status;
-            if (status === 'Present') present++;
-            else if (status === 'Absent') absent++;
-            else if (status === 'Permission') permission++;
-        }
-    });
-    
-    const presentInput = document.getElementById('pe-present');
-    const absentInput = document.getElementById('pe-absent');
-    if (presentInput) presentInput.value = present;
-    if (absentInput) absentInput.value = absent;
-    calculatePayrollDeductions();
-}
 
 </script>
 
