@@ -766,6 +766,7 @@ textarea.form-control{resize:vertical;min-height:56px}
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">&nbsp;</label>
             <button class="btn btn-primary" onclick="loadPayrollMonth()">Load</button>
+            <button class="btn btn-outline btn-sm" onclick="recalcPayrollFromReports()" title="Rebuild attendance from submitted daily reports">🔄 Recalc</button>
           </div>
         </div>
       </div>
@@ -5739,13 +5740,14 @@ async function loadPayrollFromSupabase(month) {
     if (!error && data && data.length) {
       const records = {};
       data.forEach(function(row) {
+        const ps = getPayrollSettings();
         records[row.staff_id] = {
-          workingDays:     row.working_days,
-          daysPresent:     row.days_present,
-          absentPerm:      row.absent_perm,
-          absentNoPerm:    row.absent_no_perm,
-          uniformDays:     row.uniform_days,
-          otherDeductions: row.other_deductions,
+          workingDays:     row.working_days     != null ? row.working_days     : ps.workingDays,
+          daysPresent:     row.days_present     != null ? row.days_present     : 0,
+          absentPerm:      row.absent_perm      != null ? row.absent_perm      : 0,
+          absentNoPerm:    row.absent_no_perm   != null ? row.absent_no_perm   : 0,
+          uniformDays:     row.uniform_days     != null ? row.uniform_days     : 0,
+          otherDeductions: row.other_deductions != null ? row.other_deductions : 0,
           remarks:         row.remarks || ''
         };
       });
@@ -5813,6 +5815,58 @@ async function savePayrollSettings() {
     toast('✅ Settings saved — synced to all devices', 'success');
   } catch(e) {
     toast('Save failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+// ── Rebuild payroll tallies from submitted daily reports ──────────
+async function recalcPayrollFromReports() {
+  const month = payrollCurrentMonth;
+  if (!month) { toast('Load a month first', 'error'); return; }
+  showLoading('Rebuilding from daily reports…');
+  try {
+    // Fetch all daily_reports for this month from Supabase
+    const { data: reports, error } = await supabaseClient
+      .from('daily_reports')
+      .select('date,attendance')
+      .gte('date', month + '-01')
+      .lte('date', month + '-31');
+    if (error) throw error;
+    if (!reports || !reports.length) {
+      toast('No daily reports found for ' + month, 'info'); return;
+    }
+
+    const s = getPayrollSettings();
+    // Fresh records — zero everything out for the month
+    const records = {};
+    state.staff.forEach(function(st) {
+      records[st.id] = {
+        workingDays: s.workingDays, daysPresent: 0,
+        absentPerm: 0, absentNoPerm: 0,
+        uniformDays: 0, otherDeductions: 0, remarks: ''
+      };
+    });
+
+    // Count each report day
+    reports.forEach(function(row) {
+      let attendance = {};
+      try { attendance = (typeof row.attendance === 'string') ? JSON.parse(row.attendance) : (row.attendance || {}); } catch(e) {}
+      state.staff.forEach(function(st) {
+        const status = attendance[st.id] || 'present';
+        const rec = records[st.id];
+        if (status === 'present')         rec.daysPresent  = (rec.daysPresent  || 0) + 1;
+        else if (status === 'permission') rec.absentPerm   = (rec.absentPerm   || 0) + 1;
+        else if (status === 'absent')     rec.absentNoPerm = (rec.absentNoPerm || 0) + 1;
+        // off_duty: no effect
+      });
+    });
+
+    // Save back to Supabase
+    payrollRecords[month] = records;
+    savePayrollRecordsToLocal(month, records);
+    renderPayroll();
+    toast('✅ Rebuilt from ' + reports.length + ' daily report(s)', 'success');
+  } catch(e) {
+    toast('Recalc failed: ' + e.message, 'error');
   } finally { hideLoading(); }
 }
 
@@ -6444,25 +6498,27 @@ async function emailPayrollReport() {
       const toList = [s.directorEmails, s.managerEmails].filter(Boolean).join(',');
       if (!toList) { toast('Add director/manager emails in Payroll Settings first', 'error'); return; }
       const subj = '💰 Payroll Register — ' + monthLabel;
-      // Pass everything as GET params — html body sent as encoded param so script just sends it
-      const url = payrollUrl
-        + '?action=sendPayroll'
-        + '&to='      + encodeURIComponent(toList)
-        + '&subject=' + encodeURIComponent(subj)
-        + '&month='   + encodeURIComponent(month)
-        + '&htmlBody=' + encodeURIComponent(html);
+      // POST — GET would truncate the HTML body (URLs have ~2000 char limit)
+      const postUrl = payrollUrl + '?action=sendPayroll';
+      const postBody = JSON.stringify({ to: toList, subject: subj, month: month, htmlBody: html });
+      let sent = false;
       try {
-        const resp = await fetch(url, { method: 'GET', mode: 'cors' });
+        const resp = await fetch(postUrl, {
+          method: 'POST', mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: postBody
+        });
         if (resp.ok) {
           const json = await resp.json().catch(function(){ return {}; });
           if (json.ok === false) { toast('Error: ' + (json.error || 'Unknown'), 'error'); }
           else { toast('✅ Payroll email sent', 'success'); }
-          return;
+          sent = true;
         }
-      } catch(corsErr) { /* CORS blocked — fall through to no-cors fire-and-forget */ }
-      // no-cors fallback — can't confirm delivery but script will receive and send
-      await fetch(url, { method: 'GET', mode: 'no-cors' });
-      toast('✅ Payroll email triggered (check inbox to confirm)', 'success');
+      } catch(corsErr) { /* CORS blocked — try no-cors */ }
+      if (!sent) {
+        await fetch(postUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: postBody });
+        toast('✅ Payroll email triggered (check inbox to confirm)', 'success');
+      }
     } catch(e) {
       const msg = e.message || '';
       if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('403')) {
