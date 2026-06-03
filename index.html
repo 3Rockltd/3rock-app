@@ -339,8 +339,8 @@ textarea.form-control{resize:vertical;min-height:56px}
 .shift-tabs{display:flex;gap:4px;margin-bottom:14px}
 .shift-tab{flex:1;padding:8px 4px;border-radius:var(--r-md);border:1.5px solid var(--border);background:#fff;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer;text-align:center;transition:all .2s}
 .shift-tab.active.morning{background:#fef3c7;border-color:#d97706;color:#92400e}
-.shift-tab.active.noon{background:#dbeafe;border-color:#2563eb;color:#1e40af}
-.shift-tab.active.night{background:#ede9fe;border-color:#7c3aed;color:#4c1d95}
+.shift-tab.active.afternoon{background:#dbeafe;border-color:#2563eb;color:#1e40af}
+.shift-tab.active.evening{background:#ede9fe;border-color:#7c3aed;color:#4c1d95}
 .task-zone-header{background:var(--surface);padding:8px 12px;border-radius:var(--r-sm);margin-bottom:6px;font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between}
 .task-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);margin-bottom:5px;transition:all .2s;cursor:pointer}
 .task-item.done{background:#f0fdf4;border-color:#86efac}
@@ -363,8 +363,8 @@ textarea.form-control{resize:vertical;min-height:56px}
 .cleaner-name-big{font-family:"Barlow Condensed",sans-serif;font-size:28px;font-weight:800}
 .cleaner-shift-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:6px}
 .shift-morning{background:#fef3c7;color:#92400e}
-.shift-noon{background:#dbeafe;color:#1e40af}
-.shift-night{background:#ede9fe;color:#4c1d95}
+.shift-afternoon{background:#dbeafe;color:#1e40af}
+.shift-evening{background:#ede9fe;color:#4c1d95}
 
 /* ATTENDANCE */
 .attend-card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-lg);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
@@ -892,14 +892,18 @@ textarea.form-control{resize:vertical;min-height:56px}
           </div>
         </div>
 
-        <!-- PHOTOS -->
-        <div class="section-title">📷 Photos</div>
+        <!-- MEDIA -->
+        <div class="section-title">📸 Media</div>
         <div class="card" style="padding:14px;margin-bottom:12px">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Add photos showing work completed today (max 5)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Add photos or videos showing work completed today (max 5 items)</div>
           <div id="dr-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
           <label style="display:inline-flex;align-items:center;gap:6px;background:var(--off-white);border:1.5px dashed var(--border);border-radius:var(--r-md);padding:10px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--navy)">
             📷 Add Photo
             <input type="file" id="dr-photo-input" accept="image/*" multiple style="display:none" onchange="drAddPhotos(event)">
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:6px;background:var(--off-white);border:1.5px dashed var(--border);border-radius:var(--r-md);padding:10px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--navy);margin-left:8px">
+            🎥 Add Video
+            <input type="file" id="dr-video-input" accept="video/*" multiple style="display:none" onchange="drAddVideos(event)">
           </label>
         </div>
 
@@ -921,6 +925,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         <!-- ACTION BUTTONS -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:80px">
           <button class="btn btn-primary" style="flex:1;min-width:140px" onclick="submitDailyReport()">✅ Submit &amp; Send Report</button>
+          <button class="btn btn-success" id="dr-save-btn" style="display:none" onclick="saveReportWithoutEmail()">💾 Save Changes</button>
           <button class="btn btn-outline" onclick="previewDailyReport()">👁 Preview Email</button>
         </div>
       </div>
@@ -1004,7 +1009,7 @@ textarea.form-control{resize:vertical;min-height:56px}
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div>
-      <div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Noon</option><option>Night</option></select></div>
+      <div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></div>
     </div>
     <div class="section-sep red">Family & Marital Status</div>
     <div class="form-row">
@@ -1395,8 +1400,8 @@ textarea.form-control{resize:vertical;min-height:56px}
         <label class="form-label">Assigned Shift</label>
         <select class="form-control" id="task-shift-select">
           <option value="Morning">Morning</option>
-          <option value="Noon">Noon</option>
-          <option value="Night">Night</option>
+          <option value="Afternoon">Afternoon</option>
+          <option value="Evening">Evening</option>
           <option value="All">All Shifts</option>
         </select>
       </div>
@@ -2461,7 +2466,7 @@ function renderDashboard() {
     const todayLogs = state.taskLogs.filter(l => l.date === todayStr());
     const totalTasks = state.tasks.length;
     const pct = totalTasks ? Math.round(todayLogs.length / totalTasks * 100) : 0;
-    const shiftBreakdown = ['Morning','Noon','Night'].map(sh => {
+    const shiftBreakdown = ['Morning','Afternoon','Evening'].map(sh => {
       const shTasks = state.tasks.filter(t => t.shift === sh || t.shift === 'All');
       const shDone = todayLogs.filter(l => l.shift === sh).length;
       return `<div class="prog-item"><div class="prog-val">${shDone}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
@@ -2483,7 +2488,7 @@ function renderCleanerDashboard() {
   const todayLogs = state.taskLogs.filter(l => l.date === todayStr() && l.shift === myShift);
   const done = myTasks.filter(t => todayLogs.some(l => l.taskid === t.id)).length;
   const pct = myTasks.length ? Math.round(done / myTasks.length * 100) : 0;
-  const shiftCls = myShift === 'Morning' ? 'shift-morning' : myShift === 'Noon' ? 'shift-noon' : 'shift-night';
+  const shiftCls = myShift === 'Morning' ? 'shift-morning' : myShift === 'Afternoon' ? 'shift-afternoon' : 'shift-evening';
   const dashEl = se('screen-dashboard');
   if (!dashEl) return;
   const q = getQueue();
@@ -4218,7 +4223,7 @@ function renderManagementTasks(el) {
       </svg>
     </div>
     <div class="progress-summary">
-      ${['Morning','Noon','Night'].map(sh=>{
+      ${['Morning','Afternoon','Evening'].map(sh=>{
         const shTasks = state.tasks.filter(t=>t.assignedshift===sh||t.assignedshift==='All');
         const shHandledIds = new Set(
           todayLogs
@@ -4226,8 +4231,8 @@ function renderManagementTasks(el) {
             .map(l=>l.taskid)
         );
         const shHandled = Math.min(shTasks.filter(t => shHandledIds.has(t.id)).length, shTasks.length);
-        const bg = sh==='Morning'?'#fef3c7':sh==='Noon'?'#dbeafe':'#ede9fe';
-        const col = sh==='Morning'?'#92400e':sh==='Noon'?'#1e40af':'#4c1d95';
+        const bg = sh==='Morning'?'#fef3c7':sh==='Afternoon'?'#dbeafe':'#ede9fe';
+        const col = sh==='Morning'?'#92400e':sh==='Afternoon'?'#1e40af':'#4c1d95';
         return `<div class="prog-item" style="background:${bg};border-radius:8px;padding:8px"><div class="prog-val" style="color:${col}">${shHandled}/${shTasks.length}</div><div class="prog-lbl">${sh}</div></div>`;
       }).join('')}
     </div>
@@ -4241,7 +4246,7 @@ function renderManagementTasks(el) {
       </select>
     </div>`;
 
-  const shiftHtml = `<div class="shift-tabs">${['Morning','Noon','Night','All'].map(sh=>`<button class="shift-tab ${activeShift===sh?`active ${sh.toLowerCase()}`:''}}" onclick="setShift('${sh}')">${sh}</button>`).join('')}</div>`;
+  const shiftHtml = `<div class="shift-tabs">${['Morning','Afternoon','Evening','All'].map(sh=>`<button class="shift-tab ${activeShift===sh?`active ${sh.toLowerCase()}`:''}}" onclick="setShift('${sh}')">${sh}</button>`).join('')}</div>`;
 
   const shiftFilter = activeShift === 'All' ? null : activeShift;
   // Use the preserved value (read before innerHTML is replaced)
@@ -4286,7 +4291,7 @@ function renderCleanerTasks(el) {
   );
   const handled = allMyTasks.filter(t => handledIds.has(t.id)).length;
   const pct = allMyTasks.length > 0 ? Math.round(handled / allMyTasks.length * 100) : 0;
-  const shiftBadgeClass = myShift==='Morning'?'shift-morning':myShift==='Noon'?'shift-noon':'shift-night';
+  const shiftBadgeClass = myShift==='Morning'?'shift-morning':myShift==='Afternoon'?'shift-afternoon':'shift-evening';
 
   const headerHtml = `
     <div class="cleaner-welcome">
@@ -5139,7 +5144,7 @@ async function renderReports() {
   if (taskReport) {
     taskReport.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px">Loading task data…</div>';
     const logs = from || to ? await loadTaskLogsForRange(from, to) : state.taskLogs;
-    const rows = ['Morning','Noon','Night'].map(sh => {
+    const rows = ['Morning','Afternoon','Evening'].map(sh => {
       const shTasks = state.tasks.filter(t => t.shift===sh||t.shift==='All');
       const shDone = logs.filter(l => l.shift===sh).length;
       const pct = shTasks.length ? Math.round(shDone/shTasks.length*100) : 0;
@@ -6931,6 +6936,10 @@ function showDraftForm(date) {
   renderDrPhotos();
   clearShiftTags();
 
+  // Hide Save Changes button for new drafts
+  const saveBtn = document.getElementById('dr-save-btn');
+  if (saveBtn) saveBtn.style.display = 'none';
+
   // Build attendance grid
   drAttendance = {};
   state.staff.forEach(function(st) {
@@ -6983,6 +6992,10 @@ function editDailyReport() {
 
   const badge = document.getElementById('dr-status-badge');
   badge.innerHTML = '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">EDITING</span>';
+
+  // Show Save Changes button when editing an existing submitted report
+  const saveBtn = document.getElementById('dr-save-btn');
+  if (saveBtn) saveBtn.style.display = 'inline-flex';
 }
 
 // ── Attendance grid ───────────────────────────────────────────────
@@ -7013,18 +7026,36 @@ function cycleAttendance(staffId) {
   renderAttendanceGrid();
 }
 
-// ── Photos ────────────────────────────────────────────────────────
+// ── Media (Photos + Videos) ───────────────────────────────────────
 
 function drAddPhotos(event) {
   const files = Array.from(event.target.files);
   const remaining = 5 - drPhotos.length;
-  if (remaining <= 0) { toast('Maximum 5 photos', 'error'); return; }
+  if (remaining <= 0) { toast('Maximum 5 media items', 'error'); return; }
   const toAdd = files.slice(0, remaining);
   let loaded = 0;
   toAdd.forEach(function(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      drPhotos.push({ dataUrl: e.target.result, name: file.name });
+      drPhotos.push({ dataUrl: e.target.result, name: file.name, type: 'image' });
+      loaded++;
+      if (loaded === toAdd.length) renderDrPhotos();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function drAddVideos(event) {
+  const files = Array.from(event.target.files);
+  const remaining = 5 - drPhotos.length;
+  if (remaining <= 0) { toast('Maximum 5 media items', 'error'); return; }
+  const toAdd = files.slice(0, remaining);
+  let loaded = 0;
+  toAdd.forEach(function(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      drPhotos.push({ dataUrl: e.target.result, name: file.name, type: 'video' });
       loaded++;
       if (loaded === toAdd.length) renderDrPhotos();
     };
@@ -7037,6 +7068,13 @@ function renderDrPhotos() {
   const preview = document.getElementById('dr-photo-preview');
   if (!preview) return;
   preview.innerHTML = drPhotos.map(function(p, i) {
+    if (p.type === 'video') {
+      return '<div style="position:relative;width:72px;height:72px;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);background:#000;display:flex;align-items:center;justify-content:center">'
+        + '<video src="' + p.dataUrl + '" style="width:100%;height:100%;object-fit:cover"></video>'
+        + '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;pointer-events:none">▶️</div>'
+        + '<button onclick="drRemovePhoto(' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>'
+        + '</div>';
+    }
     return '<div style="position:relative;width:72px;height:72px;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border)">'
       + '<img src="' + p.dataUrl + '" style="width:100%;height:100%;object-fit:cover">'
       + '<button onclick="drRemovePhoto(' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>'
@@ -7151,6 +7189,58 @@ async function submitDailyReport() {
   } finally { hideLoading(); }
 }
 
+// ── Save edits without resending email ───────────────────────────
+
+async function saveReportWithoutEmail() {
+  if (!drCurrentData) { toast('No existing report to save', 'error'); return; }
+  const date = drCurrentDate || todayStr();
+  const morningStaff = document.getElementById('dr-morning-staff').value.trim();
+  const morningNarrative = document.getElementById('dr-morning-narrative').value.trim();
+  const afternoonStaff = document.getElementById('dr-afternoon-staff').value.trim();
+  const afternoonNarrative = document.getElementById('dr-afternoon-narrative').value.trim();
+  const eveningStaff = document.getElementById('dr-evening-staff').value.trim();
+  const eveningNarrative = document.getElementById('dr-evening-narrative').value.trim();
+  const issues = document.getElementById('dr-issues').value.trim();
+  const supervisorName = (document.getElementById('dr-supervisor-name').value || '').trim();
+
+  const presentStaff    = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
+  const absentStaff     = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
+  const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
+  const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
+
+  const reportData = Object.assign({}, drCurrentData, {
+    morning_staff: morningStaff,
+    morning_narrative: morningNarrative,
+    afternoon_staff: afternoonStaff,
+    afternoon_narrative: afternoonNarrative,
+    evening_staff: eveningStaff,
+    evening_narrative: eveningNarrative,
+    issues: issues,
+    photos: JSON.stringify(drPhotos),
+    attendance: JSON.stringify(drAttendance),
+    present_count:    presentStaff.length,
+    absent_count:     absentStaff.length,
+    permission_count: permissionStaff.length,
+    off_duty_count:   offDutyStaff.length,
+    supervisor_name:  supervisorName || drCurrentData.supervisor_name || (currentUser ? currentUser.name : ''),
+    last_edited_by:   currentUser ? currentUser.name : '',
+    last_edited_at:   new Date().toISOString()
+  });
+
+  showLoading('Saving report...');
+  try {
+    const { error } = await supabaseClient.from('daily_reports').upsert(reportData);
+    if (error && !error.message.includes('does not exist')) {
+      console.warn('daily_reports save:', error.message);
+    }
+    drCurrentData = reportData;
+    showSubmittedReport(reportData);
+    toast('✅ Report saved (no email sent)', 'success');
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
 // ── Preview ───────────────────────────────────────────────────────
 
 function previewDailyReport() {
@@ -7204,7 +7294,7 @@ function buildReportEmailHTML(data) {
   var permList     = state.staff.filter(function(s){ return attendance[s.id]==='permission'; });
   var offDutyList  = state.staff.filter(function(s){ return attendance[s.id]==='off_duty'; });
 
-  // Photos
+  // Media (photos + videos)
   var photos = [];
   try { photos = typeof data.photos === 'string' ? JSON.parse(data.photos) : (data.photos || []); } catch(e) {}
 
@@ -7226,14 +7316,21 @@ function buildReportEmailHTML(data) {
       + '</div>';
   }
 
-  // Photo grid
+  // Media grid (photos + videos)
   var photoHtml = '';
   if (photos.length) {
+    var photoItems = photos.filter(function(p){ return p.type !== 'video'; });
+    var videoItems = photos.filter(function(p){ return p.type === 'video'; });
+    var mediaContent = '';
+    if (photoItems.length) {
+      mediaContent += photoItems.map(function(p){ return '<img src="' + p.dataUrl + '" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0">'; }).join('');
+    }
+    if (videoItems.length) {
+      mediaContent += videoItems.map(function(p){ return '<div style="width:120px;height:90px;border-radius:8px;border:1px solid #e2e8f0;background:#000;display:inline-flex;align-items:center;justify-content:center;font-size:28px;vertical-align:top">🎥</div>'; }).join('');
+    }
     photoHtml = '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
-      + '<h3 style="font-size:16px;font-weight:700;color:#1e3a5f;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">📷 Photos</h3>'
-      + '<div style="display:flex;flex-wrap:wrap;gap:8px">'
-      + photos.map(function(p){ return '<img src="' + p.dataUrl + '" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0">'; }).join('')
-      + '</div></div>';
+      + '<h3 style="font-size:16px;font-weight:700;color:#1e3a5f;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">📸 Media</h3>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:8px">' + mediaContent + '</div></div>';
   }
 
   // Issues
@@ -7267,7 +7364,7 @@ function buildReportEmailHTML(data) {
     + kpiCard(String(absentList.length), 'Staff Absent', '#dc2626', '#b91c1c')
     + kpiCard(String(permList.length), 'On Permission', '#16a34a', '#15803d')
     + kpiCard(String(offDutyList.length), 'Off Duty', '#64748b', '#475569')
-    + kpiCard(String(photos.length), 'Photos', '#7c3aed', '#6d28d9')
+    + kpiCard(String(photos.length), 'Media', '#7c3aed', '#6d28d9')
     + kpiCard(String(totalIssues), 'Issues', '#dc2626', '#b91c1c')
     + '</div></div>'
 
