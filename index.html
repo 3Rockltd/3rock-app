@@ -7087,7 +7087,6 @@ async function submitDailyReport() {
   const supervisorName  = (document.getElementById('dr-supervisor-name').value || '').trim();
 
   const reportData = {
-    id: date,
     date: date,
     morning_staff: morningStaff,
     morning_narrative: morningNarrative,
@@ -7112,8 +7111,9 @@ async function submitDailyReport() {
   try {
     // Save to Supabase daily_reports table
     const { error } = await supabaseClient.from('daily_reports').upsert(reportData, { onConflict: 'date' });
-    if (error && !error.message.includes('does not exist')) {
-      console.warn('daily_reports save:', error.message);
+    if (error) {
+      toast('❌ Submit failed: ' + error.message, 'error');
+      return;
     }
 
     // ── AUTO-TALLY ATTENDANCE INTO PAYROLL ───────────────────────
@@ -7213,9 +7213,23 @@ async function saveReportWithoutEmail() {
 
   showLoading('Saving report...');
   try {
-    const { error } = await supabaseClient.from('daily_reports').upsert(reportData, { onConflict: 'date' });
-    if (error && !error.message.includes('does not exist')) {
-      console.warn('daily_reports save:', error.message);
+    // Strip id from payload to avoid primary key conflicts
+    const updatePayload = Object.assign({}, reportData);
+    delete updatePayload.id;
+
+    let saveError = null;
+    if (drCurrentData && drCurrentData.id) {
+      const { error } = await supabaseClient.from('daily_reports').update(updatePayload).eq('id', drCurrentData.id);
+      saveError = error;
+    } else {
+      const { error } = await supabaseClient.from('daily_reports').update(updatePayload).eq('date', date);
+      saveError = error;
+    }
+
+    if (saveError) {
+      console.error('daily_reports save error:', saveError);
+      toast('Save failed: ' + saveError.message, 'error');
+      return;
     }
     drCurrentData = reportData;
     showSubmittedReport(reportData);
