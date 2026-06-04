@@ -7206,9 +7206,7 @@ async function saveReportWithoutEmail() {
     absent_count:     absentStaff.length,
     permission_count: permissionStaff.length,
     off_duty_count:   offDutyStaff.length,
-    supervisor_name:  supervisorName || drCurrentData.supervisor_name || (currentUser ? currentUser.name : ''),
-    last_edited_by:   currentUser ? currentUser.name : '',
-    last_edited_at:   new Date().toISOString()
+    supervisor_name:  supervisorName || drCurrentData.supervisor_name || (currentUser ? currentUser.name : '')
   });
 
   showLoading('Saving report...');
