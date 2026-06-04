@@ -7715,11 +7715,20 @@ function openShiftPicker(shift) {
       lastGroup = g;
       header = '<div style="width:100%;font-size:9px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 2px 3px;margin-top:' + (g > 0 ? '6px' : '0') + '">' + groupHeaders[g] + '</div>';
     }
-    return header + '<div onclick=\"toggleShiftStaff(\\\'' + st.id + '\\\',\\\'' + shift + '\\\')\" id=\"spp-' + st.id + '\" style=\"'
-      + 'padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;user-select:none;transition:all .15s;'
-      + (isSelected ? 'background:var(--navy);color:#fff;' : 'background:var(--off-white);color:var(--text-secondary);border:1.5px solid var(--border);')
-      + '">' + esc(display.toUpperCase()) + '</div>';
+    const selStyle   = 'padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;user-select:none;transition:all .15s;background:var(--navy);color:#fff;';
+    const unselStyle = 'padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;user-select:none;transition:all .15s;background:var(--off-white);color:var(--text-secondary);border:1.5px solid var(--border);';
+    return header
+      + '<div class="spp-btn" data-id="' + st.id + '" data-shift="' + shift + '" id="spp-' + st.id + '" style="' + (isSelected ? selStyle : unselStyle) + '">'
+      + esc(display.toUpperCase()) + '</div>';
   }).join('');
+
+  // Event delegation — avoids all inline onclick escaping issues
+  grid.onclick = function(e) {
+    const btn = e.target.closest('.spp-btn');
+    if (!btn) return;
+    toggleShiftStaff(btn.dataset.id, btn.dataset.shift);
+  };
+
   openModal('modal-shift-picker');
 }
 
