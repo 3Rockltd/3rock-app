@@ -7722,32 +7722,38 @@ function openShiftPicker(shift) {
       + esc(display.toUpperCase()) + '</div>';
   }).join('');
 
-  // Event delegation — avoids all inline onclick escaping issues
-  grid.onclick = function(e) {
-    const btn = e.target.closest('.spp-btn');
-    if (!btn) return;
-    toggleShiftStaff(btn.dataset.id, btn.dataset.shift);
-  };
-
   openModal('modal-shift-picker');
 }
 
 function toggleShiftStaff(staffId, shift) {
   const sel = _shiftPickerSelected[shift];
+  if (!sel) return;
   const idx = sel.indexOf(staffId);
   if (idx === -1) { sel.push(staffId); }
   else { sel.splice(idx, 1); }
-  // Update button style live
+  const isSelected = sel.indexOf(staffId) !== -1;
   const btn = document.getElementById('spp-' + staffId);
   if (btn) {
-    const st = state.staff.find(function(s){ return s.id === staffId; });
-    const display = st ? (st.alias || st.firstname || st.name.split(' ')[0]) : '';
-    const isSelected = sel.indexOf(staffId) !== -1;
     btn.style.background = isSelected ? 'var(--navy)' : 'var(--off-white)';
-    btn.style.color       = isSelected ? '#fff' : 'var(--text-secondary)';
-    btn.style.border      = isSelected ? 'none' : '1.5px solid var(--border)';
+    btn.style.color      = isSelected ? '#fff'        : 'var(--text-secondary)';
+    btn.style.border     = isSelected ? 'none'        : '1.5px solid var(--border)';
   }
 }
+
+// Permanent delegated listener for shift picker — set once at page load
+// Avoids issues with innerHTML resets destroying per-element listeners
+document.addEventListener('click', function(e) {
+  var el = e.target;
+  // Walk up to find spp-btn (handles clicks on child text nodes too)
+  for (var i = 0; i < 4; i++) {
+    if (!el || !el.classList) break;
+    if (el.classList.contains('spp-btn')) {
+      toggleShiftStaff(el.getAttribute('data-id'), el.getAttribute('data-shift'));
+      return;
+    }
+    el = el.parentElement;
+  }
+});
 
 function confirmShiftPicker() {
   renderShiftTags(_shiftPickerShift);
