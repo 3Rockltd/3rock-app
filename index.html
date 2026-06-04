@@ -5670,13 +5670,14 @@ function getPayrollRecords(month) {
 // "records" is a JSON object keyed by staff_id, each value has the payroll fields.
 
 function serializePayrollRecords(records) {
-  // Strip memory-only _tally_* and _dailyDays keys before saving
+  // Keep _tally_YYYY-MM-DD keys (needed for deduplication across sessions)
+  // Only strip _dailyDays (derived counter, rebuilt on load)
   const clean = {};
   Object.keys(records).forEach(function(staffId) {
     const r = records[staffId];
     const row = {};
     Object.keys(r).forEach(function(k) {
-      if (!k.startsWith('_')) row[k] = r[k];
+      if (k !== '_dailyDays') row[k] = r[k];
     });
     clean[staffId] = row;
   });
@@ -5706,7 +5707,7 @@ async function loadPayrollFromSupabase(month) {
       const records = {};
       Object.keys(raw).forEach(function(staffId) {
         const r = raw[staffId];
-        records[staffId] = {
+        const rec = {
           workingDays:     r.workingDays     != null ? r.workingDays     : ps.workingDays,
           daysPresent:     r.daysPresent     != null ? r.daysPresent     : 0,
           absentPerm:      r.absentPerm      != null ? r.absentPerm      : 0,
@@ -5715,6 +5716,13 @@ async function loadPayrollFromSupabase(month) {
           otherDeductions: r.otherDeductions != null ? r.otherDeductions : 0,
           remarks:         r.remarks || ''
         };
+        // Restore _tally_* keys so deduplication works in new sessions
+        Object.keys(r).forEach(function(k) {
+          if (k.startsWith('_tally_')) rec[k] = r[k];
+        });
+        // Rebuild _dailyDays from tally key count
+        rec._dailyDays = Object.keys(rec).filter(function(k){ return k.startsWith('_tally_'); }).length;
+        records[staffId] = rec;
       });
       payrollRecords[month] = records;
       return records;
@@ -7110,6 +7118,11 @@ async function submitDailyReport() {
 
     // ── AUTO-TALLY ATTENDANCE INTO PAYROLL ───────────────────────
     const month = date.slice(0, 7);
+    // Always load latest records from Supabase first to avoid overwriting
+    // data saved by other sessions or devices
+    if (!payrollRecords[month]) {
+      await loadPayrollFromSupabase(month);
+    }
     const payRecords = getPayrollRecords(month);
     state.staff.forEach(function(st) {
       const status = drAttendance[st.id] || 'present';
@@ -7162,6 +7175,9 @@ async function submitDailyReport() {
 async function saveReportWithoutEmail() {
   if (!drCurrentData) { toast('No existing report to save', 'error'); return; }
   const date = drCurrentDate || todayStr();
+  // Ensure payroll records loaded before tallying
+  const month = date.slice(0, 7);
+  if (!payrollRecords[month]) { await loadPayrollFromSupabase(month); }
   const morningStaff = document.getElementById('dr-morning-staff').value.trim();
   const morningNarrative = document.getElementById('dr-morning-narrative').value.trim();
   const afternoonStaff = document.getElementById('dr-afternoon-staff').value.trim();
