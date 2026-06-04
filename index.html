@@ -7111,7 +7111,7 @@ async function submitDailyReport() {
   showLoading('Submitting report...');
   try {
     // Save to Supabase daily_reports table
-    const { error } = await supabaseClient.from('daily_reports').upsert(reportData);
+    const { error } = await supabaseClient.from('daily_reports').upsert(reportData, { onConflict: 'date' });
     if (error && !error.message.includes('does not exist')) {
       console.warn('daily_reports save:', error.message);
     }
@@ -7213,7 +7213,7 @@ async function saveReportWithoutEmail() {
 
   showLoading('Saving report...');
   try {
-    const { error } = await supabaseClient.from('daily_reports').upsert(reportData);
+    const { error } = await supabaseClient.from('daily_reports').upsert(reportData, { onConflict: 'date' });
     if (error && !error.message.includes('does not exist')) {
       console.warn('daily_reports save:', error.message);
     }
