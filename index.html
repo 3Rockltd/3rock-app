@@ -5665,95 +5665,55 @@ function getPayrollRecords(month) {
   return payrollRecords[month];
 }
 
-// ── Robust payroll_records upsert ─────────────────────────────────────────
-// Strips missing optional columns one-by-one and retries, same pattern as payroll_settings.
-// Run this migration in Supabase SQL editor to add all columns at once:
-//   ALTER TABLE payroll_records
-//     ADD COLUMN IF NOT EXISTS working_days     integer DEFAULT 26,
-//     ADD COLUMN IF NOT EXISTS days_present     integer DEFAULT 0,
-//     ADD COLUMN IF NOT EXISTS absent_perm      integer DEFAULT 0,
-//     ADD COLUMN IF NOT EXISTS absent_no_perm   integer DEFAULT 0,
-//     ADD COLUMN IF NOT EXISTS uniform_days     integer DEFAULT 0,
-//     ADD COLUMN IF NOT EXISTS other_deductions numeric  DEFAULT 0,
-//     ADD COLUMN IF NOT EXISTS remarks          text     DEFAULT \'\',
-//     ADD COLUMN IF NOT EXISTS updated_at       timestamptz;
-const PAYROLL_RECORDS_OPTIONAL_COLS = ['working_days','days_present','absent_perm','absent_no_perm','uniform_days','other_deductions','remarks','updated_at'];
+// ── payroll_records: single row per month, records stored as JSONB ────────
+// Schema: payroll_records(id text PK, month text, records jsonb NOT NULL)
+// "records" is a JSON object keyed by staff_id, each value has the payroll fields.
 
-async function upsertPayrollRowSafe(row) {
-  let p = Object.assign({}, row);
-  const stripped = [];
-  for (let attempt = 0; attempt <= PAYROLL_RECORDS_OPTIONAL_COLS.length; attempt++) {
-    const { error } = await supabaseClient.from('payroll_records').upsert(p);
-    if (!error) {
-      if (stripped.length) console.warn('payroll_records saved without cols (run migration):', stripped.join(', '));
-      return null;
-    }
-    const match = error.message && error.message.match(/Could not find (?:the \')?(\w+)(?:\' column)?.*schema cache/i);
-    const col = match ? match[1] : null;
-    if (col && PAYROLL_RECORDS_OPTIONAL_COLS.includes(col)) {
-      stripped.push(col);
-      delete p[col];
-      continue;
-    }
-    return error;
-  }
-  return new Error('payroll_records: too many missing columns');
-}
-
-function buildPayrollRow(month, staffId, r) {
-  // _tally_* and _dailyDays keys are intentionally excluded — memory-only
-  return {
-    id:               month + '_' + staffId,
-    month:            month,
-    staff_id:         staffId,
-    working_days:     r.workingDays     || 26,
-    days_present:     r.daysPresent     || 0,
-    absent_perm:      r.absentPerm      || 0,
-    absent_no_perm:   r.absentNoPerm    || 0,
-    uniform_days:     r.uniformDays     || 0,
-    other_deductions: r.otherDeductions || 0,
-    remarks:          r.remarks         || '',
-    updated_at:       new Date().toISOString()
-  };
+function serializePayrollRecords(records) {
+  // Strip memory-only _tally_* and _dailyDays keys before saving
+  const clean = {};
+  Object.keys(records).forEach(function(staffId) {
+    const r = records[staffId];
+    const row = {};
+    Object.keys(r).forEach(function(k) {
+      if (!k.startsWith('_')) row[k] = r[k];
+    });
+    clean[staffId] = row;
+  });
+  return clean;
 }
 
 function savePayrollRecordsToLocal(month, records) {
   payrollRecords[month] = records;
-  const rows = Object.keys(records).map(function(sid) { return buildPayrollRow(month, sid, records[sid]); });
-  if (!rows.length) return;
-  // Upsert all rows; on column error, retry each row individually with stripping
-  supabaseClient.from('payroll_records').upsert(rows).then(function(r) {
-    if (!r.error) { setSyncDot('synced'); return; }
-    const match = r.error.message && r.error.message.match(/Could not find (?:the \')?(\w+)(?:\' column)?.*schema cache/i);
-    if (match) {
-      // At least one column is missing — fall back to per-row safe upsert
-      Promise.all(rows.map(function(row){ return upsertPayrollRowSafe(row); })).then(function(errs) {
-        const fail = errs.find(function(e){ return e; });
-        if (fail) { toast('⚠ Payroll sync error: ' + fail.message, 'error', 5000); setSyncDot('error'); }
-        else { setSyncDot('synced'); }
-      });
-    } else {
-      toast('⚠ Payroll sync error: ' + r.error.message, 'error', 5000);
-      setSyncDot('error');
-    }
+  const payload = {
+    id:      month,
+    month:   month,
+    records: serializePayrollRecords(records)
+  };
+  supabaseClient.from('payroll_records').upsert(payload).then(function(r) {
+    if (r.error) { toast('⚠ Payroll sync error: ' + r.error.message, 'error', 5000); setSyncDot('error'); }
+    else { setSyncDot('synced'); }
   });
 }
 
 async function loadPayrollFromSupabase(month) {
   try {
-    const { data, error } = await supabaseClient.from('payroll_records').select('*').eq('month', month);
-    if (!error && data && data.length) {
+    const { data, error } = await supabaseClient.from('payroll_records').select('*').eq('id', month).single();
+    if (!error && data && data.records) {
+      // records is a JSONB object keyed by staff_id
+      const raw = typeof data.records === 'string' ? JSON.parse(data.records) : data.records;
+      const ps  = getPayrollSettings();
       const records = {};
-      data.forEach(function(row) {
-        const ps = getPayrollSettings();
-        records[row.staff_id] = {
-          workingDays:     row.working_days     != null ? row.working_days     : ps.workingDays,
-          daysPresent:     row.days_present     != null ? row.days_present     : 0,
-          absentPerm:      row.absent_perm      != null ? row.absent_perm      : 0,
-          absentNoPerm:    row.absent_no_perm   != null ? row.absent_no_perm   : 0,
-          uniformDays:     row.uniform_days     != null ? row.uniform_days     : 0,
-          otherDeductions: row.other_deductions != null ? row.other_deductions : 0,
-          remarks:         row.remarks || ''
+      Object.keys(raw).forEach(function(staffId) {
+        const r = raw[staffId];
+        records[staffId] = {
+          workingDays:     r.workingDays     != null ? r.workingDays     : ps.workingDays,
+          daysPresent:     r.daysPresent     != null ? r.daysPresent     : 0,
+          absentPerm:      r.absentPerm      != null ? r.absentPerm      : 0,
+          absentNoPerm:    r.absentNoPerm    != null ? r.absentNoPerm    : 0,
+          uniformDays:     r.uniformDays     != null ? r.uniformDays     : 0,
+          otherDeductions: r.otherDeductions != null ? r.otherDeductions : 0,
+          remarks:         r.remarks || ''
         };
       });
       payrollRecords[month] = records;
@@ -5865,9 +5825,11 @@ async function recalcPayrollFromReports() {
       });
     });
 
-    // Save back to Supabase
+    // Save back to Supabase using JSON schema
     payrollRecords[month] = records;
-    savePayrollRecordsToLocal(month, records);
+    const payload = { id: month, month: month, records: serializePayrollRecords(records) };
+    const { error: saveErr } = await supabaseClient.from('payroll_records').upsert(payload);
+    if (saveErr) throw saveErr;
     renderPayroll();
     toast('✅ Rebuilt from ' + reports.length + ' daily report(s)', 'success');
   } catch(e) {
@@ -6395,8 +6357,13 @@ async function savePayrollEntry() {
   try {
     // Build the single row and upsert directly so we can await the result
     const r = records[staffId];
-    const row = buildPayrollRow(payrollCurrentMonth, staffId, r);
-    const error = await upsertPayrollRowSafe(row);
+    // Save full month records object (JSON schema)
+    const allRecords = getPayrollRecords(payrollCurrentMonth);
+    allRecords[staffId] = r;
+    savePayrollRecordsToLocal(payrollCurrentMonth, allRecords);
+    // Await the save by doing a direct upsert here
+    const payload = { id: payrollCurrentMonth, month: payrollCurrentMonth, records: serializePayrollRecords(allRecords) };
+    const { error } = await supabaseClient.from('payroll_records').upsert(payload);
     if (error) throw error;
     payrollRecords[payrollCurrentMonth] = records;
     closeModal('modal-payroll-entry');
@@ -6415,11 +6382,12 @@ async function resetPayrollEntry() {
   if (!confirmed) return;
   showLoading('Resetting entry…');
   try {
-    const rowId = payrollCurrentMonth + '_' + staffId;
-    await supabaseClient.from('payroll_records').delete().eq('id', rowId);
     const records = getPayrollRecords(payrollCurrentMonth);
     delete records[staffId];
     payrollRecords[payrollCurrentMonth] = records;
+    const payload = { id: payrollCurrentMonth, month: payrollCurrentMonth, records: serializePayrollRecords(records) };
+    const { error: saveErr } = await supabaseClient.from('payroll_records').upsert(payload);
+    if (saveErr) throw saveErr;
     closeModal('modal-payroll-entry');
     renderPayroll();
     toast('Entry reset to defaults', 'success');
