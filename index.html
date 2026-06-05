@@ -925,7 +925,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         <!-- ACTION BUTTONS -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:80px">
           <button class="btn btn-primary" style="flex:1;min-width:140px" onclick="submitDailyReport()">✅ Submit &amp; Send Report</button>
-          <button class="btn btn-success" id="dr-save-btn" style="display:none" onclick="saveReportWithoutEmail()">💾 Save Changes</button>
+          <button class="btn btn-success" id="dr-save-btn" style="display:inline-flex" onclick="saveReportWithoutEmail()">💾 Save Draft</button>
           <button class="btn btn-outline" onclick="previewDailyReport()">👁 Preview Email</button>
         </div>
       </div>
@@ -1010,6 +1010,18 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="form-row">
       <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="sf-phone"></div>
       <div class="form-group"><label class="form-label">Shift Assigned</label><select class="form-control" id="sf-shift"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Days Off <span style="font-weight:400;color:var(--text-muted)">(select all off days — staff will auto-toggle Off Duty on these days)</span></label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="sf-days-off-wrap">
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="0" style="display:none">Sun</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="1" style="display:none">Mon</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="2" style="display:none">Tue</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="3" style="display:none">Wed</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="4" style="display:none">Thu</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="5" style="display:none">Fri</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--off-white);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;transition:all .15s" onclick="sfToggleDayOff(this)"><input type="checkbox" value="6" style="display:none">Sat</label>
+      </div>
     </div>
     <div class="section-sep red">Family & Marital Status</div>
     <div class="form-row">
@@ -2654,7 +2666,8 @@ async function saveStaff() {
     maritalstatus: maritalStatus,
     spousename: document.getElementById('sf-spouse-name').value,
     spousecontact: document.getElementById('sf-spouse-contact').value,
-    numberofkids: parseInt(document.getElementById('sf-kids').value) || 0
+    numberofkids: parseInt(document.getElementById('sf-kids').value) || 0,
+    daysoff: sfGetDaysOff()
   };
   showLoading(isEditing ? 'Updating staff member…' : 'Enrolling staff member…');
   try {
@@ -2705,6 +2718,8 @@ function openEditStaff() {
   f('sf-spouse-name', s.spousename||s.spouseName);
   f('sf-spouse-contact', s.spousecontact||s.spouseContact);
   f('sf-kids', s.numberofkids||s.numberOfKids||0);
+  // Restore days off
+  sfSetDaysOff(s.daysoff || s.daysOff || []);
   ['staff-photo-preview','ghana-front-preview','ghana-back-preview'].forEach(id => {
     const el = document.getElementById(id); if (el) { el.style.display='none'; el.src=''; }
   });
@@ -5295,8 +5310,60 @@ function clearStaffForm() {
     const btn = document.getElementById(id); if (btn) btn.classList.remove('visible');
   });
   clearFieldError('sf-name','err-sf-name'); clearFieldError('sf-id','err-sf-id');
+  // Clear days-off toggles
+  const daysOffWrap = document.getElementById('sf-days-off-wrap');
+  if (daysOffWrap) daysOffWrap.querySelectorAll('label').forEach(function(lbl) {
+    const cb = lbl.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = false;
+    lbl.style.background = 'var(--off-white)';
+    lbl.style.borderColor = 'var(--border)';
+    lbl.style.color = 'var(--text-primary)';
+  });
   const modal = document.getElementById('modal-add-staff');
   if (modal) modal.querySelectorAll('input[type=file]').forEach(f => { f.value=''; });
+}
+
+function sfToggleDayOff(lbl) {
+  const cb = lbl.querySelector('input[type=checkbox]');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  if (cb.checked) {
+    lbl.style.background = 'var(--navy)';
+    lbl.style.borderColor = 'var(--navy)';
+    lbl.style.color = '#fff';
+  } else {
+    lbl.style.background = 'var(--off-white)';
+    lbl.style.borderColor = 'var(--border)';
+    lbl.style.color = 'var(--text-primary)';
+  }
+}
+
+function sfGetDaysOff() {
+  const daysOffWrap = document.getElementById('sf-days-off-wrap');
+  if (!daysOffWrap) return [];
+  return Array.from(daysOffWrap.querySelectorAll('input[type=checkbox]'))
+    .filter(function(cb) { return cb.checked; })
+    .map(function(cb) { return parseInt(cb.value); });
+}
+
+function sfSetDaysOff(daysArr) {
+  const daysOffWrap = document.getElementById('sf-days-off-wrap');
+  if (!daysOffWrap) return;
+  daysOffWrap.querySelectorAll('label').forEach(function(lbl) {
+    const cb = lbl.querySelector('input[type=checkbox]');
+    if (!cb) return;
+    const isOff = daysArr && daysArr.indexOf(parseInt(cb.value)) >= 0;
+    cb.checked = isOff;
+    if (isOff) {
+      lbl.style.background = 'var(--navy)';
+      lbl.style.borderColor = 'var(--navy)';
+      lbl.style.color = '#fff';
+    } else {
+      lbl.style.background = 'var(--off-white)';
+      lbl.style.borderColor = 'var(--border)';
+      lbl.style.color = 'var(--text-primary)';
+    }
+  });
 }
 
 function clearInvForm() {
@@ -6912,15 +6979,19 @@ function showDraftForm(date) {
   renderDrPhotos();
   clearShiftTags();
 
-  // Hide Save Changes button for new drafts
+  // Always show Save button (allows saving draft without sending email)
   const saveBtn = document.getElementById('dr-save-btn');
-  if (saveBtn) saveBtn.style.display = 'none';
+  if (saveBtn) saveBtn.style.display = 'inline-flex';
 
   // Build attendance grid
   drAttendance = {};
+  // Get the day-of-week for the report date (0=Sun … 6=Sat)
+  const reportDayOfWeek = new Date(date + 'T12:00:00').getDay();
   state.staff.forEach(function(st) {
-    // Default off-shift staff to off_duty, everyone else present
-    drAttendance[st.id] = (st.status === 'Off Shift' || st.status === 'On Leave') ? 'off_duty' : 'present';
+    const daysOff = st.daysoff || st.daysOff || [];
+    const isOffDay = daysOff.indexOf(reportDayOfWeek) >= 0;
+    // Auto-toggle off_duty if today is staff's designated off day, or if they're Off Shift / On Leave
+    drAttendance[st.id] = (isOffDay || st.status === 'Off Shift' || st.status === 'On Leave') ? 'off_duty' : 'present';
   });
   renderAttendanceGrid();
 }
@@ -7110,9 +7181,35 @@ async function submitDailyReport() {
   showLoading('Submitting report...');
   try {
     // Save to Supabase daily_reports table
-    const { error } = await supabaseClient.from('daily_reports').upsert(reportData, { onConflict: 'date' });
-    if (error) {
-      toast('❌ Submit failed: ' + error.message, 'error');
+    // Use insert for new records (no existing id), update for existing ones
+    // This avoids the null-id constraint error when submitting backdated reports
+    let saveError = null;
+    if (drCurrentData && drCurrentData.id) {
+      // Existing record — update by id
+      const updatePayload = Object.assign({}, reportData);
+      delete updatePayload.id;
+      const { error } = await supabaseClient.from('daily_reports').update(updatePayload).eq('id', drCurrentData.id);
+      saveError = error;
+    } else {
+      // Check if a record already exists for this date (e.g. submitted from another device)
+      const { data: existing } = await supabaseClient.from('daily_reports').select('id').eq('date', date).single();
+      if (existing && existing.id) {
+        const updatePayload = Object.assign({}, reportData);
+        delete updatePayload.id;
+        const { error } = await supabaseClient.from('daily_reports').update(updatePayload).eq('id', existing.id);
+        saveError = error;
+        if (!saveError) reportData.id = existing.id;
+      } else {
+        // Truly new record — insert without id (let DB generate it)
+        const insertPayload = Object.assign({}, reportData);
+        delete insertPayload.id;
+        const { data: inserted, error } = await supabaseClient.from('daily_reports').insert(insertPayload).select().single();
+        saveError = error;
+        if (!saveError && inserted) reportData.id = inserted.id;
+      }
+    }
+    if (saveError) {
+      toast('❌ Submit failed: ' + saveError.message, 'error');
       return;
     }
 
@@ -7173,7 +7270,7 @@ async function submitDailyReport() {
 // ── Save edits without resending email ───────────────────────────
 
 async function saveReportWithoutEmail() {
-  if (!drCurrentData) { toast('No existing report to save', 'error'); return; }
+  // Allow saving even for brand-new drafts (drCurrentData will be null)
   const date = drCurrentDate || todayStr();
   // Ensure payroll records loaded before tallying
   const month = date.slice(0, 7);
@@ -7192,7 +7289,12 @@ async function saveReportWithoutEmail() {
   const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
   const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
 
-  const reportData = Object.assign({}, drCurrentData, {
+  const reportData = Object.assign({
+    date: date,
+    submitted_by: currentUser ? currentUser.name : '',
+    submitted_role: currentUser ? currentUser.role : '',
+    submitted_at: new Date().toISOString()
+  }, drCurrentData, {
     morning_staff: morningStaff,
     morning_narrative: morningNarrative,
     afternoon_staff: afternoonStaff,
@@ -7206,22 +7308,32 @@ async function saveReportWithoutEmail() {
     absent_count:     absentStaff.length,
     permission_count: permissionStaff.length,
     off_duty_count:   offDutyStaff.length,
-    supervisor_name:  supervisorName || drCurrentData.supervisor_name || (currentUser ? currentUser.name : '')
+    supervisor_name:  supervisorName || (drCurrentData && drCurrentData.supervisor_name) || (currentUser ? currentUser.name : '')
   });
 
   showLoading('Saving report...');
   try {
-    // Strip id from payload to avoid primary key conflicts
-    const updatePayload = Object.assign({}, reportData);
-    delete updatePayload.id;
+    const savePayload = Object.assign({}, reportData);
+    delete savePayload.id;
 
     let saveError = null;
     if (drCurrentData && drCurrentData.id) {
-      const { error } = await supabaseClient.from('daily_reports').update(updatePayload).eq('id', drCurrentData.id);
+      // Update existing record by id
+      const { error } = await supabaseClient.from('daily_reports').update(savePayload).eq('id', drCurrentData.id);
       saveError = error;
     } else {
-      const { error } = await supabaseClient.from('daily_reports').update(updatePayload).eq('date', date);
-      saveError = error;
+      // Check if a record already exists for this date
+      const { data: existing } = await supabaseClient.from('daily_reports').select('id').eq('date', date).single();
+      if (existing && existing.id) {
+        const { error } = await supabaseClient.from('daily_reports').update(savePayload).eq('id', existing.id);
+        saveError = error;
+        if (!saveError) reportData.id = existing.id;
+      } else {
+        // New record — insert without id
+        const { data: inserted, error } = await supabaseClient.from('daily_reports').insert(savePayload).select().single();
+        saveError = error;
+        if (!saveError && inserted) reportData.id = inserted.id;
+      }
     }
 
     if (saveError) {
