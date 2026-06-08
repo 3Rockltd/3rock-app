@@ -605,10 +605,11 @@ textarea.form-control{resize:vertical;min-height:56px}
       </div>
       <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search name or role..." id="staff-search" oninput="renderStaff()"></div>
       <div class="tabs">
-        <button class="tab active" onclick="filterStaff('all',this)">All</button>
+        <button class="tab active" onclick="filterStaff('all',this)">All Active</button>
         <button class="tab" onclick="filterStaff('On Shift',this)">On Shift</button>
         <button class="tab" onclick="filterStaff('Off Shift',this)">Off</button>
         <button class="tab" onclick="filterStaff('On Leave',this)">Leave</button>
+        <button class="tab" onclick="filterStaff('disengaged',this)" style="color:var(--text-muted)">⛔ Disengaged</button>
       </div>
       <div id="staff-grid" class="staff-grid"></div>
       <button class="load-more-btn" id="staff-load-more" style="display:none" onclick="loadMoreStaff()">Load more staff</button>
@@ -750,7 +751,8 @@ textarea.form-control{resize:vertical;min-height:56px}
         <div class="page-title">Payroll Management</div>
         <div class="page-sub" id="payroll-sub-lbl">Monthly salary register</div>
         <div class="page-actions">
-          <button class="btn btn-outline btn-sm" onclick="openPayrollSettings()">⚙ Settings</button>
+          <div id="pay-viewonly-notice" style="display:none;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-left:4px solid #2563eb;border-radius:var(--r-md);padding:6px 12px;font-size:11px;color:#1e40af;font-weight:600;width:100%;margin-bottom:6px">👁 View only — only Supervisors can edit payroll entries</div>
+          <button class="btn btn-outline btn-sm" id="pay-settings-btn" onclick="openPayrollSettings()">⚙ Settings</button>
           <button class="btn btn-outline btn-sm" onclick="emailPayrollReport()">✉️ Email</button>
           <button class="btn btn-primary btn-sm" onclick="exportPayrollPDF()">📄 Export PDF</button>
         </div>
@@ -774,20 +776,20 @@ textarea.form-control{resize:vertical;min-height:56px}
       <!-- KPI summary -->
       <div class="kpi-row" id="payroll-kpis" style="margin-bottom:16px"></div>
 
-      <!-- Awards & Comments (input for supervisor/manager, view for director) -->
+      <!-- Awards & Comments (input for supervisor only, view for director/manager) -->
       <div class="section-title">🏆 Monthly Awards & Notes</div>
       <div class="card" style="padding:14px;margin-bottom:14px" id="payroll-awards-section">
         <div class="form-row">
           <div class="form-group" style="margin-bottom:10px">
             <label class="form-label">⭐ Best Performing Staff <span style="font-weight:400;color:var(--text-muted)">(tap to select multiple)</span></label>
-            <div id="pay-best-performer-chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 8px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer" onclick="openAwardPicker('bestPerformer')">
+            <div id="pay-best-performer-chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 8px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer" onclick="if(canEdit()) openAwardPicker('bestPerformer')">
               <span style="color:var(--text-muted);font-size:12px;align-self:center" id="pay-bp-placeholder">Tap to select staff…</span>
             </div>
             <input type="hidden" id="pay-best-performer" value="">
           </div>
           <div class="form-group" style="margin-bottom:10px">
             <label class="form-label">👔 Best Dressed Staff <span style="font-weight:400;color:var(--text-muted)">(tap to select multiple)</span></label>
-            <div id="pay-best-dressed-chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 8px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer" onclick="openAwardPicker('bestDressed')">
+            <div id="pay-best-dressed-chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px 8px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer" onclick="if(canEdit()) openAwardPicker('bestDressed')">
               <span style="color:var(--text-muted);font-size:12px;align-self:center" id="pay-bd-placeholder">Tap to select staff…</span>
             </div>
             <input type="hidden" id="pay-best-dressed" value="">
@@ -795,7 +797,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         </div>
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">📝 General Comments for the Month</label>
-          <textarea class="form-control" id="pay-comments" rows="3" placeholder="Overall performance notes, issues, observations for this payroll period..." onchange="savePayrollAwards()"></textarea>
+          <textarea class="form-control" id="pay-comments" rows="3" placeholder="Overall performance notes, issues, observations for this payroll period..." onchange="if(canEdit()) savePayrollAwards()"></textarea>
         </div>
       </div>
 
@@ -840,10 +842,15 @@ textarea.form-control{resize:vertical;min-height:56px}
       <!-- FORM (compose mode) -->
       <div id="dr-form-area">
 
+        <!-- VIEW-ONLY NOTICE for director/manager -->
+        <div id="dr-viewonly-notice" style="display:none;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-left:4px solid #2563eb;border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1e40af;font-weight:600">
+          👁 View only — only Supervisors can create or edit daily reports
+        </div>
+
         <!-- ATTENDANCE SECTION -->
         <div class="section-title">👥 Attendance</div>
         <div class="card" style="padding:14px;margin-bottom:12px">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Tap each staff member to cycle: Present → Absent → On Permission → Off Duty</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px" id="dr-attendance-hint">Tap each staff member to cycle: Present → Absent → On Permission → Off Duty</div>
           <div id="dr-attendance-grid" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         </div>
 
@@ -923,7 +930,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         </div>
 
         <!-- ACTION BUTTONS -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:80px">
+        <div id="dr-action-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:80px">
           <button class="btn btn-primary" style="flex:1;min-width:140px" onclick="submitDailyReport()">✅ Submit &amp; Send Report</button>
           <button class="btn btn-success" id="dr-save-btn" style="display:inline-flex" onclick="saveReportWithoutEmail()">💾 Save Draft</button>
           <button class="btn btn-outline" onclick="previewDailyReport()">👁 Preview Email</button>
@@ -937,7 +944,7 @@ textarea.form-control{resize:vertical;min-height:56px}
           <button class="btn btn-primary" onclick="emailDailyReport()">✉️ Resend Email</button>
           <button class="btn btn-outline" onclick="copyDailyReport()">📋 Copy Report</button>
           <button class="btn btn-outline" onclick="exportDailyReportPDF()">📄 Download PDF</button>
-          <button class="btn btn-outline" style="color:var(--amber);border-color:var(--amber)" onclick="editDailyReport()">✏️ Edit Report</button>
+          <button class="btn btn-outline" id="dr-edit-btn" style="color:var(--amber);border-color:var(--amber)" onclick="editDailyReport()">✏️ Edit Report</button>
         </div>
       </div>
 
@@ -1058,6 +1065,50 @@ textarea.form-control{resize:vertical;min-height:56px}
     <button class="btn btn-amber btn-sm" onclick="openEditStaff()" id="prof-edit-btn">✏️ Edit</button>
     <button class="btn btn-danger btn-sm" onclick="deleteCurrentStaff()" id="prof-delete-btn">Remove</button>
   </div></div></div>
+</div>
+
+<!-- DISENGAGE STAFF MODAL -->
+<div class="modal-overlay center-ov" id="modal-disengage-staff" style="display:none" onclick="overlayClick(event,'modal-disengage-staff')">
+  <div class="modal center-m">
+    <div class="modal-header" style="background:#991b1b"><span class="modal-title">⛔ Disengage Staff Member</span><button class="modal-close" onclick="closeModal('modal-disengage-staff')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin-bottom:14px;font-size:12px;color:#991b1b">
+        This will mark the staff member as disengaged. They will be greyed out, excluded from attendance grids, payroll, and job lists. This action can be reversed later.
+      </div>
+      <div class="form-group"><label class="form-label">Staff Member</label><input type="text" class="form-control" id="disengage-staff-name" readonly style="background:#e8edf7"></div>
+      <div class="form-group">
+        <label class="form-label">Reason for Disengagement *</label>
+        <select class="form-control" id="disengage-reason-select" onchange="toggleDisengageOther(this.value)">
+          <option value="">— Select a reason —</option>
+          <option>Resigned</option>
+          <option>Contract ended</option>
+          <option>Dismissed</option>
+          <option>Absconded</option>
+          <option>Retirement</option>
+          <option>Medical reasons</option>
+          <option>Mutual agreement</option>
+          <option>Other</option>
+        </select>
+        <div class="field-error" id="err-disengage-reason">Please select a reason</div>
+      </div>
+      <div class="form-group" id="disengage-other-group" style="display:none">
+        <label class="form-label">Specify reason</label>
+        <input type="text" class="form-control" id="disengage-reason-other" placeholder="Enter reason...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date of Disengagement</label>
+        <input type="date" class="form-control" id="disengage-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Additional Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <textarea class="form-control" id="disengage-notes" rows="2" placeholder="Any additional context..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeModal('modal-disengage-staff')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDisengage()">⛔ Confirm Disengagement</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- INVENTORY MODAL -->
@@ -2352,7 +2403,14 @@ async function goToTab(tab, filter, skipPush) {
   else if (tab === 'inventory') renderInventory();
   else if (tab === 'jobs') renderJobs();
   else if (tab === 'tasks') renderTasks();
-  else if (tab === 'payroll') { loadPayrollSettingsFromSupabase().then(function(){ if (payrollCurrentMonth) renderPayroll(); }); }
+  else if (tab === 'payroll') {
+    // Show/hide view-only notice and settings button
+    const payViewOnly = document.getElementById('pay-viewonly-notice');
+    const paySettingsBtn = document.getElementById('pay-settings-btn');
+    if (payViewOnly) payViewOnly.style.display = canEdit() ? 'none' : '';
+    if (paySettingsBtn) paySettingsBtn.style.display = canEdit() ? '' : 'none';
+    loadPayrollSettingsFromSupabase().then(function(){ if (payrollCurrentMonth) renderPayroll(); });
+  }
   else if (tab === 'incidents') {
     const from = document.getElementById('inc-filter-from')?.value || '';
     const to = document.getElementById('inc-filter-to')?.value || '';
@@ -2398,16 +2456,16 @@ function buildActionBars() {
 // ================================================================
 function renderDashboard() {
   if (currentUser && currentUser.role === 'cleaner') { renderCleanerDashboard(); return; }
-  const onShift = state.staff.filter(s => s.status === 'On Shift').length;
+  const onShift = state.staff.filter(s => !s.disengaged && s.status === 'On Shift').length;
   const todayJobs = state.jobs.filter(j => j.date === todayStr());
   const lowStock = state.inventory.filter(i => i.category !== 'Equipment' && i.reorder != null && i.reorder !== '' && Number(i.reorder) > 0 && Number(i.qty) <= Number(i.reorder));
   const se = id => document.getElementById(id);
   if (se('stat-onshift')) se('stat-onshift').textContent = onShift;
-  if (se('stat-staff-sub')) se('stat-staff-sub').textContent = `of ${state.staff.length} staff`;
+  if (se('stat-staff-sub')) se('stat-staff-sub').textContent = `of ${state.staff.filter(s=>!s.disengaged).length} staff`;
   if (se('stat-jobs-today')) se('stat-jobs-today').textContent = todayJobs.length;
   if (se('stat-jobs-sub')) se('stat-jobs-sub').textContent = `${todayJobs.filter(j => j.status === 'In Progress').length} in progress`;
   if (se('stat-lowstock')) se('stat-lowstock').textContent = lowStock.length;
-  if (se('kpi-staff')) se('kpi-staff').textContent = state.staff.length;
+  if (se('kpi-staff')) se('kpi-staff').textContent = state.staff.filter(s=>!s.disengaged).length;
   if (se('kpi-onshift')) se('kpi-onshift').textContent = onShift;
   if (se('kpi-month')) se('kpi-month').textContent = state.jobs.filter(j => j.date && j.date.startsWith(todayStr().slice(0,7))).length;
   if (se('kpi-task-pct')) {
@@ -2469,9 +2527,9 @@ function renderDashboard() {
     }
   }
   if (se('director-metrics-section') && se('director-metrics-section').style.display !== 'none') {
-    const off = state.staff.filter(s => s.status === 'Off Shift').length;
-    const leave = state.staff.filter(s => s.status === 'On Leave').length;
-    const t = state.staff.length || 1;
+    const off = state.staff.filter(s => !s.disengaged && s.status === 'Off Shift').length;
+    const leave = state.staff.filter(s => !s.disengaged && s.status === 'On Leave').length;
+    const t = state.staff.filter(s=>!s.disengaged).length || 1;
     if (se('staff-bars')) se('staff-bars').innerHTML = actBar('On Shift', onShift, t, 'var(--green)') + actBar('Off Shift', off, t, 'var(--text-muted)') + actBar('On Leave', leave, t, 'var(--amber)');
     const sTot = todayJobs.length || 1;
     if (se('job-bars')) se('job-bars').innerHTML = actBar('Scheduled', todayJobs.filter(j => j.status === 'Scheduled').length, sTot, 'var(--navy)') + actBar('In Progress', todayJobs.filter(j => j.status === 'In Progress').length, sTot, 'var(--amber)') + actBar('Completed', todayJobs.filter(j => j.status === 'Done').length, sTot, 'var(--green)');
@@ -2537,11 +2595,18 @@ function renderCleanerDashboard() {
 function renderStaff() {
   staffPage = 0;
   const q = (document.getElementById('staff-search') || {value:''}).value.toLowerCase();
-  const list = state.staff.filter(s => (s.name.toLowerCase().includes(q) || (s.role||'').toLowerCase().includes(q)) && (staffFilter === 'all' || s.status === staffFilter));
+  const activeStaff = state.staff.filter(s => !s.disengaged);
+  const disengagedStaff = state.staff.filter(s => !!s.disengaged);
+  let list;
+  if (staffFilter === 'disengaged') {
+    list = disengagedStaff.filter(s => s.name.toLowerCase().includes(q) || (s.role||'').toLowerCase().includes(q));
+  } else {
+    list = activeStaff.filter(s => (s.name.toLowerCase().includes(q) || (s.role||'').toLowerCase().includes(q)) && (staffFilter === 'all' || s.status === staffFilter));
+  }
   const countEl = document.getElementById('staff-count-lbl');
   const onshiftEl = document.getElementById('onshift-count-lbl');
-  if (countEl) countEl.textContent = `${state.staff.length} staff`;
-  if (onshiftEl) onshiftEl.textContent = `${state.staff.filter(s => s.status === 'On Shift').length} on shift`;
+  if (countEl) countEl.textContent = `${activeStaff.length} active · ${disengagedStaff.length} disengaged`;
+  if (onshiftEl) onshiftEl.textContent = `${activeStaff.filter(s => s.status === 'On Shift').length} on shift`;
   const grid = document.getElementById('staff-grid');
   if (!grid) return;
   const page = list.slice(0, PAGE_SIZE);
@@ -2553,9 +2618,9 @@ function renderStaff() {
 }
 
 function staffCard(s) {
+  const isDisengaged = !!s.disengaged;
   const photoKey = s.photo ? `staff-card-photo-${s.id}` : null;
   if (photoKey && s.photo) {
-    // Store photo in a hidden element to safely pass large base64 to viewImage
     let el = document.getElementById(photoKey);
     if (!el) { el = document.createElement('img'); el.id = photoKey; el.style.display = 'none'; document.body.appendChild(el); }
     el.setAttribute('data-src', s.photo);
@@ -2563,7 +2628,9 @@ function staffCard(s) {
   const avatarHtml = s.photo
     ? `<div class="sc-avatar" onclick="event.stopPropagation();viewStoredImage('${photoKey}','${esc(s.name)}')" style="cursor:zoom-in"><img src="${s.photo}" alt=""></div>`
     : `<div class="sc-avatar">${esc(initials(s.name))}</div>`;
-  return `<div class="staff-card" onclick="openStaffProfile('${esc(s.id)}')"><div class="sc-header">${avatarHtml}<div style="flex:1"><div class="sc-name">${esc(s.name)}</div><div class="sc-role">${esc(s.role)}</div></div><span class="pill ${pillClass(s.status)}">${esc(s.status)}</span></div><div class="sc-body">${detRow('Staff ID', s.staffid||s.staffId)}${detRow('Phone', s.phone)}${detRow('Shift', s.shift||'—')}</div></div>`;
+  const disengagedBadge = isDisengaged ? `<span class="pill" style="background:#e5e7eb;color:#6b7280;font-size:8px">⛔ Disengaged</span>` : `<span class="pill ${pillClass(s.status)}">${esc(s.status)}</span>`;
+  const cardStyle = isDisengaged ? 'opacity:0.55;filter:grayscale(80%)' : '';
+  return `<div class="staff-card" onclick="openStaffProfile('${esc(s.id)}')" style="${cardStyle}"><div class="sc-header">${avatarHtml}<div style="flex:1"><div class="sc-name">${esc(s.name)}</div><div class="sc-role">${esc(s.role)}</div></div>${disengagedBadge}</div><div class="sc-body">${detRow('Staff ID', s.staffid||s.staffId)}${detRow('Phone', s.phone)}${isDisengaged ? detRow('Reason', s.disengagedreason||'—') : detRow('Shift', s.shift||'—')}</div></div>`;
 }
 
 function loadMoreStaff() {
@@ -2764,8 +2831,12 @@ function openStaffProfile(id) {
   }
   document.getElementById('prof-name').textContent = s.name;
   document.getElementById('prof-role').textContent = s.role;
+  const isDisengaged = !!s.disengaged;
   const statusHtml = canEdit()
-    ? `<div style="margin:12px 0"><label class="form-label">Update Status</label><select class="form-control" id="prof-status-sel" onchange="updateStaffStatus(this.value)"><option ${s.status==='On Shift'?'selected':''}>On Shift</option><option ${s.status==='Off Shift'?'selected':''}>Off Shift</option><option ${s.status==='On Leave'?'selected':''}>On Leave</option></select></div>` : '';
+    ? (isDisengaged
+        ? `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600">⛔ Disengaged — ${esc(s.disengagedreason||'Reason not specified')}<br><span style="font-size:10px;color:var(--text-muted)">${s.disengageddate ? 'Date: ' + esc(s.disengageddate) : ''}</span></div><button class="btn btn-outline btn-sm" style="border-color:var(--green);color:var(--green);margin-bottom:10px" onclick="reengageStaff()">↩ Re-engage Staff</button>`
+        : `<div style="margin:12px 0"><label class="form-label">Update Status</label><select class="form-control" id="prof-status-sel" onchange="updateStaffStatus(this.value)"><option ${s.status==='On Shift'?'selected':''}>On Shift</option><option ${s.status==='Off Shift'?'selected':''}>Off Shift</option><option ${s.status==='On Leave'?'selected':''}>On Leave</option></select></div><button class="btn btn-danger btn-sm" style="margin-bottom:10px;opacity:0.8" onclick="openDisengageModal()">⛔ Disengage Staff</button>`)
+    : (isDisengaged ? `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600">⛔ Disengaged — ${esc(s.disengagedreason||'')}</div>` : '');
   let ghanaImagesHtml = '';
   if (s.ghanafront && s.ghanafront.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('staff-ghana-front-store','Ghana Card - Front')"><span class="dk">Ghana Card Front</span><span class="dv">📷 Tap to view</span></div>`;
   if (s.ghanaback && s.ghanaback.startsWith('data:')) ghanaImagesHtml += `<div class="detail-row" style="cursor:pointer" onclick="viewStoredImage('staff-ghana-back-store','Ghana Card - Back')"><span class="dk">Ghana Card Back</span><span class="dv">📷 Tap to view</span></div>`;
@@ -2820,6 +2891,72 @@ async function deleteCurrentStaff() {
     renderStaff(); renderDashboard();
     toast('Staff member removed', 'success');
   } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+function openDisengageModal() {
+  if (!canEdit()) return;
+  const s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  document.getElementById('disengage-staff-name').value = s.name;
+  document.getElementById('disengage-reason-select').value = '';
+  document.getElementById('disengage-reason-other').value = '';
+  document.getElementById('disengage-notes').value = '';
+  document.getElementById('disengage-date').value = todayStr();
+  document.getElementById('disengage-other-group').style.display = 'none';
+  const errEl = document.getElementById('err-disengage-reason');
+  if (errEl) errEl.classList.remove('show');
+  closeModal('modal-staff-profile');
+  openModal('modal-disengage-staff');
+}
+
+function toggleDisengageOther(val) {
+  const grp = document.getElementById('disengage-other-group');
+  if (grp) grp.style.display = val === 'Other' ? '' : 'none';
+}
+
+async function confirmDisengage() {
+  if (!canEdit()) return;
+  const s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  let reason = document.getElementById('disengage-reason-select').value;
+  if (!reason) {
+    const errEl = document.getElementById('err-disengage-reason');
+    if (errEl) errEl.classList.add('show');
+    return;
+  }
+  if (reason === 'Other') {
+    reason = document.getElementById('disengage-reason-other').value.trim() || 'Other';
+  }
+  const date = document.getElementById('disengage-date').value || todayStr();
+  const notes = document.getElementById('disengage-notes').value.trim();
+  showLoading('Disengaging staff member…');
+  try {
+    const changes = { disengaged: true, disengagedreason: reason, disengageddate: date, disengagednotes: notes, status: 'Off Shift' };
+    await dbUpdate('staff', s.id, changes);
+    Object.assign(s, changes);
+    closeModal('modal-disengage-staff');
+    renderStaff(); renderDashboard();
+    toast(`${s.name} has been disengaged`, 'info');
+  } catch(e) { toast('Update failed: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function reengageStaff() {
+  if (!canEdit()) return;
+  const s = state.staff.find(x => x.id === currentStaffId);
+  if (!s) return;
+  const confirmed = await showConfirm('Re-engage Staff', `Re-engage ${s.name} and restore them to active staff?`, 'Re-engage', 'btn-success');
+  if (!confirmed) return;
+  showLoading('Re-engaging staff member…');
+  try {
+    const changes = { disengaged: false, disengagedreason: null, disengageddate: null, disengagednotes: null, status: 'Off Shift' };
+    await dbUpdate('staff', s.id, changes);
+    Object.assign(s, changes);
+    closeModal('modal-staff-profile');
+    renderStaff(); renderDashboard();
+    toast(`${s.name} has been re-engaged`, 'success');
+  } catch(e) { toast('Update failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
 }
 
@@ -3315,7 +3452,7 @@ function openInvDetail(id) {
     document.getElementById('inv-equipment-detail-section').style.display = 'block';
     // Buttons — show usage log and condition update for equipment
     const lub = document.getElementById('log-usage-btn'); if (lub) lub.style.display = canEdit() ? 'inline-flex' : 'none';
-    const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = 'none';
+    const rdb = document.getElementById('report-damage-btn'); if (rdb) rdb.style.display = canEdit() ? 'inline-flex' : 'none';
     const ucb = document.getElementById('update-condition-btn'); if (ucb) ucb.style.display = canEdit() ? 'inline-flex' : 'none';
     const eib = document.getElementById('edit-inv-btn'); if (eib) eib.style.display = 'none';
     const rsb = document.getElementById('restock-inv-btn'); if (rsb) rsb.style.display = 'none';
@@ -3820,10 +3957,25 @@ async function saveDamageReport() {
   try {
     await dbInsert('damagereports', report);
     state.damageReports.push(report);
-    if (item && dmgQty > 0) {
-      const newQty = Math.max(0, item.qty - dmgQty);
-      await dbUpdate('inventory', item.id, { qty: newQty });
-      item.qty = newQty;
+    if (item) {
+      const isEq = isEquipment(item);
+      if (isEq) {
+        // For equipment: add condition history entry and update condition to Damaged
+        const prevCondition = item.condition || 'Good';
+        if (!Array.isArray(item.conditionhistory)) item.conditionhistory = [];
+        const histEntry = {
+          id: uid(), condition: 'Damaged', date, notes: '⚠ Damage: ' + desc,
+          updatedby: currentUser.name, createdat: new Date().toISOString(),
+          photo: photo || ''
+        };
+        item.conditionhistory.push(histEntry);
+        item.condition = 'Damaged';
+        await dbUpdate('inventory', item.id, { condition: 'Damaged', conditionhistory: item.conditionhistory });
+      } else if (dmgQty > 0) {
+        const newQty = Math.max(0, item.qty - dmgQty);
+        await dbUpdate('inventory', item.id, { qty: newQty });
+        item.qty = newQty;
+      }
     }
     closeModal('modal-damage-report'); renderInventory(); renderDashboard();
     toast('Damage report submitted', 'success');
@@ -4005,7 +4157,7 @@ async function deleteJob(id) {
 function populateJobStaffSelect() {
   const sel = document.getElementById('jf-staff');
   if (!sel) return;
-  sel.innerHTML = '<option value="">— Unassigned —</option>' + state.staff.map(s => `<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.shift||'—')})</option>`).join('');
+  sel.innerHTML = '<option value="">— Unassigned —</option>' + state.staff.filter(s => !s.disengaged).map(s => `<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.shift||'—')})</option>`).join('');
 }
 
 // ================================================================
@@ -4682,7 +4834,7 @@ function openAddTaskModal() {
   if (ic) ic.value = '1';
   // Populate staff dropdown
   const staffSel = document.getElementById('task-staff-select');
-  const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
+  const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role) && !s.disengaged);
   staffSel.innerHTML = '<option value="">— Whole shift —</option>' +
     cleaners.map(s => `<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.shift||'—')})</option>`).join('');
   // Populate floor dropdown
@@ -5210,7 +5362,7 @@ async function renderCleanerReport() {
   el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px">Loading…</div>';
   try {
     const logs = from || to ? await loadTaskLogsForRange(from, to) : state.taskLogs;
-    const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
+    const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role) && !s.disengaged);
     if (!cleaners.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px">No cleaners enrolled</div>'; return; }
     const intervalFreqs = ['Hourly','Every 2 Hours','Every 4 Hours','Custom Interval'];
     // Build rows per cleaner
@@ -5799,6 +5951,7 @@ async function loadPayrollFromSupabase(month) {
 }
 
 function openPayrollSettings() {
+  if (!canEdit()) { toast('Only supervisors can change payroll settings', 'error'); return; }
   const s = getPayrollSettings();
   document.getElementById('ps-base-salary').value = s.baseSalary;
   document.getElementById('ps-absent-rate').value = s.absentRate;
@@ -5891,8 +6044,14 @@ async function recalcPayrollFromReports() {
       let attendance = {};
       try { attendance = (typeof row.attendance === 'string') ? JSON.parse(row.attendance) : (row.attendance || {}); } catch(e) {}
       state.staff.forEach(function(st) {
-        const status = attendance[st.id] || 'present';
+        // Skip if this staff member had not yet started on this report date
+        const staffStartDate = st.startdate || st.startDate || '';
+        if (staffStartDate && staffStartDate > row.date) return;
+        const status = attendance[st.id];
+        // If staff has no entry in this report's attendance, they were not yet enrolled — skip
+        if (status === undefined || status === null) return;
         const rec = records[st.id];
+        if (!rec) return;
         if (status === 'present')         rec.daysPresent  = (rec.daysPresent  || 0) + 1;
         else if (status === 'permission') rec.absentPerm   = (rec.absentPerm   || 0) + 1;
         else if (status === 'absent')     rec.absentNoPerm = (rec.absentNoPerm || 0) + 1;
@@ -5996,7 +6155,7 @@ function openAwardPicker(type) {
   } catch(e) { _awardPickerSel = []; }
 
   const grid = document.getElementById('award-picker-grid');
-  grid.innerHTML = state.staff.map(function(st) {
+  grid.innerHTML = state.staff.filter(function(st){ return !st.disengaged; }).map(function(st) {
     const display  = st.alias || st.firstname || st.name.split(' ')[0];
     const selected = _awardPickerSel.indexOf(st.id) !== -1;
     return '<div onclick="toggleAwardStaff(\'' + esc(st.id) + '\')" id="awp-' + esc(st.id) + '" style="'
@@ -6119,8 +6278,8 @@ function renderPayroll() {
   if (commentsEl) commentsEl.value = awards.comments || '';
   renderAwardsDashboard(month, awards);
 
-  // Staff rows — compact register
-  const staffList = state.staff;
+  // Staff rows — compact register (active staff only)
+  const staffList = state.staff.filter(function(st){ return !st.disengaged; });
   let totalBase = 0, totalDeductions = 0, totalNet = 0;
 
   // Build compact register using DOM elements to avoid quote escaping issues
@@ -6369,6 +6528,7 @@ function openPayrollEntryFromDetail() {
 }
 
 function openPayrollEntry(staffId) {
+  if (!canEdit()) { toast('Only supervisors can edit payroll entries', 'error'); return; }
   if (!payrollCurrentMonth) { toast('Load a payroll month first', 'error'); return; }
   const st = state.staff.find(function(s){ return s.id === staffId; });
   if (!st) return;
@@ -6966,6 +7126,24 @@ function showDraftForm(date) {
   badge.style.display = 'inline-flex';
   badge.innerHTML = '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">DRAFT — NOT SUBMITTED</span>';
 
+  // View-only mode for director/manager
+  const isSupervisorOnly = !canEdit();
+  const viewNotice = document.getElementById('dr-viewonly-notice');
+  const actionBtns = document.getElementById('dr-action-btns');
+  const attendanceHint = document.getElementById('dr-attendance-hint');
+  if (viewNotice) viewNotice.style.display = isSupervisorOnly ? '' : 'none';
+  if (actionBtns) actionBtns.style.display = isSupervisorOnly ? 'none' : 'flex';
+  if (attendanceHint) attendanceHint.style.display = isSupervisorOnly ? 'none' : '';
+  // Disable all form inputs for director/manager
+  document.querySelectorAll('#dr-form-area textarea, #dr-form-area input:not([type=hidden]):not([type=date])').forEach(function(el) {
+    el.readOnly = isSupervisorOnly;
+    el.style.pointerEvents = isSupervisorOnly ? 'none' : '';
+    el.style.opacity = isSupervisorOnly ? '0.7' : '';
+  });
+  document.querySelectorAll('#dr-form-area [onclick*="openShiftPicker"], #dr-form-area label[for]').forEach(function(el) {
+    el.style.pointerEvents = isSupervisorOnly ? 'none' : '';
+  });
+
   // Clear form
   document.getElementById('dr-morning-staff').value = '';
   document.getElementById('dr-morning-narrative').value = '';
@@ -6979,19 +7157,22 @@ function showDraftForm(date) {
   renderDrPhotos();
   clearShiftTags();
 
-  // Always show Save button (allows saving draft without sending email)
+  // Only show Save button for supervisors
   const saveBtn = document.getElementById('dr-save-btn');
-  if (saveBtn) saveBtn.style.display = 'inline-flex';
+  if (saveBtn) saveBtn.style.display = canEdit() ? 'inline-flex' : 'none';
 
   // Build attendance grid
   drAttendance = {};
   // Get the day-of-week for the report date (0=Sun … 6=Sat)
   const reportDayOfWeek = new Date(date + 'T12:00:00').getDay();
-  state.staff.forEach(function(st) {
+  state.staff.filter(function(st){ return !st.disengaged; }).forEach(function(st) {
     const daysOff = st.daysoff || st.daysOff || [];
     const isOffDay = daysOff.indexOf(reportDayOfWeek) >= 0;
-    // Auto-toggle off_duty if today is staff's designated off day, or if they're Off Shift / On Leave
-    drAttendance[st.id] = (isOffDay || st.status === 'Off Shift' || st.status === 'On Leave') ? 'off_duty' : 'present';
+    // New staff: if their start date is after the report date, they were not yet on staff
+    const staffStartDate = st.startdate || st.startDate || '';
+    const notYetStarted = staffStartDate && staffStartDate > date;
+    // Auto-toggle off_duty if today is staff's designated off day, or if they're Off Shift / On Leave, or haven't started yet
+    drAttendance[st.id] = (notYetStarted || isOffDay || st.status === 'Off Shift' || st.status === 'On Leave') ? 'off_duty' : 'present';
   });
   renderAttendanceGrid();
 }
@@ -7004,6 +7185,10 @@ function showSubmittedReport(data) {
   badge.style.display = 'inline-flex';
   badge.innerHTML = '<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">✅ SUBMITTED</span>';
 
+  // Hide Edit button for director/manager
+  const editBtn = document.getElementById('dr-edit-btn');
+  if (editBtn) editBtn.style.display = canEdit() ? '' : 'none';
+
   const html = buildReportEmailHTML(data);
   const preview = document.getElementById('dr-submitted-preview');
   preview.innerHTML = html;
@@ -7011,6 +7196,7 @@ function showSubmittedReport(data) {
 }
 
 function editDailyReport() {
+  if (!canEdit()) { toast('Only supervisors can edit daily reports', 'error'); return; }
   if (!drCurrentData) return;
   const d = drCurrentData;
   document.getElementById('dr-form-area').style.display = '';
@@ -7056,10 +7242,12 @@ function renderAttendanceGrid() {
     permission: { label:'Permission',  bg:'#d97706', color:'#fff' },
     off_duty:   { label:'Off Duty',    bg:'#64748b', color:'#fff' }
   };
-  grid.innerHTML = state.staff.map(function(st) {
+  const clickable = canEdit();
+  grid.innerHTML = state.staff.filter(function(st){ return !st.disengaged; }).map(function(st) {
     const status = drAttendance[st.id] || 'present';
     const cfg = statusConfig[status];
-    return '<div onclick="cycleAttendance(\'' + esc(st.id) + '\')" style="cursor:pointer;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;background:' + cfg.bg + ';color:' + cfg.color + ';user-select:none;transition:all .15s">'
+    const onclickAttr = clickable ? 'onclick="cycleAttendance(\'' + esc(st.id) + '\')"' : '';
+    return '<div ' + onclickAttr + ' style="cursor:' + (clickable ? 'pointer' : 'default') + ';padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;background:' + cfg.bg + ';color:' + cfg.color + ';user-select:none;transition:all .15s">'
       + esc(st.name.toUpperCase())
       + '<span style="font-size:9px;opacity:.8;margin-left:4px">(' + cfg.label + ')</span>'
       + '</div>';
@@ -7815,7 +8003,7 @@ function openShiftPicker(shift) {
   const selected = _shiftPickerSelected[shift] || [];
 
   // Sort: matching shift first, other assigned shifts second, unassigned last
-  const sorted = state.staff.slice().sort(function(a, b) {
+  const sorted = state.staff.filter(function(st){ return !st.disengaged; }).slice().sort(function(a, b) {
     function groupOf(st) {
       const s = (st.shift || '').toLowerCase();
       if (s.includes(shift)) return 0;
