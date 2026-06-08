@@ -1049,15 +1049,6 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="sf-bank-name"></div>
       <div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="sf-bank-acct"></div>
     </div>
-    <div class="section-sep red">Login Access</div>
-    <div class="form-group">
-      <label class="form-label">App Login Password <span style="font-weight:400;color:var(--text-muted)">(set a password for this staff member to sign in)</span></label>
-      <div style="position:relative">
-        <input type="password" class="form-control" id="sf-login-password" placeholder="e.g. Abena@2025" autocomplete="new-password">
-        <button type="button" onclick="sfTogglePasswordVis()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-muted)" title="Show/hide password">👁</button>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Leave blank to keep the shared cleaner password. If set, this person must use their individual password to log in.</div>
-    </div>
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" id="save-staff-btn" onclick="saveStaff()">Enrol Staff Member</button></div>
   </div></div>
 </div>
@@ -1330,4 +1321,13 @@ textarea.form-control{resize:vertical;min-height:56px}
     </div>
     <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="log-date"></div>
     <div class="form-group"><label class="form-label">Job / Project Name</label><input type="text" class="form-control" id="log-job"></div>
-    <div class="fo
+    <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-control" id="log-notes" rows="2"></textarea></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" onclick="saveUsageLog()">✅ Log Usage & Update Stock</button></div>
+  </div></div>
+</div>
+
+<!-- DAMAGE REPORT MODAL -->
+<div class="modal-overlay center-ov" id="modal-damage-report" style="display:none" onclick="overlayClick(event,'modal-damage-report')">
+  <div class="modal center-m"><div class="modal-header" style="background:#991b1b"><span class="modal-title">⚠ Report Damaged Item</span><button class="modal-close" onclick="closeModal('modal-damage-report')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="
