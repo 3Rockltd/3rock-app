@@ -6291,7 +6291,8 @@ function renderPayroll() {
     const absDed   = (rec.absentNoPerm || 0) * s.absentRate;
     const uniDed   = (rec.uniformDays  || 0) * s.uniformRate;
     const totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions) || 0);
-    const netPay   = s.baseSalary - totalDed;
+    const bonus    = parseFloat(rec.bonus) || 0;
+    const netPay   = s.baseSalary - totalDed + bonus;
     totalBase      += s.baseSalary;
     totalDeductions += totalDed;
     totalNet       += netPay;
@@ -6328,7 +6329,9 @@ function renderPayroll() {
 
     const dl = document.createElement('div');
     dl.style.cssText = 'font-size:10px;color:var(--text-muted);margin-top:1px';
-    dl.innerHTML = rec.daysPresent + '/' + rec.workingDays + ' days' + (totalDed > 0 ? ' &middot; <span style="color:var(--danger)">−' + totalDed + '</span>' : '');
+    dl.innerHTML = rec.daysPresent + '/' + rec.workingDays + ' days'
+      + (totalDed > 0 ? ' &middot; <span style="color:var(--danger)">−' + totalDed + '</span>' : '')
+      + (bonus > 0    ? ' &middot; <span style="color:var(--green)">+' + bonus + ' bonus</span>' : '');
     mid.appendChild(dl);
 
     if (hasBank) {
@@ -6433,7 +6436,8 @@ function openPayrollDetail(staffId) {
   const absDed  = (rec.absentNoPerm || 0) * s.absentRate;
   const uniDed  = (rec.uniformDays  || 0) * s.uniformRate;
   const totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions) || 0);
-  const netPay   = s.baseSalary - totalDed;
+  const bonus    = parseFloat(rec.bonus) || 0;
+  const netPay   = s.baseSalary - totalDed + bonus;
   const bankAcct = st.bankacct || st.bankAcct || '';
   const bankName = st.bankname || st.bankName || '';
   const awards   = getPayrollAwards(payrollCurrentMonth);
@@ -6477,6 +6481,7 @@ function openPayrollDetail(staffId) {
     + (totalDed > 0
         ? '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px dashed var(--border-light);margin-top:4px"><span style="font-size:12px;font-weight:700;color:var(--danger)">Total Deductions</span><span style="font-size:12px;font-weight:700;color:var(--danger)">−GHC ' + totalDed + '</span></div>'
         : '<div style="font-size:11px;color:var(--green);padding:6px 0;font-weight:600">✅ No deductions this month</div>')
+    + (bonus > 0 ? '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px dashed var(--border-light);margin-top:4px"><span style="font-size:12px;font-weight:700;color:var(--green)">💚 Bonus / Allowance</span><span style="font-size:12px;font-weight:700;color:var(--green)">+GHC ' + bonus + '</span></div>' : '')
     + (rec.remarks ? '<div style="background:var(--off-white);border-radius:var(--r-md);padding:8px 10px;margin-top:8px;font-size:11px;color:var(--text-secondary)"><strong>Remarks:</strong> ' + esc(rec.remarks) + '</div>' : '')
     // Awards badges
     + ((isBP || iBD) ? '<div style="display:flex;gap:6px;margin-top:10px">'
@@ -6546,6 +6551,7 @@ function openPayrollEntry(staffId) {
   document.getElementById('pe-absent-noperm').value = rec.absentNoPerm || 0;
   document.getElementById('pe-uniform-days').value = rec.uniformDays || 0;
   document.getElementById('pe-other-deductions').value = rec.otherDeductions || 0;
+  document.getElementById('pe-bonus').value = rec.bonus || 0;
   document.getElementById('pe-remarks').value = rec.remarks || '';
   calcPayrollEntry();
   openModal('modal-payroll-entry');
@@ -6557,10 +6563,11 @@ function calcPayrollEntry() {
   const absentNoPerm = parseInt(document.getElementById('pe-absent-noperm').value) || 0;
   const uniformDays = parseInt(document.getElementById('pe-uniform-days').value) || 0;
   const otherDed = parseFloat(document.getElementById('pe-other-deductions').value) || 0;
+  const bonus = parseFloat(document.getElementById('pe-bonus').value) || 0;
   const absDed = absentNoPerm * s.absentRate;
   const uniDed = uniformDays * s.uniformRate;
   const totalDed = absDed + uniDed + otherDed;
-  const netPay = s.baseSalary - totalDed;
+  const netPay = s.baseSalary - totalDed + bonus;
   const preview = document.getElementById('pe-calc-preview');
   if (preview) {
     preview.style.display = 'block';
@@ -6568,6 +6575,7 @@ function calcPayrollEntry() {
       + (absDed > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Absent deduction</span><span style="font-size:12px;font-weight:600;color:var(--danger)">−GHC ' + absDed + '</span></div>' : '')
       + (uniDed > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Uniform violation</span><span style="font-size:12px;font-weight:600;color:var(--danger)">−GHC ' + uniDed + '</span></div>' : '')
       + (otherDed > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Other deductions</span><span style="font-size:12px;font-weight:600;color:var(--danger)">−GHC ' + otherDed + '</span></div>' : '')
+      + (bonus > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-secondary)">Bonus / Allowance</span><span style="font-size:12px;font-weight:600;color:var(--green)">+GHC ' + bonus + '</span></div>' : '')
       + '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span style="font-size:13px;font-weight:700">Net Pay</span><span style="font-size:16px;font-weight:800;color:' + (netPay < s.baseSalary * 0.8 ? 'var(--danger)' : 'var(--green)') + '">GHC ' + netPay.toLocaleString() + '</span></div>';
   }
 }
@@ -6586,6 +6594,7 @@ async function savePayrollEntry() {
     absentNoPerm:    parseInt(document.getElementById('pe-absent-noperm').value)   || 0,
     uniformDays:     parseInt(document.getElementById('pe-uniform-days').value)    || 0,
     otherDeductions: parseFloat(document.getElementById('pe-other-deductions').value) || 0,
+    bonus:           parseFloat(document.getElementById('pe-bonus').value) || 0,
     remarks:         document.getElementById('pe-remarks').value.trim()
   });
   showLoading('Saving payroll entry…');
@@ -6648,11 +6657,12 @@ async function emailPayrollReport() {
   // Build payroll rows HTML
   let totalNet = 0;
   const rows = state.staff.map(function(st, i) {
-    const rec = records[st.id] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0 };
+    const rec = records[st.id] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, bonus: 0 };
     const absDed   = (rec.absentNoPerm || 0) * s.absentRate;
     const uniDed   = (rec.uniformDays  || 0) * s.uniformRate;
     const totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions) || 0);
-    const net      = s.baseSalary - totalDed;
+    const bonus    = parseFloat(rec.bonus) || 0;
+    const net      = s.baseSalary - totalDed + bonus;
     totalNet += net;
     const isBP = bpIds.indexOf(st.id) !== -1;
     const iBD  = bdIds.indexOf(st.id) !== -1;
@@ -6664,6 +6674,7 @@ async function emailPayrollReport() {
       + '<td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">' + esc(st.name) + badge + '</td>'
       + '<td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;text-align:center">' + (rec.daysPresent || rec.workingDays) + '/' + rec.workingDays + '</td>'
       + '<td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;text-align:center;color:#dc2626">' + (totalDed > 0 ? '−GHC ' + totalDed : '—') + '</td>'
+      + '<td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;text-align:center;color:#16a34a">' + (bonus > 0 ? '+GHC ' + bonus : '—') + '</td>'
       + '<td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;color:' + (net < s.baseSalary ? '#dc2626' : '#16a34a') + '">GHC ' + net.toLocaleString() + '</td>'
       + '</tr>';
   }).join('');
@@ -6690,6 +6701,7 @@ async function emailPayrollReport() {
     + '<th style="padding:8px 10px;text-align:left">Staff Name</th>'
     + '<th style="padding:8px 10px;text-align:center">Days</th>'
     + '<th style="padding:8px 10px;text-align:center">Deductions</th>'
+    + '<th style="padding:8px 10px;text-align:center">Bonus</th>'
     + '<th style="padding:8px 10px;text-align:right">Net Pay</th>'
     + '</tr></thead><tbody>' + rows + '</tbody>'
     + '<tfoot><tr style="background:#0a1628;color:#fff"><td colspan="4" style="padding:10px;font-size:14px;font-weight:700">TOTAL NET PAYOUT</td>'
@@ -6780,9 +6792,10 @@ async function exportPayrollPDF() {
       const absDed  = (rec.absentNoPerm || 0) * s.absentRate;
       const uniDed  = (rec.uniformDays  || 0) * s.uniformRate;
       const totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions) || 0);
+      const bonus    = parseFloat(rec.bonus) || 0;
       grandGross += s.baseSalary;
       grandDed   += totalDed;
-      grandNet   += (s.baseSalary - totalDed);
+      grandNet   += (s.baseSalary - totalDed + bonus);
     });
 
     // ── helpers ─────────────────────────────────────────────────────
@@ -6814,7 +6827,7 @@ async function exportPayrollPDF() {
 
     // ── TABLE COLUMNS (no staff id / phone / shift) ──────────────────
     // Widths must sum to usable = 281
-    // #5  Name44  Bank30  AcctNo36  Days16  AbsNP14  UniV12  AbsDed20  UniDed18  OtherDed18  TotalDed22  NetPay GHC 46 = 281
+    // #5  Name44  Bank30  AcctNo36  Days16  AbsNP14  UniV12  AbsDed18  UniDed16  OtherDed16  Bonus16  TotalDed20  NetPay GHC 38 = 281
     const COLS = [
       { h: '#',            w: 5,  a: 'l' },
       { h: 'Staff Name',   w: 44, a: 'l' },
@@ -6823,11 +6836,12 @@ async function exportPayrollPDF() {
       { h: 'Days',         w: 16, a: 'c' },
       { h: 'Abs NP',       w: 14, a: 'c' },
       { h: 'Uni. Viol.',   w: 12, a: 'c' },
-      { h: 'Abs Ded',      w: 20, a: 'r' },
-      { h: 'Uni Ded',      w: 18, a: 'r' },
-      { h: 'Other Ded',    w: 18, a: 'r' },
-      { h: 'Total Ded',    w: 22, a: 'r' },
-      { h: 'Net Pay (GHC)',w: 46, a: 'r' }
+      { h: 'Abs Ded',      w: 18, a: 'r' },
+      { h: 'Uni Ded',      w: 16, a: 'r' },
+      { h: 'Other Ded',    w: 16, a: 'r' },
+      { h: 'Bonus',        w: 16, a: 'r' },
+      { h: 'Total Ded',    w: 20, a: 'r' },
+      { h: 'Net Pay (GHC)',w: 38, a: 'r' }
     ];
 
     function drawTableHeader(yy) {
@@ -6945,11 +6959,12 @@ async function exportPayrollPDF() {
     var grandNetFinal = 0;
 
     state.staff.forEach(function(st, i) {
-      var rec      = records[st.id] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentPerm: 0, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, remarks: '' };
+      var rec      = records[st.id] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentPerm: 0, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, bonus: 0, remarks: '' };
       var absDed   = (rec.absentNoPerm || 0) * s.absentRate;
       var uniDed   = (rec.uniformDays  || 0) * s.uniformRate;
       var totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions) || 0);
-      var net      = s.baseSalary - totalDed;
+      var bonus    = parseFloat(rec.bonus) || 0;
+      var net      = s.baseSalary - totalDed + bonus;
       grandNetFinal += net;
       var isBP     = bpIds.indexOf(st.id) !== -1;
       var isBD     = bdIds.indexOf(st.id) !== -1;
@@ -6984,13 +6999,16 @@ async function exportPayrollPDF() {
         { v: absDed   > 0 ? absDed.toLocaleString()   : '\u2014', c: COLS[7]  },
         { v: uniDed   > 0 ? uniDed.toLocaleString()   : '\u2014', c: COLS[8]  },
         { v: (rec.otherDeductions || 0) > 0 ? parseFloat(rec.otherDeductions).toLocaleString() : '\u2014', c: COLS[9] },
-        { v: totalDed > 0 ? totalDed.toLocaleString() : '\u2014', c: COLS[10] },
-        { v: net.toLocaleString(),                     c: COLS[11] }
+        { v: bonus    > 0 ? bonus.toLocaleString()     : '\u2014', c: COLS[10] },
+        { v: totalDed > 0 ? totalDed.toLocaleString() : '\u2014', c: COLS[11] },
+        { v: net.toLocaleString(),                     c: COLS[12] }
       ];
 
       cells.forEach(function(item) {
-        if (item.c === COLS[11]) {
+        if (item.c === COLS[12]) {
           doc.setTextColor(isLow ? 185 : 22, isLow ? 28 : 163, isLow ? 28 : 74);
+        } else if (item.c === COLS[10]) {
+          doc.setTextColor(22, 163, 74); // green for bonus
         } else if (item.c === COLS[3] && !bankAcct) {
           doc.setTextColor(185, 100, 0);
         } else {
@@ -7945,7 +7963,8 @@ function checkPaymentReminder() {
     const absDed = (rec.absentNoPerm||0)*s.absentRate;
     const uniDed = (rec.uniformDays||0)*s.uniformRate;
     const totalDed = absDed + uniDed + (parseFloat(rec.otherDeductions)||0);
-    return sum + (s.baseSalary - totalDed);
+    const bonus = parseFloat(rec.bonus)||0;
+    return sum + (s.baseSalary - totalDed + bonus);
   }, 0);
 
   const existing = document.getElementById('payment-reminder-banner');
@@ -8239,6 +8258,7 @@ function supervisorUncheck(taskId, shift) { return uncheckTask(taskId, shift); }
         <div class="form-group"><label class="form-label">Uniform Violation Days</label><input type="number" class="form-control" id="pe-uniform-days" min="0" value="0" oninput="calcPayrollEntry()"></div>
         <div class="form-group"><label class="form-label">Other Deductions (GHC)</label><input type="number" class="form-control" id="pe-other-deductions" min="0" value="0" oninput="calcPayrollEntry()"></div>
       </div>
+      <div class="form-group"><label class="form-label" style="color:var(--green)">💚 Bonus / Allowance (GHC)</label><input type="number" class="form-control" id="pe-bonus" min="0" value="0" oninput="calcPayrollEntry()" style="border-color:var(--green)" placeholder="0"></div>
       <div id="pe-calc-preview" style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin:10px 0;display:none"></div>
       <div class="form-group"><label class="form-label">Remarks</label><input type="text" class="form-control" id="pe-remarks" placeholder="e.g. Probation, Bonus, Medical leave..."></div>
       <div class="form-actions" style="justify-content:space-between">
