@@ -6029,13 +6029,20 @@ async function recalcPayrollFromReports() {
     }
 
     const s = getPayrollSettings();
-    // Fresh records — zero everything out for the month
+    // Fresh records — reset attendance counters but preserve manual fields (bonus, otherDeductions, uniformDays, remarks)
+    const existingRecords = getPayrollRecords(month);
     const records = {};
     state.staff.forEach(function(st) {
+      const prev = existingRecords[st.id] || {};
       records[st.id] = {
-        workingDays: s.workingDays, daysPresent: 0,
-        absentPerm: 0, absentNoPerm: 0,
-        uniformDays: 0, otherDeductions: 0, remarks: ''
+        workingDays:     s.workingDays,
+        daysPresent:     0,
+        absentPerm:      0,
+        absentNoPerm:    0,
+        uniformDays:     prev.uniformDays     || 0,
+        otherDeductions: prev.otherDeductions || 0,
+        bonus:           prev.bonus           || 0,
+        remarks:         prev.remarks         || ''
       };
     });
 
@@ -6400,6 +6407,10 @@ function renderPayroll() {
       .map(function(id){ const st=state.staff.find(function(s){return s.id===id;}); return st?st.name:null; }).filter(Boolean);
     const bdNames2 = (Array.isArray(awards.bestDressed) ? awards.bestDressed : (awards.bestDressed ? [awards.bestDressed] : []))
       .map(function(id){ const st=state.staff.find(function(s){return s.id===id;}); return st?st.name:null; }).filter(Boolean);
+    const totalBonuses = staffList.reduce(function(sum, st) {
+      const rec = records[st.id] || {};
+      return sum + (parseFloat(rec.bonus) || 0);
+    }, 0);
     totalsEl.innerHTML = '<div class="card-title">Payroll Summary — '+monthLabel+'</div>'
       + detRow('Base Rate (per staff)', 'GHC '+s.baseSalary.toLocaleString())
       + detRow('Absent Deduction Rate', 'GHC '+s.absentRate+'/day (no permission)')
@@ -6408,6 +6419,7 @@ function renderPayroll() {
       + detRow('Total Staff', staffList.length)
       + detRow('Total Gross', 'GHC '+totalBase.toLocaleString())
       + detRow('Total Deductions', 'GHC '+totalDeductions.toLocaleString())
+      + (totalBonuses > 0 ? detRow('💚 Total Bonuses', 'GHC +'+totalBonuses.toLocaleString()) : '')
       + (bpNames2.length ? detRow('⭐ Best Performer', bpNames2.join(', ')) : '')
       + (bdNames2.length ? detRow('👔 Best Dressed', bdNames2.join(', ')) : '')
       + (awards.comments ? detRow('Monthly Comments', awards.comments) : '')
