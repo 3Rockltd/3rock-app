@@ -7244,7 +7244,7 @@ function editDailyReport() {
   // Restore attendance
   drAttendance = {};
   try { drAttendance = typeof d.attendance === 'string' ? JSON.parse(d.attendance) : (d.attendance || {}); } catch(e) {}
-  state.staff.forEach(function(st) { if (!drAttendance[st.id]) drAttendance[st.id] = 'present'; });
+  state.staff.forEach(function(st) { if (!st.disengaged && !drAttendance[st.id]) drAttendance[st.id] = 'present'; });
   renderAttendanceGrid();
   initShiftTagsFromData(d);
 
@@ -7369,10 +7369,10 @@ async function submitDailyReport() {
   }
 
   // Count attendance
-  const presentStaff    = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
-  const absentStaff     = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
-  const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
-  const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
+  const presentStaff    = state.staff.filter(function(s) { return !s.disengaged && (drAttendance[s.id] || 'present') === 'present'; });
+  const absentStaff     = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'absent'; });
+  const permissionStaff = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'permission'; });
+  const offDutyStaff    = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'off_duty'; });
   const supervisorName  = (document.getElementById('dr-supervisor-name').value || '').trim();
 
   const reportData = {
@@ -7502,10 +7502,10 @@ async function saveReportWithoutEmail() {
   const issues = document.getElementById('dr-issues').value.trim();
   const supervisorName = (document.getElementById('dr-supervisor-name').value || '').trim();
 
-  const presentStaff    = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
-  const absentStaff     = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
-  const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
-  const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
+  const presentStaff    = state.staff.filter(function(s) { return !s.disengaged && (drAttendance[s.id] || 'present') === 'present'; });
+  const absentStaff     = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'absent'; });
+  const permissionStaff = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'permission'; });
+  const offDutyStaff    = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'off_duty'; });
 
   const reportData = Object.assign({
     date: date,
@@ -7571,10 +7571,10 @@ async function saveReportWithoutEmail() {
 
 function previewDailyReport() {
   const date = drCurrentDate || todayStr();
-  const presentStaff    = state.staff.filter(function(s) { return (drAttendance[s.id] || 'present') === 'present'; });
-  const absentStaff     = state.staff.filter(function(s) { return drAttendance[s.id] === 'absent'; });
-  const permissionStaff = state.staff.filter(function(s) { return drAttendance[s.id] === 'permission'; });
-  const offDutyStaff    = state.staff.filter(function(s) { return drAttendance[s.id] === 'off_duty'; });
+  const presentStaff    = state.staff.filter(function(s) { return !s.disengaged && (drAttendance[s.id] || 'present') === 'present'; });
+  const absentStaff     = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'absent'; });
+  const permissionStaff = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'permission'; });
+  const offDutyStaff    = state.staff.filter(function(s) { return !s.disengaged && drAttendance[s.id] === 'off_duty'; });
   const draft = {
     date: date,
     morning_staff: document.getElementById('dr-morning-staff').value,
@@ -7589,6 +7589,7 @@ function previewDailyReport() {
     present_count: presentStaff.length,
     absent_count: absentStaff.length,
     permission_count: permissionStaff.length,
+    off_duty_count: offDutyStaff.length,
     submitted_by: currentUser ? currentUser.name : '',
     submitted_role: currentUser ? currentUser.role : ''
   };
@@ -7615,10 +7616,10 @@ function buildReportEmailHTML(data) {
   // Attendance
   var attendance = {};
   try { attendance = typeof data.attendance === 'string' ? JSON.parse(data.attendance) : (data.attendance || {}); } catch(e) {}
-  var presentList  = state.staff.filter(function(s){ return (attendance[s.id]||'present')==='present'; });
-  var absentList   = state.staff.filter(function(s){ return attendance[s.id]==='absent'; });
-  var permList     = state.staff.filter(function(s){ return attendance[s.id]==='permission'; });
-  var offDutyList  = state.staff.filter(function(s){ return attendance[s.id]==='off_duty'; });
+  var presentList  = state.staff.filter(function(s){ return !s.disengaged && (attendance[s.id]||'present')==='present'; });
+  var absentList   = state.staff.filter(function(s){ return !s.disengaged && attendance[s.id]==='absent'; });
+  var permList     = state.staff.filter(function(s){ return !s.disengaged && attendance[s.id]==='permission'; });
+  var offDutyList  = state.staff.filter(function(s){ return !s.disengaged && attendance[s.id]==='off_duty'; });
 
   // Media (photos + videos)
   var photos = [];
@@ -7820,9 +7821,10 @@ function copyDailyReport() {
   var text = '🧹 Cleaning Activity Report\n'
     + new Date(data.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + '\n'
     + '3 Rock Builders Company Limited\n='.repeat(1) + '='.repeat(49) + '\n\n'
-    + 'Staff Present (' + (data.present_count||0) + '): ' + state.staff.filter(function(s){return (attendance[s.id]||'present')==='present';}).map(function(s){return s.name;}).join(', ') + '\n'
-    + 'Staff Absent (' + (data.absent_count||0) + '): ' + state.staff.filter(function(s){return attendance[s.id]==='absent';}).map(function(s){return s.name;}).join(', ') + '\n'
-    + 'On Permission (' + (data.permission_count||0) + '): ' + state.staff.filter(function(s){return attendance[s.id]==='permission';}).map(function(s){return s.name;}).join(', ') + '\n\n'
+    + 'Staff Present (' + (data.present_count||0) + '): ' + state.staff.filter(function(s){return !s.disengaged && (attendance[s.id]||'present')==='present';}).map(function(s){return s.name;}).join(', ') + '\n'
+    + 'Staff Absent (' + (data.absent_count||0) + '): ' + state.staff.filter(function(s){return !s.disengaged && attendance[s.id]==='absent';}).map(function(s){return s.name;}).join(', ') + '\n'
+    + 'On Permission (' + (data.permission_count||0) + '): ' + state.staff.filter(function(s){return !s.disengaged && attendance[s.id]==='permission';}).map(function(s){return s.name;}).join(', ') + '\n'
+    + 'Off Duty (' + (data.off_duty_count||0) + '): ' + state.staff.filter(function(s){return !s.disengaged && attendance[s.id]==='off_duty';}).map(function(s){return s.name;}).join(', ') + '\n\n'
     + (data.morning_narrative ? '🌅 MORNING SHIFT\n'+(data.morning_staff?data.morning_staff+': ':'')+data.morning_narrative+'\n\n':'')
     + (data.afternoon_narrative ? '☀️ AFTERNOON SHIFT\n'+(data.afternoon_staff?data.afternoon_staff+': ':'')+data.afternoon_narrative+'\n\n':'')
     + (data.evening_narrative ? '🌙 EVENING SHIFT\n'+(data.evening_staff?data.evening_staff+': ':'')+data.evening_narrative+'\n\n':'')
@@ -7857,10 +7859,10 @@ function exportDailyReportPDF() {
   var y = 48;
   var attendance = {};
   try { attendance = typeof data.attendance==='string'?JSON.parse(data.attendance):(data.attendance||{}); } catch(e){}
-  var presentList  = state.staff.filter(function(s){return (attendance[s.id]||'present')==='present';});
-  var absentList   = state.staff.filter(function(s){return attendance[s.id]==='absent';});
-  var permList     = state.staff.filter(function(s){return attendance[s.id]==='permission';});
-  var offDutyList  = state.staff.filter(function(s){return attendance[s.id]==='off_duty';});
+  var presentList  = state.staff.filter(function(s){return !s.disengaged && (attendance[s.id]||'present')==='present';});
+  var absentList   = state.staff.filter(function(s){return !s.disengaged && attendance[s.id]==='absent';});
+  var permList     = state.staff.filter(function(s){return !s.disengaged && attendance[s.id]==='permission';});
+  var offDutyList  = state.staff.filter(function(s){return !s.disengaged && attendance[s.id]==='off_duty';});
 
   function pdfSection(title, color) {
     doc.setFillColor(color[0],color[1],color[2]); doc.rect(14,y,182,7,'F');
