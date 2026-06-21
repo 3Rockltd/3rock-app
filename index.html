@@ -945,6 +945,7 @@ textarea.form-control{resize:vertical;min-height:56px}
           <button class="btn btn-outline" onclick="copyDailyReport()">📋 Copy Report</button>
           <button class="btn btn-outline" onclick="exportDailyReportPDF()">📄 Download PDF</button>
           <button class="btn btn-outline" id="dr-edit-btn" style="color:var(--amber);border-color:var(--amber)" onclick="editDailyReport()">✏️ Edit Report</button>
+          <button class="btn btn-outline" id="dr-delete-btn" style="color:var(--danger);border-color:var(--danger)" onclick="deleteDailyReport()">🗑️ Delete Report</button>
         </div>
       </div>
 
@@ -5933,6 +5934,7 @@ async function loadPayrollFromSupabase(month) {
           absentNoPerm:    r.absentNoPerm    != null ? r.absentNoPerm    : 0,
           uniformDays:     r.uniformDays     != null ? r.uniformDays     : 0,
           otherDeductions: r.otherDeductions != null ? r.otherDeductions : 0,
+          bonus:           r.bonus           != null ? r.bonus           : 0,
           remarks:         r.remarks || ''
         };
         // Restore _tally_* keys so deduplication works in new sessions
@@ -7215,9 +7217,11 @@ function showSubmittedReport(data) {
   badge.style.display = 'inline-flex';
   badge.innerHTML = '<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">✅ SUBMITTED</span>';
 
-  // Hide Edit button for director/manager
+  // Hide Edit/Delete buttons for director/manager
   const editBtn = document.getElementById('dr-edit-btn');
   if (editBtn) editBtn.style.display = canEdit() ? '' : 'none';
+  const deleteBtn = document.getElementById('dr-delete-btn');
+  if (deleteBtn) deleteBtn.style.display = canEdit() ? '' : 'none';
 
   const html = buildReportEmailHTML(data);
   const preview = document.getElementById('dr-submitted-preview');
@@ -7259,6 +7263,29 @@ function editDailyReport() {
   // Show Save Changes button when editing an existing submitted report
   const saveBtn = document.getElementById('dr-save-btn');
   if (saveBtn) saveBtn.style.display = 'inline-flex';
+}
+
+// ── Delete ────────────────────────────────────────────────────────
+
+async function deleteDailyReport() {
+  if (!canEdit()) { toast('Only supervisors can delete daily reports', 'error'); return; }
+  if (!drCurrentData || !drCurrentData.id) { toast('No saved report to delete', 'error'); return; }
+
+  const dateStr = new Date(drCurrentData.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const confirmed = await showConfirm('Delete Report', 'Permanently delete the daily report for ' + dateStr + '? This cannot be undone and will not affect payroll tallies already recorded.', 'Delete', 'btn-danger');
+  if (!confirmed) return;
+
+  showLoading('Deleting report...');
+  try {
+    const { error } = await supabaseClient.from('daily_reports').delete().eq('id', drCurrentData.id);
+    if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
+    const deletedDate = drCurrentData.date;
+    drCurrentData = null;
+    showDraftForm(deletedDate);
+    toast('🗑️ Report deleted', 'success');
+  } catch(e) {
+    toast('Delete failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
 }
 
 // ── Attendance grid ───────────────────────────────────────────────
@@ -7763,13 +7790,17 @@ async function emailDailyReport() {
   if (s.appsScriptWebhookUrl && s.appsScriptWebhookUrl.startsWith('https://')) {
     showLoading('Sending email via Apps Script...');
     try {
+      // Cache-bust: a repeated identical GET URL (e.g. resending the same
+      // date) can otherwise be served from the browser's HTTP cache, which
+      // shows a "success" toast without ever hitting the Apps Script again.
       const url = s.appsScriptWebhookUrl
         + '?date=' + encodeURIComponent(data.date)
-        + '&source=app';
+        + '&source=app'
+        + '&_t=' + Date.now();
       // Try with cors first; fall back to no-cors
       let sent = false;
       try {
-        const resp = await fetch(url, { method: 'GET', mode: 'cors' });
+        const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store' });
         if (resp.ok) {
           const json = await resp.json().catch(function(){ return {}; });
           if (json.ok === false) {
@@ -7784,7 +7815,7 @@ async function emailDailyReport() {
       }
       if (!sent) {
         try {
-          await fetch(url, { method: 'GET', mode: 'no-cors' });
+          await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' });
           toast('✅ Email triggered via Apps Script (no-cors — check your inbox to confirm)', 'success');
         } catch(ncErr) {
           toast('⚠ Apps Script unreachable — check the URL and deployment access in Payroll Settings', 'error', 6000);
