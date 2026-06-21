@@ -7277,8 +7277,15 @@ async function deleteDailyReport() {
 
   showLoading('Deleting report...');
   try {
-    const { error } = await supabaseClient.from('daily_reports').delete().eq('id', drCurrentData.id);
+    const { data: deletedRows, error } = await supabaseClient.from('daily_reports').delete().eq('id', drCurrentData.id).select();
     if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
+    if (!deletedRows || deletedRows.length === 0) {
+      // Supabase returns no error even when Row Level Security silently
+      // blocks the delete and zero rows match — that's why it looked like
+      // it worked but the report reappears on Load.
+      toast('⚠ Delete blocked by database permissions — add a DELETE policy for daily_reports in Supabase (Authentication → Policies)', 'error', 8000);
+      return;
+    }
     const deletedDate = drCurrentData.date;
     drCurrentData = null;
     showDraftForm(deletedDate);
