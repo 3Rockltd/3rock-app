@@ -6718,7 +6718,7 @@ async function emailPayrollReport() {
     + '<th style="padding:8px 10px;text-align:center">Bonus</th>'
     + '<th style="padding:8px 10px;text-align:right">Net Pay</th>'
     + '</tr></thead><tbody>' + rows + '</tbody>'
-    + '<tfoot><tr style="background:#0a1628;color:#fff"><td colspan="4" style="padding:10px;font-size:14px;font-weight:700">TOTAL NET PAYOUT</td>'
+    + '<tfoot><tr style="background:#0a1628;color:#fff"><td colspan="5" style="padding:10px;font-size:14px;font-weight:700">TOTAL NET PAYOUT</td>'
     + '<td style="padding:10px;text-align:right;font-size:18px;font-weight:800;color:#f5c842">GHC ' + totalNet.toLocaleString() + '</td></tr></tfoot>'
     + '</table>'
     + '<div style="margin-top:14px;font-size:11px;color:#94a3b8;text-align:center">Generated ' + new Date().toLocaleString() + ' · 3-Rock Builders Management App · Confidential</div>'
@@ -6951,18 +6951,6 @@ async function exportPayrollPDF() {
       }
       y += cardH + 4;
 
-      if (awards.comments) {
-        var commentLines = doc.splitTextToSize(awards.comments, usable - 8);
-        var boxH = 9 + commentLines.length * 4.2;
-        doc.setFillColor(240, 245, 255); doc.roundedRect(ML, y, usable, boxH, 2, 2, 'F');
-        doc.setFillColor(10, 22, 40);    doc.roundedRect(ML, y, usable, 6,    2, 2, 'F');
-        doc.rect(ML, y + 3, usable, 3, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-        doc.text('GENERAL COMMENTS', ML + 3, y + 4.5);
-        doc.setTextColor(20, 30, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-        doc.text(commentLines, ML + 4, y + 10);
-        y += boxH + 4;
-      }
     }
 
     // ── PAGE 2+: Register table ──────────────────────────────────────
@@ -7062,6 +7050,22 @@ async function exportPayrollPDF() {
     doc.setTextColor(245, 200, 66); doc.setFontSize(9);
     doc.text('NET PAYOUT: GHC ' + grandNetFinal.toLocaleString(), ML + usable - 2, y + 6.5, { align: 'right' });
     y += 13;
+
+    // ── General Comments (after table, uses empty space at bottom) ───
+    if (awards.comments) {
+      var commentLines = doc.splitTextToSize(awards.comments, usable - 8);
+      var commentBoxH = 9 + commentLines.length * 4.2;
+      if (y + commentBoxH > PH - 22) { doc.addPage(); pageHeader(doc.internal.getNumberOfPages()); y = 33; }
+      else { y += 4; }
+      doc.setFillColor(240, 245, 255); doc.roundedRect(ML, y, usable, commentBoxH, 2, 2, 'F');
+      doc.setFillColor(10, 22, 40);    doc.roundedRect(ML, y, usable, 6,           2, 2, 'F');
+      doc.rect(ML, y + 3, usable, 3, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+      doc.text('GENERAL COMMENTS', ML + 3, y + 4.5);
+      doc.setTextColor(20, 30, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+      doc.text(commentLines, ML + 4, y + 10);
+      y += commentBoxH + 4;
+    }
 
     // ── Authorisation section ────────────────────────────────────────
     if (y > PH - 60) { doc.addPage(); pageHeader(doc.internal.getNumberOfPages()); y = 33; }
