@@ -1068,6 +1068,17 @@ textarea.form-control{resize:vertical;min-height:56px}
   </div></div></div>
 </div>
 
+<!-- ARCHIVED STAFF HISTORY MODAL (read-only, director/manager audit view) -->
+<div class="modal-overlay center-ov" id="modal-staff-history" style="display:none" onclick="overlayClick(event,'modal-staff-history')">
+  <div class="modal center-m">
+    <div class="modal-header" style="background:var(--navy)"><span class="modal-title">📜 History — <span id="history-staff-name"></span></span><button class="modal-close" onclick="closeModal('modal-staff-history')">✕</button></div>
+    <div class="modal-body"><div id="history-body"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-staff-history')">Close</button>
+    </div></div>
+  </div>
+</div>
+
 <!-- DISENGAGE STAFF MODAL -->
 <div class="modal-overlay center-ov" id="modal-disengage-staff" style="display:none" onclick="overlayClick(event,'modal-disengage-staff')">
   <div class="modal center-m">
@@ -1366,10 +1377,28 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="log-qty" min="1" placeholder="0"><div class="field-error" id="err-log-qty">Enter a valid quantity</div></div>
       <div class="form-group"><label class="form-label">Unit</label><input type="text" class="form-control" id="log-unit" readonly style="background:#e8edf7"></div>
     </div>
+    <div class="form-group" id="log-returned-group" style="display:none"><label class="form-label">Quantity Returned <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input type="number" class="form-control" id="log-returned" min="0" placeholder="0"></div>
     <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="log-date"></div>
     <div class="form-group"><label class="form-label">Job / Project Name</label><input type="text" class="form-control" id="log-job"></div>
     <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-control" id="log-notes" rows="2"></textarea></div>
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-log-usage')">Cancel</button><button class="btn btn-red" onclick="saveUsageLog()">✅ Log Usage & Update Stock</button></div>
+  </div></div>
+</div>
+
+<!-- EDIT USAGE LOG MODAL -->
+<div class="modal-overlay center-ov" id="modal-edit-usage-log" style="display:none" onclick="overlayClick(event,'modal-edit-usage-log')">
+  <div class="modal center-m"><div class="modal-header" style="background:var(--amber)"><span class="modal-title">✏️ Edit Usage Log</span><button class="modal-close" onclick="closeModal('modal-edit-usage-log')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Item</label><input type="text" class="form-control" id="eul-item-name" readonly style="background:#e8edf7"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Quantity Used *</label><input type="number" class="form-control" id="eul-qty" min="0"></div>
+      <div class="form-group"><label class="form-label">Quantity Returned</label><input type="number" class="form-control" id="eul-returned" min="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-control" id="eul-date"></div>
+    <div class="form-group"><label class="form-label">Job / Project Name (Purpose / Location)</label><input type="text" class="form-control" id="eul-job"></div>
+    <div class="form-group"><label class="form-label">Remarks</label><textarea class="form-control" id="eul-notes" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Reason for Edit *</label><input type="text" class="form-control" id="eul-reason" placeholder="e.g. Corrected a data-entry mistake"><div class="field-error" id="err-eul-reason">Please give a reason for this edit</div></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-edit-usage-log')">Cancel</button><button class="btn btn-primary" onclick="saveEditUsageLog()">Save Changes</button></div>
   </div></div>
 </div>
 
@@ -1388,7 +1417,7 @@ textarea.form-control{resize:vertical;min-height:56px}
 
 <!-- JOB MODAL -->
 <div class="modal-overlay" id="modal-add-job" style="display:none" onclick="overlayClick(event,'modal-add-job')">
-  <div class="modal"><div class="modal-header"><span class="modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
+  <div class="modal"><div class="modal-header"><span class="modal-title" id="job-modal-title">Schedule New Job</span><button class="modal-close" onclick="closeModal('modal-add-job')">✕</button></div>
   <div class="modal-body">
     <div class="form-row">
       <div class="form-group"><label class="form-label">Client Name *</label><input type="text" class="form-control" id="jf-client"><div class="field-error" id="err-jf-client">Client name is required</div></div>
@@ -1403,7 +1432,7 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div class="form-group"><label class="form-label">Assigned Staff</label><select class="form-control" id="jf-staff"><option value="">— Unassigned —</option></select></div>
     </div>
     <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-control" id="jf-notes"></textarea></div>
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()">Schedule Job</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="editingJobId=null; closeModal('modal-add-job')">Cancel</button><button class="btn btn-primary" onclick="saveJob()" id="job-save-btn">Schedule Job</button></div>
   </div></div>
 </div>
 
@@ -1455,7 +1484,7 @@ textarea.form-control{resize:vertical;min-height:56px}
 
 <!-- ADD TASK MODAL -->
 <div class="modal-overlay center-ov" id="modal-add-task" style="display:none" onclick="overlayClick(event,'modal-add-task')">
-  <div class="modal center-m"><div class="modal-header"><span class="modal-title">Add Task</span><button class="modal-close" onclick="closeModal('modal-add-task')">✕</button></div>
+  <div class="modal center-m"><div class="modal-header"><span class="modal-title" id="task-modal-title">Add Task</span><button class="modal-close" onclick="closeModal('modal-add-task')">✕</button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">Task Name *</label><input type="text" class="form-control" id="task-name-input" placeholder="e.g. Mop Reception Area…"></div>
     <div class="section-sep">Assignment</div>
@@ -1509,7 +1538,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         <option value="">— Select room —</option>
       </select>
     </div>
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-add-task')">Cancel</button><button class="btn btn-primary" onclick="saveTask()">Add Task</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="editingTaskId=null; closeModal('modal-add-task')">Cancel</button><button class="btn btn-primary" onclick="saveTask()" id="task-save-btn">Add Task</button></div>
   </div></div>
 </div>
 
@@ -1536,7 +1565,7 @@ textarea.form-control{resize:vertical;min-height:56px}
 
 <!-- INCIDENT REPORT MODAL -->
 <div class="modal-overlay center-ov" id="modal-incident" style="display:none" onclick="overlayClick(event,'modal-incident')">
-  <div class="modal center-m"><div class="modal-header" style="background:#7c3aed"><span class="modal-title">Report Incident</span><button class="modal-close" onclick="closeModal('modal-incident')">✕</button></div>
+  <div class="modal center-m"><div class="modal-header" style="background:#7c3aed"><span class="modal-title" id="incident-modal-title">Report Incident</span><button class="modal-close" onclick="closeModal('modal-incident')">✕</button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">Incident Type *</label><select class="form-control" id="inc-type"><option>Accident / Injury</option><option>Client Complaint</option><option>Equipment Damage</option><option>Spill / Hazard</option><option>Security Issue</option><option>Other</option></select></div>
     <div class="form-group"><label class="form-label">Location / Area</label><input type="text" class="form-control" id="inc-location" placeholder="Where did this happen?"></div>
@@ -1544,7 +1573,7 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="form-group"><label class="form-label">Photo Evidence <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
       <div class="photo-upload-wrap"><div class="photo-upload-box"><input type="file" accept="image/*" onchange="previewPhoto(event,'inc-photo-preview','inc-photo-placeholder','del-inc-photo')"><img src="" class="photo-preview-rect" id="inc-photo-preview" style="display:none"><div id="inc-photo-placeholder">📷 Tap to add photo</div></div><button type="button" class="photo-delete-btn" id="del-inc-photo" onclick="clearPhoto('inc-photo-preview','inc-photo-placeholder','del-inc-photo')" title="Remove photo">✕</button></div>
     </div>
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-incident')">Cancel</button><button class="btn btn-primary" style="background:#7c3aed" onclick="saveIncident()">Submit Report</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="editingIncidentId=null; closeModal('modal-incident')">Cancel</button><button class="btn btn-primary" style="background:#7c3aed" onclick="saveIncident()" id="incident-save-btn">Submit Report</button></div>
   </div></div>
 </div>
 
@@ -1555,13 +1584,14 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div id="incident-mgmt-actions"></div>
   <div class="form-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-incident-detail')">Close</button>
+    <button class="btn btn-outline btn-sm" id="inc-edit-btn" onclick="openEditIncident(currentIncidentId)">✏️ Edit</button>
     <button class="btn btn-danger btn-sm" id="inc-delete-btn" onclick="deleteCurrentIncident()">Delete</button>
   </div></div></div>
 </div>
 
 <!-- SUPPLY REQUEST MODAL (submit) -->
 <div class="modal-overlay center-ov" id="modal-supply-req" style="display:none" onclick="overlayClick(event,'modal-supply-req')">
-  <div class="modal center-m"><div class="modal-header" style="background:#0369a1"><span class="modal-title">Request Supplies</span><button class="modal-close" onclick="closeModal('modal-supply-req')">✕</button></div>
+  <div class="modal center-m"><div class="modal-header" style="background:#0369a1"><span class="modal-title" id="supply-modal-title">Request Supplies</span><button class="modal-close" onclick="closeModal('modal-supply-req')">✕</button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">Item Needed *</label><input type="text" class="form-control" id="req-item" placeholder="e.g. Floor cleaner, Mop heads..."><div class="field-error" id="err-req-item">Item name is required</div></div>
     <div class="form-row">
@@ -1569,7 +1599,7 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div class="form-group"><label class="form-label">Urgency</label><select class="form-control" id="req-urgency"><option>Normal</option><option>Urgent</option></select></div>
     </div>
     <div class="form-group"><label class="form-label">Reason / Notes</label><textarea class="form-control" id="req-notes" rows="2"></textarea></div>
-    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-supply-req')">Cancel</button><button class="btn btn-primary" style="background:#0369a1" onclick="saveSupplyRequest()">Submit Request</button></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="editingRequestId=null; closeModal('modal-supply-req')">Cancel</button><button class="btn btn-primary" style="background:#0369a1" onclick="saveSupplyRequest()" id="supply-save-btn">Submit Request</button></div>
   </div></div>
 </div>
 
@@ -1580,6 +1610,7 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div id="supply-mgmt-actions"></div>
   <div class="form-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-supply-detail')">Close</button>
+    <button class="btn btn-outline btn-sm" id="req-edit-btn" onclick="openEditRequest(currentRequestId)">✏️ Edit</button>
     <button class="btn btn-danger btn-sm" id="req-delete-btn" onclick="deleteCurrentRequest()">Delete</button>
   </div></div></div>
 </div>
@@ -1678,6 +1709,10 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ================================================================
 let currentUser = null;
 let editingStaffId = null;
+let editingJobId = null;
+let editingIncidentId = null;
+let editingRequestId = null;
+let editingTaskId = null;
 let currentStaffId = null;
 let currentInvId = null;
 let currentIncidentId = null;
@@ -1761,6 +1796,7 @@ function canEdit() { return currentUser && currentUser.role === 'supervisor'; }
 function canPrint() { return currentUser && ['director','manager','supervisor'].includes(currentUser.role); }
 function isManagement() { return currentUser && ['director','manager','supervisor'].includes(currentUser.role); }
 function canManageIncidents() { return currentUser && ['director','manager','supervisor'].includes(currentUser.role); }
+function canAudit() { return currentUser && ['director','manager'].includes(currentUser.role); } // archived/disengaged staff history access
 
 // ================================================================
 // LOADING OVERLAY
@@ -1985,6 +2021,7 @@ async function loadInitialData() {
         if (!Array.isArray(variants)) variants = [];
         return {
           ...item,
+          qty: Number(item.qty) || 0, // Supabase numeric/decimal columns come back as strings — coerce once here so every +/- downstream is real arithmetic, not string concatenation
           variants: Array.isArray(variants) ? variants : [],
           usageLog,
           containers:  config.containers  ?? null,
@@ -2157,10 +2194,10 @@ document.getElementById('auth-role').addEventListener('change', async function()
     sel.innerHTML = '<option value="">Loading staff...</option>';
     loginBtn.disabled = true;
     try {
-      const { data, error } = await supabaseClient.from('staff').select('id,name,shift,role');
+      const { data, error } = await supabaseClient.from('staff').select('id,name,shift,role,disengaged');
       if (!error && data) {
         state.staff = data;
-        const cleaners = data.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role));
+        const cleaners = data.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role) && !s.disengaged);
         sel.innerHTML = cleaners.length
           ? '<option value="">Select your name...</option>' + cleaners.map(c => `<option value="${c.id}">${esc(c.name)} (${esc(c.shift||'Morning')})</option>`).join('')
           : '<option value="">No cleaners enrolled yet</option>';
@@ -2191,6 +2228,7 @@ function handleLogin() {
     const cleanerId = document.getElementById('auth-cleaner-name').value;
     staffRef = state.staff.find(s => s.id === cleanerId);
     if (!staffRef) { err.style.display = 'block'; err.textContent = 'Please select your name'; return; }
+    if (staffRef.disengaged) { err.style.display = 'block'; err.textContent = 'This staff member is disengaged and cannot log in'; return; }
     name = staffRef.name;
   }
   currentUser = { role, name, staffRef };
@@ -2835,7 +2873,7 @@ function openStaffProfile(id) {
   const isDisengaged = !!s.disengaged;
   const statusHtml = canEdit()
     ? (isDisengaged
-        ? `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600">⛔ Disengaged — ${esc(s.disengagedreason||'Reason not specified')}<br><span style="font-size:10px;color:var(--text-muted)">${s.disengageddate ? 'Date: ' + esc(s.disengageddate) : ''}</span></div><button class="btn btn-outline btn-sm" style="border-color:var(--green);color:var(--green);margin-bottom:10px" onclick="reengageStaff()">↩ Re-engage Staff</button>`
+        ? `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600">⛔ Disengaged — ${esc(s.disengagedreason||'Reason not specified')}<br><span style="font-size:10px;color:var(--text-muted)">${s.disengageddate ? 'Date: ' + esc(s.disengageddate) : ''}</span></div><div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-outline btn-sm" style="border-color:var(--green);color:var(--green)" onclick="reengageStaff()">↩ Re-engage Staff</button>${canAudit() ? `<button class="btn btn-outline btn-sm" onclick="openArchivedStaffHistory('${esc(s.id)}')">📜 View Full History</button>` : ''}</div>`
         : `<div style="margin:12px 0"><label class="form-label">Update Status</label><select class="form-control" id="prof-status-sel" onchange="updateStaffStatus(this.value)"><option ${s.status==='On Shift'?'selected':''}>On Shift</option><option ${s.status==='Off Shift'?'selected':''}>Off Shift</option><option ${s.status==='On Leave'?'selected':''}>On Leave</option></select></div><button class="btn btn-danger btn-sm" style="margin-bottom:10px;opacity:0.8" onclick="openDisengageModal()">⛔ Disengage Staff</button>`)
     : (isDisengaged ? `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600">⛔ Disengaged — ${esc(s.disengagedreason||'')}</div>` : '');
   let ghanaImagesHtml = '';
@@ -2861,7 +2899,7 @@ function openStaffProfile(id) {
   const editBtn = document.getElementById('prof-edit-btn');
   const delBtn = document.getElementById('prof-delete-btn');
   const pdfBtn = document.getElementById('prof-pdf-btn');
-  if (editBtn) editBtn.style.display = canEdit() ? 'inline-flex' : 'none';
+  if (editBtn) editBtn.style.display = (canEdit() && !isDisengaged) ? 'inline-flex' : 'none';
   if (delBtn) delBtn.style.display = canEdit() ? 'inline-flex' : 'none';
   if (pdfBtn) pdfBtn.style.display = canPrint() ? 'inline-flex' : 'none';
   openModal('modal-staff-profile');
@@ -2959,6 +2997,85 @@ async function reengageStaff() {
     toast(`${s.name} has been re-engaged`, 'success');
   } catch(e) { toast('Update failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
+}
+
+// ================================================================
+// ARCHIVED / DISENGAGED STAFF — read-only historical audit view
+// ================================================================
+async function openArchivedStaffHistory(staffId) {
+  if (!canAudit()) return;
+  const s = state.staff.find(x => x.id === staffId);
+  if (!s) return;
+  closeModal('modal-staff-profile');
+  openModal('modal-staff-history');
+  document.getElementById('history-staff-name').textContent = s.name;
+  document.getElementById('history-body').innerHTML = '<div class="empty-state"><div class="empty-text">Loading history…</div></div>';
+
+  try {
+    const nameLc = (s.name || '').toLowerCase();
+    const [attendRes, taskLogRes, incidentRes, payrollRecRes, payrollAwardRes] = await Promise.all([
+      supabaseClient.from('attendance').select('*').eq('staffid', staffId).order('date', { ascending: false }),
+      supabaseClient.from('tasklogs').select('*').order('date', { ascending: false }),
+      supabaseClient.from('incidents').select('*').order('date', { ascending: false }),
+      supabaseClient.from('payroll_records').select('*'),
+      supabaseClient.from('payroll_awards').select('*')
+    ]);
+
+    const attendance = attendRes.error ? [] : (attendRes.data || []);
+    // tasklogs/incidents only carry a display name (completedby / reportedby), not a staff_id FK —
+    // match by name, same convention already used elsewhere in this file (e.g. shift-tag restore).
+    const taskLogs   = taskLogRes.error ? [] : (taskLogRes.data || []).filter(l => (l.completedby || '').toLowerCase() === nameLc);
+    const incidents  = incidentRes.error ? [] : (incidentRes.data || []).filter(i => (i.reportedby || '').toLowerCase() === nameLc);
+
+    const payrollMonths = [];
+    if (!payrollRecRes.error) {
+      (payrollRecRes.data || []).forEach(row => {
+        const raw = typeof row.records === 'string' ? JSON.parse(row.records || '{}') : (row.records || {});
+        if (raw && raw[staffId]) payrollMonths.push({ month: row.month || row.id, rec: raw[staffId] });
+      });
+      payrollMonths.sort((a, b) => (a.month < b.month ? 1 : -1));
+    }
+
+    const awardMonths = [];
+    if (!payrollAwardRes.error) {
+      (payrollAwardRes.data || []).forEach(row => {
+        let bp = row.best_performer || []; let bd = row.best_dressed || [];
+        if (typeof bp === 'string') { try { bp = JSON.parse(bp); } catch(e) { bp = []; } }
+        if (typeof bd === 'string') { try { bd = JSON.parse(bd); } catch(e) { bd = []; } }
+        const won = [];
+        if (Array.isArray(bp) && bp.includes(staffId)) won.push('⭐ Best Performer');
+        if (Array.isArray(bd) && bd.includes(staffId)) won.push('👔 Best Dressed');
+        if (won.length) awardMonths.push({ month: (row.id || '').replace('awards_', ''), won });
+      });
+      awardMonths.sort((a, b) => (a.month < b.month ? 1 : -1));
+    }
+
+    const section = (title, rows) => `<div class="section-sep">${esc(title)} (${rows.length})</div>` +
+      (rows.length ? rows.join('') : '<div class="empty-state" style="padding:12px"><div class="empty-text" style="font-size:12px">No records</div></div>');
+
+    const attendanceRows = attendance.slice(0, 60).map(a =>
+      `<div class="log-entry"><div class="log-date">📅 ${esc(a.date)}</div><div class="log-details">In ${esc(a.checkin||'—')} · Out ${esc(a.checkout||'—')}</div></div>`);
+    const taskRows = taskLogs.slice(0, 60).map(l =>
+      `<div class="log-entry"><div class="log-date">📅 ${esc(l.date)}</div><div class="log-details">${esc(l.shift||'')} shift · ${esc(l.status||'completed')}${l.time ? ' at ' + esc(l.time) : ''}</div></div>`);
+    const incidentRows = incidents.map(i =>
+      `<div class="log-entry" style="border-left:3px solid var(--danger)"><div class="log-date">📅 ${esc(i.date)}</div><div class="log-details">${esc(i.type||'Incident')} — ${esc((i.description||'').slice(0,120))}</div></div>`);
+    const payrollRows = payrollMonths.map(p =>
+      `<div class="log-entry"><div class="log-date">🗓 ${esc(p.month)}</div><div class="log-details">Present ${p.rec.daysPresent||0}/${p.rec.workingDays||0} days${p.rec.bonus?` · Bonus GHC ${p.rec.bonus}`:''}${p.rec.remarks?` · ${esc(p.rec.remarks)}`:''}</div></div>`);
+    const awardRows = awardMonths.map(a =>
+      `<div class="log-entry" style="border-left:3px solid var(--gold)"><div class="log-date">🗓 ${esc(a.month)}</div><div class="log-details">${a.won.join(', ')}</div></div>`);
+
+    document.getElementById('history-body').innerHTML =
+      `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-md);padding:10px 14px;margin-bottom:14px;font-size:12px;color:#991b1b">
+         Read-only historical record for auditing purposes. ${esc(s.name)} is disengaged and cannot be assigned to any active work.
+       </div>` +
+      section('Payroll History', payrollRows) +
+      section('Awards', awardRows) +
+      section('Attendance', attendanceRows) +
+      section('Task Completions', taskRows) +
+      section('Incidents Reported', incidentRows);
+  } catch(e) {
+    document.getElementById('history-body').innerHTML = `<div class="empty-state"><div class="empty-text">Could not load history: ${esc(e.message)}</div></div>`;
+  }
 }
 
 function printStaffPDF() {
@@ -3546,7 +3663,7 @@ function openInvDetail(id) {
         </div>` : ''}
       </div>`;
       const entriesHtml = logs.slice().reverse().map(log =>
-        `<div class="log-entry"><div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">${log.variantName ? `<span style="font-size:10px;background:var(--surface);padding:1px 7px;border-radius:10px;font-weight:600;color:var(--navy)">${esc(log.variantName)}</span><br>` : ''}Issued: <strong>${log.qty}${item.uom ? ' ' + unitLabel : ''}</strong>${item.unitsize ? ` <span style="font-size:10px;color:var(--text-muted)">(${(log.qty/item.unitsize).toFixed(2)} ${ctStatLbl})</span>` : ''}${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}</span></div></div>`
+        `<div class="log-entry" style="position:relative">${(canEdit() && !log.variantId) ? `<button class="btn btn-outline btn-sm" style="position:absolute;top:8px;right:8px;padding:2px 8px;font-size:10px" onclick="openEditUsageLogModal('${esc(log.id)}')">✏️ Edit</button>` : ''}<div class="log-date">📅 ${esc(log.date)}</div><div class="log-details">${log.variantName ? `<span style="font-size:10px;background:var(--surface);padding:1px 7px;border-radius:10px;font-weight:600;color:var(--navy)">${esc(log.variantName)}</span><br>` : ''}Issued: <strong>${log.qty}${item.uom ? ' ' + unitLabel : ''}</strong>${item.unitsize ? ` <span style="font-size:10px;color:var(--text-muted)">(${(log.qty/item.unitsize).toFixed(2)} ${ctStatLbl})</span>` : ''}${log.returned ? `<br>↩ Returned: <strong>${log.returned}${unitLabel}</strong>` : ''}${log.job?`<br>📍 ${esc(log.job)}`:''}${log.notes?`<br>📝 ${esc(log.notes)}`:''}<br><span style="font-size:10px;color:var(--text-muted)">by ${esc(log.loggedBy||log.loggedby)}${Array.isArray(log.edits) && log.edits.length ? ` · edited ${log.edits.length}×` : ''}</span></div></div>`
       ).join('');
       return statsHtml + entriesHtml;
     })();
@@ -3564,6 +3681,7 @@ function openInvDetail(id) {
             <div class="log-date">📅 ${esc(r.date)}</div>
             <div class="log-details">
               <strong style="color:var(--success,#16a34a)">+${r.qty} ${uomLabel}</strong>${item.unitsize ? ` <span style="font-size:10px;color:var(--text-muted)">(${(r.qty/item.unitsize).toFixed(1)} containers)</span>` : ''}
+              ${(r.previousStock != null && r.newStock != null) ? `<br><span style="font-size:10px;color:var(--text-muted)">${r.previousStock} → ${r.newStock}</span>` : ''}
               ${r.ref ? `<br>🔖 ${esc(r.ref)}` : ''}
               ${r.notes ? `<br>📝 ${esc(r.notes)}` : ''}
               <br><span style="font-size:10px;color:var(--text-muted)">by ${esc(r.by||'—')}</span>
@@ -3707,15 +3825,25 @@ function openRestockModal() {
 async function saveRestock() {
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
-  const qty = parseInt(document.getElementById('restock-qty').value);
+  const qty = parseInt(document.getElementById('restock-qty').value, 10);
   if (!qty || qty < 1) { toast('Enter a valid qty', 'error'); return; }
   const date  = document.getElementById('restock-date').value || todayStr();
   const ref   = document.getElementById('restock-ref').value.trim();
   const notes = document.getElementById('restock-notes').value.trim();
-  const entry = { id: uid(), date, qty, ref, notes, by: currentUser?.name || '—', at: new Date().toISOString() };
+  // Always coerce — item.qty may arrive as a string from a numeric/decimal DB column,
+  // and a bare `item.qty + qty` would silently string-concatenate instead of adding.
+  const previousStock = Number(item.qty) || 0;
+  const newQty = previousStock + qty;
+  const entry = {
+    id: uid(), date, qty,
+    previousStock, newStock: newQty,
+    ref, notes,
+    by: currentUser?.name || '—', at: new Date().toISOString()
+  };
+  const prevRestockLog = Array.isArray(item.restockLog) ? item.restockLog.slice() : [];
+  const prevContainers = item.containers;
   if (!Array.isArray(item.restockLog)) item.restockLog = [];
   item.restockLog.push(entry);
-  const newQty = item.qty + qty;
   item.qty = newQty;
   if (item.unitsize) item.containers = Math.ceil(newQty / item.unitsize);
   showLoading('Saving restock…');
@@ -3724,16 +3852,32 @@ async function saveRestock() {
     closeModal('modal-restock');
     openInvDetail(item.id);
     renderInventory(); renderDashboard();
-    toast(`Restocked +${qty} ${item.uom||'units'}`, 'success');
-  } catch(e) { item.restockLog.pop(); item.qty -= qty; toast('Save failed: ' + e.message, 'error'); }
+    toast(`Restocked +${qty} ${item.uom||'units'} (${previousStock} → ${newQty})`, 'success');
+    notifyStockAdded(item, entry); // stub — wired up to the real notification center in Phase 3
+  } catch(e) {
+    // Roll back the optimistic local update exactly (not a re-subtraction, which would
+    // itself be vulnerable to the same string-coercion bug if qty were ever non-numeric)
+    item.restockLog = prevRestockLog;
+    item.qty = previousStock;
+    item.containers = prevContainers;
+    toast('Save failed: ' + e.message, 'error');
+  }
   finally { hideLoading(); }
+}
+
+// Placeholder hook for the notification system (Phase 3). Intentionally a no-op today —
+// keeps saveRestock() call sites stable so wiring in real notifications later doesn't
+// require touching this function again.
+function notifyStockAdded(item, entry) {
+  // TODO(Phase 3): create a `notifications` row (category: 'inventory', event: 'stock_added')
+  // and push it through the real-time notification center.
 }
 
 async function adjustQty(delta) {
   if (!canEdit()) return;
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
-  const n = item.qty + delta;
+  const n = (Number(item.qty) || 0) + delta;
   if (n < 0) { toast('Cannot go below zero', 'error'); return; }
   if (item.unitsize) item.containers = Math.ceil(n / item.unitsize);
   const updatePayload = { qty: n, usagelog: buildUsagelogForDB(item) };
@@ -3750,7 +3894,7 @@ async function adjustEqQty(delta) {
   if (!canEdit()) return;
   const item = state.inventory.find(x => x.id === currentInvId);
   if (!item) return;
-  const n = (item.qty || 0) + delta;
+  const n = (Number(item.qty) || 0) + delta;
   if (n < 0) { toast('Cannot go below zero', 'error'); return; }
   showLoading('Updating quantity…');
   try {
@@ -3774,6 +3918,8 @@ function openLogUsageModal() {
   document.getElementById('log-date').value = todayStr();
   document.getElementById('log-job').value = '';
   document.getElementById('log-notes').value = '';
+  const returnedInput = document.getElementById('log-returned');
+  if (returnedInput) returnedInput.value = '';
   // Show container hint if item has unit size
   const packHint = document.getElementById('log-pack-hint');
   if (packHint) {
@@ -3788,14 +3934,17 @@ function openLogUsageModal() {
   const hasVariants = item.category === 'Equipment' && Array.isArray(item.variants) && item.variants.length > 0;
   const varGroup = document.getElementById('log-variant-group');
   const varSel = document.getElementById('log-variant-sel');
+  const returnedGroup = document.getElementById('log-returned-group');
   if (hasVariants) {
     varSel.innerHTML = '<option value="">— Select variant —</option>' +
       item.variants.map(v => `<option value="${esc(v.id)}">${esc(item.name)} — ${esc(v.name)}${v.condition ? ' (' + esc(v.condition) + ')' : ''} · Qty: ${v.qty != null ? v.qty : 0}</option>`).join('');
     varGroup.style.display = 'block';
     document.getElementById('log-unit').value = 'units';
+    if (returnedGroup) returnedGroup.style.display = 'none';
   } else {
     varSel.innerHTML = '<option value="">— Select variant —</option>';
     varGroup.style.display = 'none';
+    if (returnedGroup) returnedGroup.style.display = 'block';
   }
 }
 
@@ -3853,12 +4002,14 @@ async function saveUsageLog() {
   }
 
   // Standard (non-variant) usage
+  const returned = Math.max(0, parseInt(document.getElementById('log-returned')?.value, 10) || 0);
   if (item.qty < qty) { toast(`Insufficient stock. Only ${item.qty} ${item.uom} available.`, 'error'); return; }
   if (!Array.isArray(item.usageLog)) item.usageLog = [];
-  const newLog = { id: uid(), date, qty, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() };
+  const newLog = { id: uid(), date, qty, returned, job: document.getElementById('log-job').value, notes: document.getElementById('log-notes').value, loggedBy: currentUser.name, loggedAt: new Date().toISOString() };
   item.usageLog.push(newLog);
-  const newQty = item.qty - qty;
-  const newContainers = item.unitsize ? Math.ceil(newQty / item.unitsize) : (item.containers != null ? Math.max(0, item.containers - Math.floor(qty / (item.unitsize || 1))) : undefined);
+  const netUsed = qty - returned;
+  const newQty = item.qty - netUsed;
+  const newContainers = item.unitsize ? Math.ceil(newQty / item.unitsize) : (item.containers != null ? Math.max(0, item.containers - Math.floor(netUsed / (item.unitsize || 1))) : undefined);
   if (newContainers !== undefined) item.containers = newContainers;
   const updatePayload = { qty: newQty, usagelog: buildUsagelogForDB({ ...item, usageLog: item.usageLog }) };
   showLoading('Logging usage…');
@@ -3869,6 +4020,94 @@ async function saveUsageLog() {
     toast('Usage logged', 'success');
   } catch(e) { item.usageLog.pop(); toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
+}
+
+var _editingUsageLogId = null;
+
+function openEditUsageLogModal(logId) {
+  if (!canEdit()) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item) return;
+  const log = (item.usageLog || []).find(l => l.id === logId);
+  if (!log) return;
+  _editingUsageLogId = logId;
+  document.getElementById('eul-item-name').value = item.name;
+  document.getElementById('eul-qty').value = log.qty;
+  document.getElementById('eul-returned').value = log.returned || 0;
+  document.getElementById('eul-date').value = log.date;
+  document.getElementById('eul-job').value = log.job || '';
+  document.getElementById('eul-notes').value = log.notes || '';
+  document.getElementById('eul-reason').value = '';
+  const errEl = document.getElementById('err-eul-reason');
+  if (errEl) errEl.classList.remove('show');
+  openModal('modal-edit-usage-log');
+}
+
+async function saveEditUsageLog() {
+  if (!canEdit()) return;
+  const item = state.inventory.find(x => x.id === currentInvId);
+  if (!item || !_editingUsageLogId) return;
+  const log = (item.usageLog || []).find(l => l.id === _editingUsageLogId);
+  if (!log) return;
+
+  const reason = document.getElementById('eul-reason').value.trim();
+  if (!reason) {
+    const errEl = document.getElementById('err-eul-reason');
+    if (errEl) errEl.classList.add('show');
+    toast('Please give a reason for this edit', 'error');
+    return;
+  }
+  const newQtyUsed  = Math.max(0, parseInt(document.getElementById('eul-qty').value, 10) || 0);
+  const newReturned = Math.max(0, parseInt(document.getElementById('eul-returned').value, 10) || 0);
+  const newDate  = document.getElementById('eul-date').value || log.date;
+  const newJob   = document.getElementById('eul-job').value.trim();
+  const newNotes = document.getElementById('eul-notes').value.trim();
+
+  // Recalculate stock: undo this log's original effect on current stock, then apply the edited effect.
+  // Stock is a running total, so this delta-correction is mathematically equivalent to a full replay
+  // of every log from scratch — no need to touch any other log entry.
+  const oldNetUsed = (Number(log.qty) || 0) - (Number(log.returned) || 0);
+  const newNetUsed = newQtyUsed - newReturned;
+  const previousStockNow = Number(item.qty) || 0;
+  const recalculatedQty = previousStockNow + oldNetUsed - newNetUsed;
+  if (recalculatedQty < 0) { toast('This change would make stock negative — check the numbers', 'error'); return; }
+
+  const editEntry = {
+    editedBy: currentUser?.name || '—',
+    editedAt: new Date().toISOString(),
+    reason,
+    previous: { qty: log.qty, returned: log.returned || 0, date: log.date, job: log.job || '', notes: log.notes || '' },
+    updated:  { qty: newQtyUsed, returned: newReturned, date: newDate, job: newJob, notes: newNotes }
+  };
+
+  // Snapshot for rollback on failure
+  const prevLogSnapshot = { ...log };
+  const prevItemQty = item.qty;
+  const prevContainers = item.containers;
+
+  log.qty = newQtyUsed;
+  log.returned = newReturned;
+  log.date = newDate;
+  log.job = newJob;
+  log.notes = newNotes;
+  if (!Array.isArray(log.edits)) log.edits = [];
+  log.edits.push(editEntry);
+  item.qty = recalculatedQty;
+  if (item.unitsize) item.containers = Math.ceil(recalculatedQty / item.unitsize);
+
+  showLoading('Saving correction…');
+  try {
+    await dbUpdate('inventory', item.id, { qty: recalculatedQty, usagelog: buildUsagelogForDB(item) });
+    closeModal('modal-edit-usage-log');
+    _editingUsageLogId = null;
+    openInvDetail(item.id); renderInventory(); renderDashboard();
+    toast('Usage log corrected — stock recalculated', 'success');
+  } catch(e) {
+    Object.assign(log, prevLogSnapshot);
+    item.qty = prevItemQty;
+    item.containers = prevContainers;
+    toast('Save failed: ' + e.message, 'error');
+  } finally { hideLoading(); }
 }
 
 function openConditionUpdateModal() {
@@ -4064,13 +4303,15 @@ async function saveJob() {
   valid = validateField('jf-location', 'err-jf-location', v => v.trim().length > 0) && valid;
   valid = validateField('jf-date', 'err-jf-date', v => v.length > 0) && valid;
   if (!valid) return;
-  showLoading('Scheduling job…');
+  const isEditing = !!editingJobId;
+  const existingJob = isEditing ? state.jobs.find(x => x.id === editingJobId) : null;
+  showLoading(isEditing ? 'Saving job…' : 'Scheduling job…');
   try {
     const staffSel = document.getElementById('jf-staff');
     const staffId = staffSel.value;
     const staffName = staffId ? (staffSel.options[staffSel.selectedIndex]?.text || '') : '';
     const job = {
-      id: uid(),
+      id: isEditing ? editingJobId : uid(),
       client: document.getElementById('jf-client').value.trim(),
       type: document.getElementById('jf-type').value,
       location: document.getElementById('jf-location').value.trim(),
@@ -4079,14 +4320,42 @@ async function saveJob() {
       assignedstaffid: staffId,
       assignedstaff: staffName,
       notes: document.getElementById('jf-notes').value,
-      status: 'Scheduled'
+      status: isEditing ? existingJob.status : 'Scheduled'
     };
-    await dbInsert('jobs', job);
-    state.jobs.push(job);
+    if (isEditing) {
+      await dbUpdate('jobs', job.id, job);
+      const idx = state.jobs.findIndex(x => x.id === job.id);
+      if (idx >= 0) state.jobs[idx] = job;
+    } else {
+      await dbInsert('jobs', job);
+      state.jobs.push(job);
+    }
+    editingJobId = null;
     closeModal('modal-add-job'); renderJobs(); renderDashboard();
-    toast('Job scheduled', 'success');
+    toast(isEditing ? 'Job updated' : 'Job scheduled', 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
+}
+
+function openEditJob(id) {
+  if (!canEdit()) return;
+  const j = state.jobs.find(x => x.id === id);
+  if (!j) return;
+  editingJobId = id;
+  const ov = document.getElementById('job-detail-overlay');
+  if (ov) ov.remove();
+  document.getElementById('job-modal-title').textContent = 'Edit Job';
+  document.getElementById('job-save-btn').textContent = 'Save Changes';
+  populateJobStaffSelect();
+  document.getElementById('jf-client').value = j.client || '';
+  document.getElementById('jf-location').value = j.location || '';
+  document.getElementById('jf-type').value = j.type || 'Regular Clean';
+  document.getElementById('jf-date').value = j.date || '';
+  document.getElementById('jf-time').value = j.time || '';
+  document.getElementById('jf-staff').value = j.assignedstaffid || '';
+  document.getElementById('jf-notes').value = j.notes || '';
+  clearFieldError('jf-client','err-jf-client'); clearFieldError('jf-location','err-jf-location'); clearFieldError('jf-date','err-jf-date');
+  openModal('modal-add-job');
 }
 
 function openJobDetail(id) {
@@ -4102,6 +4371,7 @@ function openJobDetail(id) {
         <button class="btn btn-outline btn-sm" onclick="updateJobStatus('${esc(id)}','Scheduled')">Scheduled</button>
         <button class="btn btn-amber btn-sm" onclick="updateJobStatus('${esc(id)}','In Progress')">In Progress</button>
         <button class="btn btn-success btn-sm" onclick="updateJobStatus('${esc(id)}','Done')">Done</button>
+        <button class="btn btn-outline btn-sm" onclick="openEditJob('${esc(id)}')">✏️ Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${esc(id)}')">Delete</button>
       </div>
     </div>` : '';
@@ -4373,7 +4643,7 @@ function renderManagementTasks(el) {
 
   // Supervisor filter bar — preserve selected value with selected attribute
   const cleanerOptions = state.staff
-    .filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role))
+    .filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role) && !s.disengaged)
     .map(s => `<option value="${esc(s.id)}" ${prevCleanerFilter === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
 
   const headerHtml = `
@@ -4679,6 +4949,7 @@ function mgmtTaskItemHtml(task, shiftFilter, todayLogs) {
     </div>
     <div style="display:flex;gap:4px;align-items:center">
       ${canEdit() && isHandled ? `<button class="btn btn-outline btn-sm" style="font-size:10px;padding:3px 8px;color:var(--amber);border-color:var(--amber)" onclick="event.stopPropagation();supervisorUncheck('${esc(task.id)}','${esc(shiftLabel)}')" title="Uncheck this task">↩ Undo</button>` : ''}
+      ${canEdit()?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditTask('${esc(task.id)}')" title="Edit task">✏️</button>`:''}
       ${canEdit()?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();deleteTask('${esc(task.id)}')">✕</button>`:''}
     </div>
   </div>`;
@@ -4826,6 +5097,9 @@ function setShift(sh) { activeShift = sh; renderTasks(); }
 // TASK MODAL — OPEN / SAVE / DELETE
 // ================================================================
 function openAddTaskModal() {
+  editingTaskId = null;
+  document.getElementById('task-modal-title').textContent = 'Add Task';
+  document.getElementById('task-save-btn').textContent = 'Add Task';
   document.getElementById('task-name-input').value = '';
   document.getElementById('task-shift-select').value = 'Morning';
   document.getElementById('task-freq-select').value = 'Daily';
@@ -4898,22 +5172,76 @@ async function saveTask() {
   const intervalFreqs = ['Hourly','Every 2 Hours','Every 4 Hours','Custom Interval'];
   const requiredCount = intervalFreqs.includes(freq) ? (parseInt(document.getElementById('task-interval-count')?.value)||1) : 1;
   const staffId = document.getElementById('task-staff-select')?.value || null;
-  showLoading('Adding task…');
+  const isEditing = !!editingTaskId;
+  showLoading(isEditing ? 'Saving task…' : 'Adding task…');
   try {
     const task = {
-      id: uid(), name,
+      id: isEditing ? editingTaskId : uid(), name,
       assignedshift: document.getElementById('task-shift-select').value,
       assignedstaffid: staffId || null,
       frequency: freq,
       requiredcount: requiredCount,
       zoneid: zoneId
     };
-    await dbInsert('tasks', task);
-    state.tasks.push(task);
+    if (isEditing) {
+      await dbUpdate('tasks', task.id, task);
+      const idx = state.tasks.findIndex(t => t.id === task.id);
+      if (idx >= 0) state.tasks[idx] = task;
+    } else {
+      await dbInsert('tasks', task);
+      state.tasks.push(task);
+    }
+    editingTaskId = null;
     closeModal('modal-add-task'); renderTasks();
-    toast('Task added', 'success');
+    toast(isEditing ? 'Task updated' : 'Task added', 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
+}
+
+function openEditTask(id) {
+  if (!canEdit()) return;
+  const task = state.tasks.find(t => t.id === id);
+  if (!task) return;
+  editingTaskId = id;
+  document.getElementById('task-modal-title').textContent = 'Edit Task';
+  document.getElementById('task-save-btn').textContent = 'Save Changes';
+  document.getElementById('task-name-input').value = task.name || '';
+  document.getElementById('task-shift-select').value = task.assignedshift || 'Morning';
+  document.getElementById('task-freq-select').value = task.frequency || 'Daily';
+  toggleIntervalField();
+  const ic = document.getElementById('task-interval-count');
+  if (ic) ic.value = task.requiredcount || 1;
+  // Populate staff dropdown, then select the assigned cleaner
+  const staffSel = document.getElementById('task-staff-select');
+  const cleaners = state.staff.filter(s => ['Cleaner','Senior Cleaner','Team Lead'].includes(s.role) && !s.disengaged);
+  staffSel.innerHTML = '<option value="">— Whole shift —</option>' +
+    cleaners.map(s => `<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.shift||'—')})</option>`).join('');
+  staffSel.value = task.assignedstaffid || '';
+
+  // Reverse-populate the Floor → Room Type → Room cascade from the saved zone id
+  populateTaskFloors();
+  const zone = task.zoneid ? state.zones.find(z => z.id === task.zoneid) : null;
+  if (zone) {
+    let floorId = null, rtId = null, roomId = null;
+    if (zone.type === 'floor') floorId = zone.id;
+    else if (zone.type === 'roomtype') { floorId = zone.parentid; rtId = zone.id; }
+    else if (zone.type === 'room') {
+      rtId = zone.parentid;
+      const rt = state.zones.find(z => z.id === rtId);
+      floorId = rt ? rt.parentid : null;
+      roomId = zone.id;
+    }
+    if (floorId) {
+      document.getElementById('task-floor-select').value = floorId;
+      populateTaskRoomTypes();
+      if (rtId) {
+        document.getElementById('task-rt-select').value = rtId;
+        populateTaskRooms();
+        if (roomId) document.getElementById('task-room-select').value = roomId;
+      }
+    }
+  }
+  openModal('modal-add-task');
 }
 
 async function deleteTask(id) {
@@ -4936,7 +5264,7 @@ async function deleteTask(id) {
 function openAttendance() {
   const today = todayStr();
   const todayAttendance = state.attendance.filter(a => a.date === today);
-  const html = state.staff.map(s => {
+  const html = state.staff.filter(s => !s.disengaged).map(s => {
     const rec = todayAttendance.find(a => a.staffid === s.id);
     const photo = s.photo ? `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">` : esc(initials(s.name));
     let actions = '';
@@ -4988,30 +5316,72 @@ async function checkOut(staffId) {
 async function saveIncident() {
   const desc = document.getElementById('inc-desc').value.trim();
   if (!validateField('inc-desc', 'err-inc-desc', v => v.trim().length > 0)) return;
-  showLoading('Submitting incident…');
+  const isEditing = !!editingIncidentId;
+  const existingInc = isEditing ? state.incidents.find(x => x.id === editingIncidentId) : null;
+  showLoading(isEditing ? 'Saving incident…' : 'Submitting incident…');
   try {
     const rawPhoto = document.getElementById('inc-photo-preview')?.src || '';
-    const photo = rawPhoto.startsWith('data:') ? await compressImage(rawPhoto, 600, 0.7) : '';
-    // Only send columns that exist in the Supabase incidents table
-    const inc = {
-      id: uid(),
-      type: document.getElementById('inc-type').value,
-      location: document.getElementById('inc-location').value.trim(),
-      description: desc,
-      reportedby: currentUser.name,
-      date: todayStr(),
-      createdat: new Date().toISOString(),
-      status: 'Open',
-      photo: photo || null
-    };
-    await dbInsertOffline('incidents', inc);
-    // Store resolution fields locally only (not sent to DB on create)
-    inc.resolvedby = null; inc.resolvedat = null; inc.resolutionnotes = null;
-    state.incidents.unshift(inc);
-    closeModal('modal-incident');
-    toast('Incident reported' + (!isOnline() ? ' (saved offline)' : ''), 'success');
+    const photo = rawPhoto.startsWith('data:') ? await compressImage(rawPhoto, 600, 0.7) : (isEditing ? existingInc.photo : '');
+    if (isEditing) {
+      const changes = {
+        type: document.getElementById('inc-type').value,
+        location: document.getElementById('inc-location').value.trim(),
+        description: desc,
+        photo: photo || null
+      };
+      await dbUpdate('incidents', existingInc.id, changes);
+      Object.assign(existingInc, changes);
+      editingIncidentId = null;
+      closeModal('modal-incident');
+      renderIncidentsScreen();
+      toast('Incident updated', 'success');
+    } else {
+      // Only send columns that exist in the Supabase incidents table
+      const inc = {
+        id: uid(),
+        type: document.getElementById('inc-type').value,
+        location: document.getElementById('inc-location').value.trim(),
+        description: desc,
+        reportedby: currentUser.name,
+        date: todayStr(),
+        createdat: new Date().toISOString(),
+        status: 'Open',
+        photo: photo || null
+      };
+      await dbInsertOffline('incidents', inc);
+      // Store resolution fields locally only (not sent to DB on create)
+      inc.resolvedby = null; inc.resolvedat = null; inc.resolutionnotes = null;
+      state.incidents.unshift(inc);
+      closeModal('modal-incident');
+      toast('Incident reported' + (!isOnline() ? ' (saved offline)' : ''), 'success');
+    }
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
+}
+
+function openEditIncident(id) {
+  if (!canManageIncidents()) return;
+  const i = state.incidents.find(x => x.id === id);
+  if (!i) return;
+  editingIncidentId = id;
+  closeModal('modal-incident-detail');
+  document.getElementById('incident-modal-title').textContent = 'Edit Incident';
+  document.getElementById('incident-save-btn').textContent = 'Save Changes';
+  document.getElementById('inc-type').value = i.type || 'Accident / Injury';
+  document.getElementById('inc-location').value = i.location || '';
+  document.getElementById('inc-desc').value = i.description || '';
+  clearFieldError('inc-desc','err-inc-desc');
+  if (i.photo && i.photo.startsWith('data:')) {
+    const img = document.getElementById('inc-photo-preview');
+    const ph = document.getElementById('inc-photo-placeholder');
+    const db = document.getElementById('del-inc-photo');
+    if (img) { img.src = i.photo; img.style.display = 'block'; }
+    if (ph) ph.style.display = 'none';
+    if (db) db.classList.add('visible');
+  } else {
+    clearPhoto('inc-photo-preview','inc-photo-placeholder','del-inc-photo');
+  }
+  openModal('modal-incident');
 }
 
 function setIncidentDateRange(r) {
@@ -5110,6 +5480,8 @@ function openIncidentDetail(id) {
   }
   const delBtn = document.getElementById('inc-delete-btn');
   if (delBtn) delBtn.style.display = canManageIncidents() ? 'inline-flex' : 'none';
+  const editBtn = document.getElementById('inc-edit-btn');
+  if (editBtn) editBtn.style.display = canManageIncidents() ? 'inline-flex' : 'none';
   openModal('modal-incident-detail');
 }
 
@@ -5179,25 +5551,57 @@ async function deleteCurrentIncident() {
 async function saveSupplyRequest() {
   const item = document.getElementById('req-item').value.trim();
   if (!validateField('req-item', 'err-req-item', v => v.trim().length > 0)) return;
-  showLoading('Submitting request…');
+  const isEditing = !!editingRequestId;
+  showLoading(isEditing ? 'Saving request…' : 'Submitting request…');
   try {
-    const req = {
-      id: uid(), item,
+    const changes = {
+      item,
       qty: parseInt(document.getElementById('req-qty').value)||1,
       urgency: document.getElementById('req-urgency').value,
-      notes: document.getElementById('req-notes').value,
-      requestedby: currentUser.name,
-      status: 'Pending',
-      date: todayStr(),
-      createdat: new Date().toISOString(),
-      managernote: null, approvedby: null, approvedat: null
+      notes: document.getElementById('req-notes').value
     };
-    await dbInsertOffline('supplyrequests', req);
-    state.supplyRequests.unshift(req);
-    closeModal('modal-supply-req');
-    toast('Supply request submitted' + (!isOnline() ? ' (saved offline)' : ''), 'success');
+    if (isEditing) {
+      const existing = state.supplyRequests.find(x => x.id === editingRequestId);
+      if (!existing) return;
+      await dbUpdate('supplyrequests', existing.id, changes);
+      Object.assign(existing, changes);
+      editingRequestId = null;
+      closeModal('modal-supply-req');
+      renderIncidentsScreen();
+      toast('Request updated', 'success');
+    } else {
+      const req = {
+        id: uid(), ...changes,
+        requestedby: currentUser.name,
+        status: 'Pending',
+        date: todayStr(),
+        createdat: new Date().toISOString(),
+        managernote: null, approvedby: null, approvedat: null
+      };
+      await dbInsertOffline('supplyrequests', req);
+      state.supplyRequests.unshift(req);
+      closeModal('modal-supply-req');
+      toast('Supply request submitted' + (!isOnline() ? ' (saved offline)' : ''), 'success');
+    }
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
   finally { hideLoading(); }
+}
+
+function openEditRequest(id) {
+  const r = state.supplyRequests.find(x => x.id === id);
+  if (!r) return;
+  const canEditThis = (canManageIncidents() || r.requestedby === currentUser.name) && r.status === 'Pending';
+  if (!canEditThis) return;
+  editingRequestId = id;
+  closeModal('modal-supply-detail');
+  document.getElementById('supply-modal-title').textContent = 'Edit Supply Request';
+  document.getElementById('supply-save-btn').textContent = 'Save Changes';
+  document.getElementById('req-item').value = r.item || '';
+  document.getElementById('req-qty').value = r.qty || 1;
+  document.getElementById('req-urgency').value = r.urgency || 'Normal';
+  document.getElementById('req-notes').value = r.notes || '';
+  clearFieldError('req-item','err-req-item');
+  openModal('modal-supply-req');
 }
 
 function openSupplyDetail(id) {
@@ -5230,6 +5634,8 @@ function openSupplyDetail(id) {
   }
   const delBtn = document.getElementById('req-delete-btn');
   if (delBtn) delBtn.style.display = canManageIncidents() ? 'inline-flex' : 'none';
+  const editBtn = document.getElementById('req-edit-btn');
+  if (editBtn) editBtn.style.display = ((canManageIncidents() || r.requestedby === currentUser.name) && r.status === 'Pending') ? 'inline-flex' : 'none';
   openModal('modal-supply-detail');
 }
 
@@ -5421,9 +5827,9 @@ async function renderCleanerReport() {
 function openModal(id) {
   if (id === 'modal-add-staff' && !editingStaffId) clearStaffForm();
   if (id === 'modal-add-inv') clearInvForm();
-  if (id === 'modal-add-job') { clearJobForm(); populateJobStaffSelect(); }
-  if (id === 'modal-incident') { document.getElementById('inc-desc').value = ''; document.getElementById('inc-location').value = ''; clearFieldError('inc-desc','err-inc-desc'); clearPhoto('inc-photo-preview','inc-photo-placeholder','del-inc-photo'); }
-  if (id === 'modal-supply-req') { document.getElementById('req-item').value=''; document.getElementById('req-qty').value='1'; document.getElementById('req-notes').value=''; clearFieldError('req-item','err-req-item'); }
+  if (id === 'modal-add-job') { if (!editingJobId) clearJobForm(); populateJobStaffSelect(); }
+  if (id === 'modal-incident' && !editingIncidentId) { document.getElementById('inc-desc').value = ''; document.getElementById('inc-location').value = ''; document.getElementById('inc-type').selectedIndex = 0; document.getElementById('incident-modal-title').textContent = 'Report Incident'; document.getElementById('incident-save-btn').textContent = 'Submit Report'; clearFieldError('inc-desc','err-inc-desc'); clearPhoto('inc-photo-preview','inc-photo-placeholder','del-inc-photo'); }
+  if (id === 'modal-supply-req' && !editingRequestId) { document.getElementById('req-item').value=''; document.getElementById('req-qty').value='1'; document.getElementById('req-notes').value=''; document.getElementById('req-urgency').selectedIndex = 0; document.getElementById('supply-modal-title').textContent = 'Request Supplies'; document.getElementById('supply-save-btn').textContent = 'Submit Request'; clearFieldError('req-item','err-req-item'); }
   const el = document.getElementById(id); if (el) el.style.display = 'flex';
 }
 function closeModal(id) {
@@ -5545,6 +5951,11 @@ function clearInvForm() {
 }
 
 function clearJobForm() {
+  editingJobId = null;
+  const t = document.getElementById('job-modal-title');
+  const b = document.getElementById('job-save-btn');
+  if (t) t.textContent = 'Schedule New Job';
+  if (b) b.textContent = 'Schedule Job';
   ['jf-client','jf-location','jf-date','jf-time','jf-notes'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
@@ -6668,9 +7079,11 @@ async function emailPayrollReport() {
   const bpNames = bpIds.map(function(id){ const st=state.staff.find(function(s){return s.id===id;}); return st?(st.alias||st.name):null; }).filter(Boolean);
   const bdNames = bdIds.map(function(id){ const st=state.staff.find(function(s){return s.id===id;}); return st?(st.alias||st.name):null; }).filter(Boolean);
 
-  // Build payroll rows HTML
+  // Build payroll rows HTML — skip disengaged staff unless they have a real record
+  // for this month (partial-month pay owed before disengagement).
+  const emailPayrollStaff = state.staff.filter(function(st){ return !st.disengaged || records[st.id]; });
   let totalNet = 0;
-  const rows = state.staff.map(function(st, i) {
+  const rows = emailPayrollStaff.map(function(st, i) {
     const rec = records[st.id] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, bonus: 0 };
     const absDed   = (rec.absentNoPerm || 0) * s.absentRate;
     const uniDed   = (rec.uniformDays  || 0) * s.uniformRate;
@@ -6799,9 +7212,11 @@ async function exportPayrollPDF() {
     const bpNames = bpIds.map(function(id){ const st = state.staff.find(function(s){ return s.id === id; }); return st ? (st.alias || st.name) : null; }).filter(Boolean);
     const bdNames = bdIds.map(function(id){ const st = state.staff.find(function(s){ return s.id === id; }); return st ? (st.alias || st.name) : null; }).filter(Boolean);
 
-    // Pre-compute totals
+    // Pre-compute totals — skip disengaged staff unless they have a real record
+    // for this month (partial-month pay owed before disengagement).
+    const pdfPayrollStaff = state.staff.filter(function(st){ return !st.disengaged || records[st.id]; });
     let grandGross = 0, grandDed = 0, grandNet = 0;
-    state.staff.forEach(function(st) {
+    pdfPayrollStaff.forEach(function(st) {
       const rec     = records[st.id] || {};
       const absDed  = (rec.absentNoPerm || 0) * s.absentRate;
       const uniDed  = (rec.uniformDays  || 0) * s.uniformRate;
@@ -6889,7 +7304,7 @@ async function exportPayrollPDF() {
     doc.text('PAYROLL SUMMARY', ML + 3, y + 5);
     const q4 = usable / 4;
     var summaryItems = [
-      { label: 'Total Staff',       value: String(state.staff.length) },
+      { label: 'Total Staff',       value: String(pdfPayrollStaff.length) },
       { label: 'Gross Payroll',     value: 'GHC ' + grandGross.toLocaleString() },
       { label: 'Total Deductions',  value: 'GHC ' + grandDed.toLocaleString() },
       { label: 'NET PAYOUT',        value: 'GHC ' + grandNet.toLocaleString() }
@@ -6960,7 +7375,7 @@ async function exportPayrollPDF() {
 
     var grandNetFinal = 0;
 
-    state.staff.forEach(function(st, i) {
+    pdfPayrollStaff.forEach(function(st, i) {
       var rec      = records[st.id] || { workingDays: s.workingDays, daysPresent: s.workingDays, absentPerm: 0, absentNoPerm: 0, uniformDays: 0, otherDeductions: 0, bonus: 0, remarks: '' };
       var absDed   = (rec.absentNoPerm || 0) * s.absentRate;
       var uniDed   = (rec.uniformDays  || 0) * s.uniformRate;
@@ -8014,7 +8429,11 @@ function checkPaymentReminder() {
   const month = today.toISOString().slice(0,7);
   const monthLabel = today.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
   const records = getPayrollRecords(month);
-  const totalNet = state.staff.reduce(function(sum, st) {
+  // Exclude disengaged staff from active payroll totals — unless they have a real
+  // record for this month (e.g. they worked part of the month before disengagement),
+  // in which case they're still owed pay and should stay counted.
+  const payrollStaffForReminder = state.staff.filter(function(st){ return !st.disengaged || records[st.id]; });
+  const totalNet = payrollStaffForReminder.reduce(function(sum, st) {
     const rec = records[st.id] || {};
     const absDed = (rec.absentNoPerm||0)*s.absentRate;
     const uniDed = (rec.uniformDays||0)*s.uniformRate;
@@ -8045,11 +8464,13 @@ function dismissPaymentReminder(key) {
 
 function sendPayrollReminderEmail(month, monthLabel, totalNet) {
   const s = getPayrollSettings();
+  const records = getPayrollRecords(month);
+  const staffCount = state.staff.filter(function(st){ return !st.disengaged || records[st.id]; }).length;
   const to = [s.directorEmails, s.managerEmails].filter(Boolean).join(',');
   const subject = encodeURIComponent('💰 Payroll Payment Reminder — ' + monthLabel);
   const body = encodeURIComponent(
     '3 Rock Builders Company Limited\nPayroll Payment Reminder\n\nMonth: ' + monthLabel
-    + '\nTotal Staff: ' + state.staff.length
+    + '\nTotal Staff: ' + staffCount
     + '\nEstimated Net Payout: GHC ' + totalNet.toLocaleString()
     + '\n\nPlease review the payroll register in the management app and process payment.\n\nSent from 3-Rock Builders Management App'
   );
